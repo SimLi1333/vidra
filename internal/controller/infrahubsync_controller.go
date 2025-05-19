@@ -23,7 +23,7 @@ import (
 	"strings"
 	"time"
 
-	infrahubv1alpha1 "gitlab.ost.ch/ins-stud/sa-ba/ba-fs25-infrahub/infrahub-operator/api/v1alpha1"
+	infrahubv1alpha1 "github.com/simli1333/vidra/api/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -36,9 +36,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
-	"gitlab.ost.ch/ins-stud/sa-ba/ba-fs25-infrahub/infrahub-operator/internal/adapter/infrahub"
-	"gitlab.ost.ch/ins-stud/sa-ba/ba-fs25-infrahub/infrahub-operator/internal/adapter/k8s"
-	"gitlab.ost.ch/ins-stud/sa-ba/ba-fs25-infrahub/infrahub-operator/internal/domain"
+	"github.com/simli1333/vidra/internal/adapter/infrahub"
+	"github.com/simli1333/vidra/internal/adapter/k8s"
+	"github.com/simli1333/vidra/internal/domain"
 )
 
 type InfrahubSyncReconciler struct {

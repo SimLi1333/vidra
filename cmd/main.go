@@ -35,8 +35,8 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	infrahubv1alpha1 "gitlab.ost.ch/ins-stud/sa-ba/ba-fs25-infrahub/infrahub-operator/api/v1alpha1"
-	"gitlab.ost.ch/ins-stud/sa-ba/ba-fs25-infrahub/infrahub-operator/internal/controller"
+	infrahubv1alpha1 "github.com/simli1333/vidra/api/v1alpha1"
+	"github.com/simli1333/vidra/internal/controller"
 	// +kubebuilder:scaffold:imports
 )
 

@@ -24,7 +24,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"gitlab.ost.ch/ins-stud/sa-ba/ba-fs25-infrahub/infrahub-operator/test/utils"
+	"github.com/simli1333/vidra/test/utils"
 )
 
 const namespace = "infrahub-operator-system"

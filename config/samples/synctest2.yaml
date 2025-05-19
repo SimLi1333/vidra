@@ -7,10 +7,10 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
 spec:
   source:
-    infrahubAPIURL: "http://198.19.248.5:8000"
+    infrahubAPIURL: "https://infrahub-server.infrahub.orb.local"
     targetBranch: "test-multi"
     # targetDate: "2025-04-09T00:00:00Z"
     artefactName: "Webserver_Manifest"
   destination:
-    server: 'https://cldop-test-0.network.garden:6443'
+    server: 'https://k8s-cldop-test-0.network.garden:6443'
     namespace: 'default'

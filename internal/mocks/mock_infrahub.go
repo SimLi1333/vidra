@@ -13,7 +13,7 @@ import (
 	io "io"
 	reflect "reflect"
 
-	domain "gitlab.ost.ch/ins-stud/sa-ba/ba-fs25-infrahub/infrahub-operator/internal/domain"
+	domain "github.com/simli1333/vidra/internal/domain"
 	gomock "go.uber.org/mock/gomock"
 )
 

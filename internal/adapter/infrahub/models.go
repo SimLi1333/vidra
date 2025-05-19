@@ -1,7 +1,7 @@
 package infrahub
 
 import (
-	"gitlab.ost.ch/ins-stud/sa-ba/ba-fs25-infrahub/infrahub-operator/internal/domain"
+	"github.com/simli1333/vidra/internal/domain"
 )
 
 // API Request and Response Models

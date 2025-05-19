@@ -1,4 +1,4 @@
-module gitlab.ost.ch/ins-stud/sa-ba/ba-fs25-infrahub/infrahub-operator
+module github.com/simli1333/vidra
 
 go 1.23.0
 

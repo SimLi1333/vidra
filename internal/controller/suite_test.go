@@ -34,8 +34,8 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	infrahubv1alpha1 "gitlab.ost.ch/ins-stud/sa-ba/ba-fs25-infrahub/infrahub-operator/api/v1alpha1"
-	mock "gitlab.ost.ch/ins-stud/sa-ba/ba-fs25-infrahub/infrahub-operator/internal/mocks"
+	infrahubv1alpha1 "github.com/simli1333/vidra/api/v1alpha1"
+	mock "github.com/simli1333/vidra/internal/mocks"
 	// +kubebuilder:scaffold:imports
 )
 

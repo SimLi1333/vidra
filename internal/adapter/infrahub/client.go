@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"gitlab.ost.ch/ins-stud/sa-ba/ba-fs25-infrahub/infrahub-operator/internal/domain"
+	"github.com/simli1333/vidra/internal/domain"
 )
 
 type infrahubClient struct{}
