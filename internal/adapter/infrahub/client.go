@@ -1,0 +1,204 @@
+package infrahub
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"regexp"
+	"strings"
+	"time"
+
+	"gitlab.ost.ch/ins-stud/sa-ba/ba-fs25-infrahub/infrahub-operator/internal/domain"
+)
+
+type infrahubClient struct{}
+
+// NewClient returns a new InfrahubClient.
+func NewClient() domain.InfrahubClient {
+	return &infrahubClient{}
+}
+
+var relativeFormatRegex = regexp.MustCompile(`^now[-+]\d+[smhdw]$`)
+
+// IsValidTargetDateFormat checks if the input string is a valid RFC3339 or relative time format.
+func IsValidTargetDateFormat(input string) error {
+	if _, err := time.Parse(time.RFC3339, input); err == nil {
+		return nil
+	}
+	if relativeFormatRegex.MatchString(input) {
+		return nil
+	}
+	return fmt.Errorf("targetDate must be RFC3339 or relative like 'now-2h', got: %s", input)
+}
+
+// BuildURL builds a URL using base API URL, path with placeholders, path parameters, and query parameters.
+func BuildURL(baseAPIURL, pathTemplate string, pathParams map[string]string, queryParams map[string]string) (string, error) {
+	// Replace placeholders in the path (e.g. :id)
+	path := pathTemplate
+	for key, val := range pathParams {
+		placeholder := fmt.Sprintf(":%s", key)
+		path = strings.ReplaceAll(path, placeholder, url.PathEscape(val))
+	}
+
+	// Prepare query parameters
+	q := url.Values{}
+	for k, v := range queryParams {
+		if v == "" {
+			continue // skip empty values
+		}
+
+		// Special validation for 'at' (targetDate)
+		if k == "at" {
+			if err := IsValidTargetDateFormat(v); err != nil {
+				return "", fmt.Errorf("invalid 'at' query param format: %w", err)
+			}
+		}
+
+		q.Set(k, v)
+	}
+
+	fullURL := fmt.Sprintf("%s%s", strings.TrimSuffix(baseAPIURL, "/"), path)
+
+	if encodedQuery := q.Encode(); encodedQuery != "" {
+		fullURL += "?" + encodedQuery
+	}
+
+	return fullURL, nil
+}
+
+// RunQuery sends a query to the Infrahub API
+func (c *infrahubClient) RunQuery(queryName string, apiURL string, artifactName string, targetBranche string, targetDate string, token string) (*[]domain.Artifact, error) {
+	// Construct the query URL
+	url, err := BuildURL(
+		apiURL,
+		fmt.Sprintf("/api/query/%s", queryName),
+		nil,
+		map[string]string{
+			"update_group": "false",
+			"branch":       targetBranche,
+			"at":           targetDate,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build query URL: %w", err)
+	}
+
+	payload := QueryPayload{
+		Variables: map[string]string{
+			"artifactname": artifactName,
+		},
+	}
+
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal query payload: %w", err)
+	}
+
+	req, err := http.NewRequest("POST", url, bytes.NewReader(payloadBytes))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create query request: %w", err)
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("query request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("query failed with status %s: %s", resp.Status, body)
+	}
+
+	var queryResult ArtifactIDQueryResult
+	if err := json.NewDecoder(resp.Body).Decode(&queryResult); err != nil {
+		return nil, fmt.Errorf("failed to decode query result: %w", err)
+	}
+
+	artifacts, err := CreateArtifactsFromAPIResponse(queryResult)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create artifacts from API response: %w", err)
+	}
+
+	return &artifacts, nil
+}
+
+// Login authenticates with the Infrahub API and returns the authentication token
+func (c *infrahubClient) Login(apiURL, username, password string) (string, error) {
+	loginURL := fmt.Sprintf("%s/api/auth/login", apiURL)
+
+	loginPayload := map[string]string{"username": username, "password": password}
+
+	payloadBytes, err := json.Marshal(loginPayload)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal login payload: %w", err)
+	}
+
+	req, err := http.NewRequest("POST", loginURL, bytes.NewReader(payloadBytes))
+	if err != nil {
+		return "", fmt.Errorf("failed to create login request: %w", err)
+	}
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("login request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("login failed with status %s: %s", resp.Status, body)
+	}
+
+	var loginResp LoginResponse
+	if err := json.NewDecoder(resp.Body).Decode(&loginResp); err != nil {
+		return "", fmt.Errorf("failed to decode login response: %w", err)
+	}
+
+	return loginResp.Token, nil
+}
+
+// DownloadArtifact downloads the artifact from the given URL and saves it to a temporary file
+func (c *infrahubClient) DownloadArtifact(apiURL string, artifactID string, targetBranche string, targetDate string) (io.Reader, error) {
+	url, err := BuildURL(
+		apiURL,
+		"/api/artifact/:artifactID",
+		map[string]string{
+			"artifactID": artifactID,
+		},
+		map[string]string{
+			"branch": targetBranche,
+			"at":     targetDate,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build URL for artifact: %v", err)
+	}
+
+	// Send a GET request to download the artifact
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send GET request: %v", err)
+	}
+
+	// Check if the response status is OK
+	if resp.StatusCode != http.StatusOK {
+		defer resp.Body.Close()
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read response body: %v", err)
+		}
+		return nil, fmt.Errorf("failed to download artifact, status code: %d, response: %s", resp.StatusCode, body)
+	}
+
+	// Return the response body as an io.Reader
+	return resp.Body, nil
+}

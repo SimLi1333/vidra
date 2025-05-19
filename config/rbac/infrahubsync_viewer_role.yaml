@@ -1,0 +1,23 @@
+# permissions for end users to view infrahubsyncs.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: infrahub-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: infrahubsync-viewer-role
+rules:
+- apiGroups:
+  - infrahub.operators.com
+  resources:
+  - infrahubsyncs
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - infrahub.operators.com
+  resources:
+  - infrahubsyncs/status
+  verbs:
+  - get

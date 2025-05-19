@@ -1,0 +1,16 @@
+apiVersion: infrahub.operators.com/v1alpha1
+kind: InfrahubSync
+metadata:
+  name: sync-main
+  labels:
+    app.kubernetes.io/name: infrahub-operator
+    app.kubernetes.io/managed-by: kustomize
+spec:
+  source:
+    infrahubAPIURL: "http://198.19.248.5:8000"
+    targetBranch: "main"
+    # targetDate: "2025-04-09T00:00:00Z"
+    artefactName: "Webserver_Manifest"
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: 'default'
