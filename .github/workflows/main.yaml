@@ -40,6 +40,8 @@ jobs:
     name: Unit Tests
     runs-on: ubuntu-latest
     container: golang:1.24
+    env:
+      GOFLAGS: "-buildvcs=false"
     needs: lint
     steps:
       - uses: actions/checkout@v4
