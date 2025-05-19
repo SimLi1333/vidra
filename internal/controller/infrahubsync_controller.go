@@ -269,7 +269,7 @@ func (r *InfrahubSyncReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 	// Use the non-cached client to fetch the config map via label selector
 	labelKey := "app"
-	labelValue := "infrahub-operator"
+	labelValue := "vidra"
 
 	if err := r.InitConfigWithClient(context.Background(), nonCachedClient, labelKey, labelValue); err != nil {
 		return fmt.Errorf("failed to initialize config: %w", err)

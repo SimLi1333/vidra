@@ -2,7 +2,7 @@ apiVersion: infrahub.operators.com/v1alpha1
 kind: InfrahubResource
 metadata:
   labels:
-    app.kubernetes.io/name: infrahub-operator
+    app.kubernetes.io/name: vidra
     app.kubernetes.io/managed-by: kustomize
   name: infrahubresource-sample
 spec:

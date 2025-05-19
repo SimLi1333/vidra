@@ -3,7 +3,7 @@ kind: InfrahubSync
 metadata:
   name: sync-main
   labels:
-    app.kubernetes.io/name: infrahub-operator
+    app.kubernetes.io/name: vidra
     app.kubernetes.io/managed-by: kustomize
 spec:
   source:

@@ -31,7 +31,7 @@ import (
 const (
 	FinalizerName    = "infrahubresource.infrahub.operators.com/finalizer"
 	OwnerAnnotation  = "infrahubresource.infrahub.operators.com/owned-by"
-	infrahubOperator = "infrahub-operator"
+	infrahubOperator = "vidra"
 )
 
 type InfrahubResourceReconciler struct {

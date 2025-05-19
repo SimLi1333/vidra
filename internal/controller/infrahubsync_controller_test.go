@@ -692,10 +692,10 @@ var _ = Describe("InfrahubSyncReconciler SetupWithManager", func() {
 		By("creating the ConfigMap for the controller")
 		configMap := &v1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "infrahub-operator-config",
+				Name:      "vidra-config",
 				Namespace: "default",
 				Labels: map[string]string{
-					"app": "infrahub-operator",
+					"app": "vidra",
 				},
 			},
 			Data: map[string]string{
@@ -717,7 +717,7 @@ var _ = Describe("InfrahubSyncReconciler SetupWithManager", func() {
 
 		configMap = &v1.ConfigMap{}
 		err = k8sClient.Get(ctx, types.NamespacedName{
-			Name:      "infrahub-operator-config",
+			Name:      "vidra-config",
 			Namespace: "default",
 		}, configMap)
 		Expect(err).NotTo(HaveOccurred())
