@@ -18,8 +18,12 @@ jobs:
     runs-on: ubuntu-latest
     container: golang:1.24
     continue-on-error: true
+    env:
+      GOFLAGS: "-buildvcs=false"
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Setup Cache
         uses: actions/cache@v4
         with:
@@ -53,7 +57,7 @@ jobs:
       - name: Save coverage
         run: echo "Saving coverage..."
       - name: Upload coverage.out
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: cover.out
           path: cover.out
