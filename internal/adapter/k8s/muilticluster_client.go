@@ -33,7 +33,7 @@ func (f *DynamicClientFactory) GetCachedClientFor(ctx context.Context, serverURL
 	secretList := &v1.SecretList{}
 
 	trimmedK8SURL := strings.TrimPrefix(strings.Split(serverURL, ":")[1], "//")
-	err := GetSortedListByLabel(ctx, k8sClient, "vidra-kubeconf", trimmedK8SURL, secretList)
+	err := GetSortedListByLabel(ctx, k8sClient, "cluster-kubeconfig", trimmedK8SURL, secretList)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get secrets by label: %w", err)
 	}

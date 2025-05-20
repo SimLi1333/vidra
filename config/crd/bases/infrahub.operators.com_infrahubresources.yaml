@@ -108,15 +108,17 @@ spec:
                 - Failed
                 - Stale
                 type: string
+              checksum:
+                description: |-
+                  INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
+                  Important: Run "make" to regenerate code after modifying this file
+                type: string
               lastError:
                 type: string
               lastSyncTime:
                 format: date-time
                 type: string
               managedResources:
-                description: |-
-                  INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-                  Important: Run "make" to regenerate code after modifying this file
                 items:
                   properties:
                     apiVersion:
@@ -133,6 +135,8 @@ spec:
                   - name
                   type: object
                 type: array
+              manifests:
+                type: string
             type: object
         type: object
     served: true

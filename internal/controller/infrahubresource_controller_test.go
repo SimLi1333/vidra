@@ -262,6 +262,12 @@ spec:
 						}).Should(Succeed())
 
 						By("updating the artifact to have 2 replicas")
+						instance := &infrahubv1alpha1.InfrahubResource{}
+						err = k8sClient.Get(ctx, namespacedName, instance)
+						Expect(err).NotTo(HaveOccurred())
+						instance.Status.Checksum = "checksum-67890"
+						Expect(k8sClient.Status().Update(ctx, instance)).To(Succeed())
+
 						yamlDataUpdated := `
 apiVersion: v1
 kind: Namespace
@@ -424,6 +430,123 @@ spec:
 						Expect(ing.Spec.Rules).NotTo(BeEmpty())
 					})
 
+					It("should reconcile the cached resource form the crd and not call the InfrahubClient if the checksum does not change", func() {
+						By("setting up the mock client to return a YAML with a resource")
+						yamlData := `
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: resource
+  namespace: ` + namespace + `
+`
+						mockClient.EXPECT().
+							DownloadArtifact(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+							Return(io.NopCloser(strings.NewReader(yamlData)), nil)
+						mockRESTMapper.EXPECT().
+							RESTMapping(schema.GroupKind{Group: "", Kind: "ConfigMap"}, "v1").
+							Return(&meta.RESTMapping{
+								Resource: schema.GroupVersionResource{Group: "", Version: "v1", Resource: "configmaps"},
+								Scope:    meta.RESTScopeNamespace,
+							}, nil).AnyTimes()
+						By("reconciling the resource on the destination server")
+						deployK8sClient := setupClientFactoryMock(ctx, k8sClient, mockClientFactory, namespacedName, secondK8sClient)
+						// First reconciliation - should create resource
+						_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
+						Expect(err).NotTo(HaveOccurred())
+						// resource should exist
+						Eventually(func() error {
+							res := &unstructured.Unstructured{}
+							res.SetAPIVersion("v1")
+							res.SetKind("ConfigMap")
+							return deployK8sClient.Get(ctx, types.NamespacedName{Name: "resource", Namespace: namespace}, res)
+						}).Should(Succeed())
+
+						By("running reconciliation again with the same checksum")
+
+						// The mock client should not be called again
+						mockClient.EXPECT().
+							DownloadArtifact(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+							Return(io.NopCloser(strings.NewReader(yamlData)), nil).
+							Times(0)
+					})
+
+					It("should overwrite the resource if it was manually changed", func() {
+						By("setting up the mock client to return a YAML with a resource")
+						yamlData := `
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: resource
+  namespace: ` + namespace + `
+data:
+  key: value
+`
+						mockClient.EXPECT().
+							DownloadArtifact(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+							Return(io.NopCloser(strings.NewReader(yamlData)), nil)
+						mockRESTMapper.EXPECT().
+							RESTMapping(schema.GroupKind{Group: "", Kind: "ConfigMap"}, "v1").
+							Return(&meta.RESTMapping{
+								Resource: schema.GroupVersionResource{Group: "", Version: "v1", Resource: "configmaps"},
+								Scope:    meta.RESTScopeNamespace,
+							}, nil).AnyTimes()
+						By("reconciling the resource on the destination server")
+						deployK8sClient := setupClientFactoryMock(ctx, k8sClient, mockClientFactory, namespacedName, secondK8sClient)
+						// First reconciliation - should create resource
+						_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
+						Expect(err).NotTo(HaveOccurred())
+						// resource should exist
+						Eventually(func() error {
+							res := &unstructured.Unstructured{}
+							res.SetAPIVersion("v1")
+							res.SetKind("ConfigMap")
+							return deployK8sClient.Get(ctx, types.NamespacedName{Name: "resource", Namespace: namespace}, res)
+						}).Should(Succeed())
+
+						// Simulate manual change to the resource
+						updatedResource := &unstructured.Unstructured{}
+						updatedResource.SetAPIVersion("v1")
+						updatedResource.SetKind("ConfigMap")
+						updatedResource.SetName("resource")
+						updatedResource.SetNamespace(namespace)
+						updatedResource.Object["data"] = map[string]interface{}{
+							"key": "new-value",
+						}
+						err = deployK8sClient.Update(ctx, updatedResource)
+						Expect(err).NotTo(HaveOccurred())
+						// Check if the resource was updated
+						Eventually(func() error {
+							res := &unstructured.Unstructured{}
+							res.SetAPIVersion("v1")
+							res.SetKind("ConfigMap")
+							err := deployK8sClient.Get(ctx, types.NamespacedName{Name: "resource", Namespace: namespace}, res)
+							if err != nil {
+								return err
+							}
+							if res.Object["data"].(map[string]interface{})["key"] != "new-value" {
+								return fmt.Errorf("resource was not updated")
+							}
+							return nil
+						}).Should(Succeed())
+						// Now run reconciliation again
+						_, err = reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
+						Expect(err).NotTo(HaveOccurred())
+						// Check if the resource was overwritten
+						Eventually(func() error {
+							res := &unstructured.Unstructured{}
+							res.SetAPIVersion("v1")
+							res.SetKind("ConfigMap")
+							err := deployK8sClient.Get(ctx, types.NamespacedName{Name: "resource", Namespace: namespace}, res)
+							if err != nil {
+								return err
+							}
+							if res.Object["data"].(map[string]interface{})["key"] != "value" {
+								return fmt.Errorf("resource was not overwritten")
+							}
+							return nil
+						}).Should(Succeed())
+					})
+
 					It("should reconcile resources in to its namespace if a namespace is in the artifact", func() {
 						By("setting up the mock client to return a YAML with a namespace and resources in it")
 						mockClient.EXPECT().
@@ -516,6 +639,12 @@ metadata:
 						}).Should(Succeed())
 
 						By("reconciling the resource on the destination server again with a new name")
+						instance := &infrahubv1alpha1.InfrahubResource{}
+						err = k8sClient.Get(ctx, namespacedName, instance)
+						Expect(err).NotTo(HaveOccurred())
+						instance.Status.Checksum = "checksum-67890"
+						Expect(k8sClient.Status().Update(ctx, instance)).To(Succeed())
+
 						yamlDataNew := `
 apiVersion: v1
 kind: ConfigMap
@@ -566,7 +695,7 @@ metadata:
 								Name:      "example-config",
 								Namespace: "default",
 								Annotations: map[string]string{
-									"managed-by":    infrahubOperator,
+									"managed-by":    vidraOperator,
 									OwnerAnnotation: resourceName,
 								},
 							},
@@ -715,6 +844,12 @@ metadata:
 						}).Should(Succeed())
 
 						By("setting up the mock client to return a YAML with only resource-a")
+						instance := &infrahubv1alpha1.InfrahubResource{}
+						err = k8sClient.Get(ctx, namespacedName, instance)
+						Expect(err).NotTo(HaveOccurred())
+						instance.Status.Checksum = "checksum-67890"
+						Expect(k8sClient.Status().Update(ctx, instance)).To(Succeed())
+
 						yamlDataNew := `
 apiVersion: v1
 kind: ConfigMap
@@ -797,6 +932,12 @@ metadata:
 						})
 						Expect(err).NotTo(HaveOccurred())
 						By("renaming the ConfigMap to resource-b and reconciling again")
+						instance := &infrahubv1alpha1.InfrahubResource{}
+						err = k8sClient.Get(ctx, namespacedName, instance)
+						Expect(err).NotTo(HaveOccurred())
+						instance.Status.Checksum = "checksum-67890"
+						Expect(k8sClient.Status().Update(ctx, instance)).To(Succeed())
+
 						yaml := `
 apiVersion: v1
 kind: ConfigMap
@@ -888,6 +1029,12 @@ metadata:
 						}()
 
 						By("reconciling the resource on the destination server again with just resource-b")
+						instance := &infrahubv1alpha1.InfrahubResource{}
+						err = k8sClient.Get(ctx, namespacedName, instance)
+						Expect(err).NotTo(HaveOccurred())
+						instance.Status.Checksum = "checksum-67890"
+						Expect(k8sClient.Status().Update(ctx, instance)).To(Succeed())
+
 						yaml := `
 apiVersion: v1
 kind: ConfigMap
@@ -992,6 +1139,7 @@ metadata:
 						}
 
 						Expect(k8sClient.Create(ctx, newInfrahubRes)).To(Succeed())
+
 						By("reconciling the same namespace and an other resource in the second InfrahubResource")
 						yamlData2 := `
 apiVersion: v1
@@ -1042,6 +1190,12 @@ metadata:
 						)))
 
 						By("Deleting the new infrahubResources again / namespace should stay")
+						instance := &infrahubv1alpha1.InfrahubResource{}
+						err = k8sClient.Get(ctx, namespacedName, instance)
+						Expect(err).NotTo(HaveOccurred())
+						instance.Status.Checksum = "checksum-67890"
+						Expect(k8sClient.Status().Update(ctx, instance)).To(Succeed())
+
 						err = k8sClient.Delete(ctx, newInfrahubRes)
 						Expect(err).NotTo(HaveOccurred())
 						_, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: types.NamespacedName{Name: "new-resource", Namespace: namespace}})
@@ -1077,6 +1231,10 @@ metadata:
 							AnyTimes()
 
 						By("reconciling the first infrahubResource on the destination server again with empty yaml")
+						err = k8sClient.Get(ctx, namespacedName, instance)
+						Expect(err).NotTo(HaveOccurred())
+						instance.Status.Checksum = "checksum-98765"
+						Expect(k8sClient.Status().Update(ctx, instance)).To(Succeed())
 						_, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: namespacedName})
 						Expect(err).NotTo(HaveOccurred())
 						// Check if the resource-a id deleted
@@ -1320,7 +1478,7 @@ metadata:
 								Name:      "example-config",
 								Namespace: "default",
 								Annotations: map[string]string{
-									"managed-by":    infrahubOperator,
+									"managed-by":    vidraOperator,
 									OwnerAnnotation: resourceName,
 								},
 							},
@@ -1456,6 +1614,12 @@ metadata:
 						Expect(err).NotTo(HaveOccurred())
 
 						By("updating the existing ConfigMap and recycling it with Delete failure")
+						instance := &infrahubv1alpha1.InfrahubResource{}
+						err = k8sClient.Get(ctx, namespacedName, instance)
+						Expect(err).NotTo(HaveOccurred())
+						instance.Status.Checksum = "checksum-67890"
+						Expect(k8sClient.Status().Update(ctx, instance)).To(Succeed())
+
 						mockClient.EXPECT().
 							DownloadArtifact(apiURL, artifactID, targetBranche, targetDate).
 							Return(bytes.NewReader([]byte(`{
@@ -1507,7 +1671,6 @@ metadata:
 						})
 						Expect(err).NotTo(HaveOccurred())
 
-						instance := &infrahubv1alpha1.InfrahubResource{}
 						// Verify that the DeployState is set to StateStale
 						err = k8sClient.Get(ctx, namespacedName, instance)
 						Expect(err).NotTo(HaveOccurred())
