@@ -6,5 +6,6 @@ metadata:
     app: vidra # This label is used to identify the operator's resources.
   # namespace: your-namespace
 data:
-  requeueAfter: "1m" # ParseDuration parses a duration string. A duration string is a possibly signed sequence of decimal numbers, each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+  requeueSyncAfter: "1m" # ParseDuration parses a duration string. A duration string is a possibly signed sequence of decimal numbers, each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+  requeueRecourcesAfter: "1m" # ParseDuration once the resources are recreated
   queryName: "ArtifactIDs" # The name of the Infrahub query to be used for downloading id's.

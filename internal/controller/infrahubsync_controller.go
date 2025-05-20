@@ -303,13 +303,13 @@ func (r *InfrahubSyncReconciler) InitConfigWithClient(ctx context.Context, k8sCl
 
 	var configMap *v1.ConfigMap
 	for _, cm := range configMaps.Items {
-		if okRequeue := cm.Data["requeueAfter"] != ""; okRequeue || (cm.Data["queryName"] != "") {
+		if okRequeue := cm.Data["requeueSyncAfter"] != ""; okRequeue || (cm.Data["queryName"] != "") {
 			configMap = &cm
 			break
 		}
 	}
 	// Check for 'requeueAfter' and update if available
-	requeueAfter, ok := configMap.Data["requeueAfter"]
+	requeueAfter, ok := configMap.Data["requeueSyncAfter"]
 	if ok {
 		duration, err := time.ParseDuration(requeueAfter)
 		if err == nil {
