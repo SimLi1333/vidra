@@ -13,7 +13,6 @@ import (
 	"github.com/simli1333/vidra/internal/adapter/k8s"
 	"github.com/simli1333/vidra/internal/domain"
 
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 
 	"k8s.io/apimachinery/pkg/api/equality"
@@ -317,6 +316,13 @@ func (r *InfrahubResourceReconciler) applyResource(ctx context.Context, res *inf
 	existing.SetGroupVersionKind(desired.GroupVersionKind())
 	existing.SetNamespace(desired.GetNamespace())
 	existing.SetName(desired.GetName())
+	// Add label "managed-by": "vida" to the resource
+	labels := desired.GetLabels()
+	if labels == nil {
+		labels = map[string]string{}
+	}
+	labels["managed-by"] = "vida"
+	desired.SetLabels(labels)
 
 	// Try fetching the existing resource
 	err := destClient.Get(ctx, client.ObjectKeyFromObject(existing), existing)
@@ -339,6 +345,9 @@ func (r *InfrahubResourceReconciler) applyResource(ctx context.Context, res *inf
 	// Check if annotations match, if so, update resource
 	if r.shouldUpdateResource(existing, desired) {
 		logger.Info("Resource already exists and is managed by this infrahubResource -> updating", "name", existing.GetName(), "namespace", existing.GetNamespace())
+		if r.isEqual(existing, desired) {
+			return nil
+		}
 		desired.SetResourceVersion(existing.GetResourceVersion())
 		return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 			return destClient.Update(ctx, desired)
@@ -468,12 +477,15 @@ func (r *InfrahubResourceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	if err := r.InitConfigWithClient(context.Background(), nonCachedClient, labelKey, labelValue); err != nil {
 		return fmt.Errorf("failed to initialize config: %w", err)
 	}
+
+	r.StartDynamicWatchers(cfg)
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&infrahubv1alpha1.InfrahubResource{},
 			builder.WithPredicates(predicate.GenerationChangedPredicate{})).
-		Owns(&appsv1.Deployment{}, builder.WithPredicates(skipIfUpdatedBySelf())).
-		Owns(&corev1.Service{}, builder.WithPredicates(skipIfUpdatedBySelf())).
-		Owns(&corev1.ConfigMap{}, builder.WithPredicates(skipIfUpdatedBySelf())).
+		// Owns(&appsv1.Deployment{}, builder.WithPredicates(skipIfUpdatedBySelf())).
+		// Owns(&corev1.Service{}, builder.WithPredicates(skipIfUpdatedBySelf())).
+		// Owns(&corev1.ConfigMap{}, builder.WithPredicates(skipIfUpdatedBySelf())).
 		Complete(r)
 }
 

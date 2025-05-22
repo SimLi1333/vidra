@@ -33,6 +33,11 @@ type InfrahubResourceSpec struct {
 
 	// IDs contains important identifiers for the resource
 	IDs InfrahubResourceIDs `json:"ids,omitempty" protobuf:"bytes,3,name=ids"`
+
+	// Manifest contains the manifest information for the resource
+	// Manifest InfrahubResourceManifest `json:"manifest,omitempty" protobuf:"bytes,4,name=manifest"`
+	// SyncInterval is the interval for syncing the resource
+	ReconciledAt metav1.Time `json:"reconciledAt,omitempty" protobuf:"bytes,5,name=reconciledAt"`
 }
 
 // InfrahubResourceIDs contains identifiers for the resource

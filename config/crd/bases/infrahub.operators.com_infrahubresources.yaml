@@ -69,6 +69,13 @@ spec:
                 - checksum
                 - storageID
                 type: object
+              reconciledAt:
+                description: |-
+                  Manifest contains the manifest information for the resource
+                  Manifest InfrahubResourceManifest `json:"manifest,omitempty" protobuf:"bytes,4,name=manifest"`
+                  SyncInterval is the interval for syncing the resource
+                format: date-time
+                type: string
               source:
                 description: Source contains the source information for the Infrahub
                   API interaction
