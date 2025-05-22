@@ -13,7 +13,9 @@ import (
 	"github.com/simli1333/vidra/internal/adapter/k8s"
 	"github.com/simli1333/vidra/internal/domain"
 
-	v1 "k8s.io/api/core/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -26,6 +28,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
@@ -468,7 +471,35 @@ func (r *InfrahubResourceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&infrahubv1alpha1.InfrahubResource{},
 			builder.WithPredicates(predicate.GenerationChangedPredicate{})).
+		Owns(&appsv1.Deployment{}, builder.WithPredicates(skipIfUpdatedBySelf())).
+		Owns(&corev1.Service{}, builder.WithPredicates(skipIfUpdatedBySelf())).
+		Owns(&corev1.ConfigMap{}, builder.WithPredicates(skipIfUpdatedBySelf())).
 		Complete(r)
+}
+
+func skipIfUpdatedBySelf() predicate.Predicate {
+	return predicate.Funcs{
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			ann := e.ObjectNew.GetAnnotations()
+			if ann != nil && ann["managed-by"] == vidraOperator {
+				return false // skip reconciliation
+			}
+			return true // otherwise reconcile
+		},
+		CreateFunc: func(e event.CreateEvent) bool {
+			ann := e.Object.GetAnnotations()
+			if ann != nil && ann["managed-by"] == vidraOperator {
+				return false // skip reconciliation
+			}
+			return true // otherwise reconcile
+		},
+		DeleteFunc: func(e event.DeleteEvent) bool {
+			return true
+		},
+		GenericFunc: func(e event.GenericEvent) bool {
+			return true
+		},
+	}
 }
 
 func (r *InfrahubResourceReconciler) InitConfigWithClient(ctx context.Context, k8sClient client.Client, labelKey, labelValue string) error {
@@ -477,7 +508,7 @@ func (r *InfrahubResourceReconciler) InitConfigWithClient(ctx context.Context, k
 
 	// Start with the default values
 	r.RequeueAfter = defaultRequeue
-	var configMaps v1.ConfigMapList
+	var configMaps corev1.ConfigMapList
 	if err := k8s.GetSortedListByLabel(ctx, k8sClient, labelKey, labelValue, &configMaps); err != nil {
 		if strings.Contains(err.Error(), "no resources found with label") {
 			return nil // Use default values and continue
@@ -490,7 +521,7 @@ func (r *InfrahubResourceReconciler) InitConfigWithClient(ctx context.Context, k
 		return nil
 	}
 
-	var configMap *v1.ConfigMap
+	var configMap *corev1.ConfigMap
 	for _, cm := range configMaps.Items {
 		if cm.Data["requeueRecourcesAfter"] != "" {
 			configMap = &cm

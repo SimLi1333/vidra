@@ -101,6 +101,12 @@ spec:
             description: InfrahubResourceStatus defines the observed state of InfrahubResource
             properties:
               DeployState:
+                enum:
+                - Pending
+                - Running
+                - Succeeded
+                - Failed
+                - Stale
                 type: string
               checksum:
                 description: |-
@@ -130,12 +136,6 @@ spec:
                   type: object
                 type: array
               manifests:
-                enum:
-                - Pending
-                - Running
-                - Succeeded
-                - Failed
-                - Stale
                 type: string
             type: object
         type: object

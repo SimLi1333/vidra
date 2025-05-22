@@ -56,12 +56,11 @@ type InfrahubResourceStatus struct {
 	// Important: Run "make" to regenerate code after modifying this file
 	Checksum         string                  `json:"checksum,omitempty"`
 	ManagedResources []ManagedResourceStatus `json:"managedResources,omitempty"`
-
+	Manifests        string                  `json:"manifests,omitempty"`
+	LastSyncTime     metav1.Time             `json:"lastSyncTime,omitempty"`
 	// +kubebuilder:validation:Enum=Pending;Running;Succeeded;Failed;Stale
-	Manifests    string      `json:"manifests,omitempty"`
-	LastSyncTime metav1.Time `json:"lastSyncTime,omitempty"`
-	DeployState  State       `json:"DeployState,omitempty"`
-	LastError    string      `json:"lastError,omitempty"`
+	DeployState State  `json:"DeployState,omitempty"`
+	LastError   string `json:"lastError,omitempty"`
 }
 
 type ManagedResourceStatus struct {
