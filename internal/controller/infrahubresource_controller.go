@@ -63,7 +63,7 @@ func (r *InfrahubResourceReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			return ctrl.Result{}, nil
 		}
 		logger.Error(err, "Failed to get InfrahubResource resource")
-		return ctrl.Result{}, MarkStateFailed(ctx, r.Client, res, err)
+		return ctrl.Result{RequeueAfter: r.RequeueAfter}, MarkStateFailed(ctx, r.Client, res, err)
 	}
 	var destClient client.Client
 	if res.Spec.Destination.Server == "" || res.Spec.Destination.Server == "https://kubernetes.default.svc" {
@@ -75,7 +75,7 @@ func (r *InfrahubResourceReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		var err error
 		destClient, err = r.ClientFactory.GetCachedClientFor(ctx, res.Spec.Destination.Server, r.Client)
 		if err != nil {
-			return ctrl.Result{}, MarkStateFailed(ctx, r.Client, res, fmt.Errorf("failed to get client for destination: %w", err))
+			return ctrl.Result{RequeueAfter: r.RequeueAfter}, MarkStateFailed(ctx, r.Client, res, fmt.Errorf("failed to get client for destination: %w", err))
 		}
 	}
 
@@ -93,7 +93,7 @@ func (r *InfrahubResourceReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	if !r.hasFinalizer(res) {
 		logger.Info("Adding finalizer")
 		if err := r.addFinalizer(ctx, res); err != nil {
-			return ctrl.Result{}, MarkStateFailed(ctx, r.Client, res, err)
+			return ctrl.Result{RequeueAfter: r.RequeueAfter}, MarkStateFailed(ctx, r.Client, res, err)
 		}
 	}
 
@@ -109,20 +109,20 @@ func (r *InfrahubResourceReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		)
 		if err != nil {
 			logger.Error(err, "Failed to download artifact")
-			return ctrl.Result{}, MarkStateFailed(ctx, r.Client, res, err)
+			return ctrl.Result{RequeueAfter: r.RequeueAfter}, MarkStateFailed(ctx, r.Client, res, err)
 		}
 		// Optionally: read contentReader into a string and store in res.Status.Manifests
 		var sb strings.Builder
 		if _, err := io.Copy(&sb, contentReader); err != nil {
 			logger.Error(err, "Failed to read artifact content")
-			return ctrl.Result{}, MarkStateFailed(ctx, r.Client, res, err)
+			return ctrl.Result{RequeueAfter: r.RequeueAfter}, MarkStateFailed(ctx, r.Client, res, err)
 		}
 		res.Status.Manifests = sb.String()
 		contentReader = strings.NewReader(res.Status.Manifests)
 	} else {
 		if res.Status.Manifests == "" {
 			logger.Error(nil, "No manifests available in status to reconcile")
-			return ctrl.Result{}, MarkStateFailed(ctx, r.Client, res, fmt.Errorf("no manifests available in status"))
+			return ctrl.Result{RequeueAfter: r.RequeueAfter}, MarkStateFailed(ctx, r.Client, res, fmt.Errorf("no manifests available in status"))
 		}
 		contentReader = strings.NewReader(res.Status.Manifests)
 	}
@@ -130,7 +130,7 @@ func (r *InfrahubResourceReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	newResources, err := r.decodeAndApplyResources(ctx, res, contentReader, destClient)
 	if err != nil {
 		logger.Error(err, "Failed to decode and apply resources")
-		return ctrl.Result{}, MarkStateFailed(ctx, r.Client, res, err)
+		return ctrl.Result{RequeueAfter: r.RequeueAfter}, MarkStateFailed(ctx, r.Client, res, err)
 	}
 
 	if err := r.cleanupRemovedResources(ctx, res, newResources, destClient); err != nil {
@@ -139,7 +139,7 @@ func (r *InfrahubResourceReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			logger.Error(err, "State is stale, returning error")
 			return ctrl.Result{}, err
 		}
-		return ctrl.Result{}, MarkStateFailed(ctx, r.Client, res, err)
+		return ctrl.Result{RequeueAfter: r.RequeueAfter}, MarkStateFailed(ctx, r.Client, res, err)
 	}
 
 	res.Status.Checksum = res.Spec.IDs.Checksum
@@ -147,7 +147,7 @@ func (r *InfrahubResourceReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	if err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		return r.Status().Update(ctx, res)
 	}); err != nil {
-		return ctrl.Result{}, MarkStateFailed(ctx, r.Client, res, err)
+		return ctrl.Result{RequeueAfter: r.RequeueAfter}, MarkStateFailed(ctx, r.Client, res, err)
 	}
 
 	if err := MarkState(ctx, r.Client, res, func() {
@@ -155,26 +155,26 @@ func (r *InfrahubResourceReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		res.Status.DeployState = infrahubv1alpha1.StateSucceeded
 	}); err != nil {
 		logger.Error(err, "Failed to update SyncState to Running")
-		return ctrl.Result{}, err
+		return ctrl.Result{RequeueAfter: r.RequeueAfter}, err
 	}
 
 	logger.Info("Reconciliation complete")
-	return ctrl.Result{}, nil
+	return ctrl.Result{RequeueAfter: r.RequeueAfter}, nil
 }
 
 func (r *InfrahubResourceReconciler) handleDeletion(ctx context.Context, res *infrahubv1alpha1.InfrahubResource, destClient client.Client) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 	if !r.hasFinalizer(res) {
-		return ctrl.Result{}, nil
+		return ctrl.Result{RequeueAfter: r.RequeueAfter}, nil
 	}
 	logger.Info("Cleaning up managed resources")
 
 	for _, mr := range res.Status.ManagedResources {
 		if err := r.deleteManagedResource(ctx, res, mr, destClient); err != nil {
-			return ctrl.Result{}, MarkStateFailed(ctx, r.Client, res, err)
+			return ctrl.Result{RequeueAfter: r.RequeueAfter}, MarkStateFailed(ctx, r.Client, res, err)
 		}
 	}
-	return ctrl.Result{}, r.removeFinalizer(ctx, res)
+	return ctrl.Result{RequeueAfter: r.RequeueAfter}, r.removeFinalizer(ctx, res)
 }
 
 func (r *InfrahubResourceReconciler) decodeAndApplyResources(ctx context.Context, res *infrahubv1alpha1.InfrahubResource, contentReader io.Reader, destClient client.Client) (map[string]infrahubv1alpha1.ManagedResourceStatus, error) {

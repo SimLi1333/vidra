@@ -72,7 +72,7 @@ func (r *InfrahubSyncReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			return ctrl.Result{}, nil
 		}
 		logger.Error(err, "Failed to get InfrahubSync resource")
-		return ctrl.Result{}, MarkStateFailed(ctx, r.Client, infrahubSync, err)
+		return ctrl.Result{RequeueAfter: r.RequeueAfter}, MarkStateFailed(ctx, r.Client, infrahubSync, err)
 	}
 
 	// Mark the InfrahubSync resource as running
@@ -80,7 +80,7 @@ func (r *InfrahubSyncReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		infrahubSync.Status.SyncState = infrahubv1alpha1.StateRunning
 	}); err != nil {
 		logger.Error(err, "Failed to update SyncState to Running")
-		return ctrl.Result{}, err
+		return ctrl.Result{RequeueAfter: r.RequeueAfter}, err
 	}
 
 	var apiURL = infrahubSync.Spec.Source.InfrahubAPIURL
@@ -89,14 +89,14 @@ func (r *InfrahubSyncReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	username, password, err := r.getCredentials(ctx, apiURL)
 	if err != nil {
 		logger.Error(err, "Failed to get credentials from Secret")
-		return ctrl.Result{}, MarkStateFailed(ctx, r.Client, infrahubSync, err)
+		return ctrl.Result{RequeueAfter: r.RequeueAfter}, MarkStateFailed(ctx, r.Client, infrahubSync, err)
 	}
 
 	// Get authentication token using the Infrahub client
 	token, err := r.InfrahubClient.Login(apiURL, username, password)
 	if err != nil {
 		logger.Error(err, "Failed to login to Infrahub")
-		return ctrl.Result{}, MarkStateFailed(ctx, r.Client, infrahubSync, err)
+		return ctrl.Result{RequeueAfter: r.RequeueAfter}, MarkStateFailed(ctx, r.Client, infrahubSync, err)
 	}
 
 	// Run the query and process the results using the Infrahub client
@@ -117,7 +117,7 @@ func (r *InfrahubSyncReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	err = r.processArtifacts(ctx, infrahubSync, queryResult)
 	if err != nil {
 		logger.Error(err, "Error processing artifacts")
-		return ctrl.Result{}, MarkStateFailed(ctx, r.Client, infrahubSync, err)
+		return ctrl.Result{RequeueAfter: r.RequeueAfter}, MarkStateFailed(ctx, r.Client, infrahubSync, err)
 	}
 
 	// Update the status of the InfrahubSync resource
@@ -126,7 +126,7 @@ func (r *InfrahubSyncReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		infrahubSync.Status.LastSyncTime = metav1.Now()
 	}); err != nil {
 		logger.Error(err, "Failed to update SyncState to Success")
-		return ctrl.Result{}, err
+		return ctrl.Result{RequeueAfter: r.RequeueAfter}, err
 	}
 
 	return ctrl.Result{RequeueAfter: r.RequeueAfter}, nil
