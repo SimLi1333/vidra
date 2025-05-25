@@ -21,8 +21,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/yaml"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
@@ -40,11 +42,13 @@ const (
 
 type InfrahubResourceReconciler struct {
 	client.Client
-	Scheme         *runtime.Scheme
-	RESTMapper     meta.RESTMapper
-	InfrahubClient domain.InfrahubClient
-	ClientFactory  k8s.ClientFactory
-	RequeueAfter   time.Duration
+	Scheme                *runtime.Scheme
+	RESTMapper            meta.RESTMapper
+	InfrahubClient        domain.InfrahubClient
+	ClientFactory         k8s.ClientFactory
+	DynamicWatcherFactory *DynamicWatcherFactory
+	DynamicClient         dynamic.Interface
+	RequeueAfter          time.Duration
 }
 
 // +kubebuilder:rbac:groups=infrahub.operators.com,resources=infrahubresources,verbs=get;list;watch;create;update;patch;delete
@@ -63,7 +67,7 @@ func (r *InfrahubResourceReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			return ctrl.Result{}, nil
 		}
 		logger.Error(err, "Failed to get InfrahubResource resource")
-		return ctrl.Result{RequeueAfter: r.RequeueAfter}, MarkStateFailed(ctx, r.Client, res, err)
+		return ctrl.Result{}, MarkStateFailed(ctx, r.Client, res, err)
 	}
 	var destClient client.Client
 	if res.Spec.Destination.Server == "" || res.Spec.Destination.Server == "https://kubernetes.default.svc" {
@@ -75,7 +79,7 @@ func (r *InfrahubResourceReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		var err error
 		destClient, err = r.ClientFactory.GetCachedClientFor(ctx, res.Spec.Destination.Server, r.Client)
 		if err != nil {
-			return ctrl.Result{RequeueAfter: r.RequeueAfter}, MarkStateFailed(ctx, r.Client, res, fmt.Errorf("failed to get client for destination: %w", err))
+			return ctrl.Result{}, MarkStateFailed(ctx, r.Client, res, fmt.Errorf("failed to get client for destination: %w", err))
 		}
 	}
 
@@ -93,7 +97,7 @@ func (r *InfrahubResourceReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	if !r.hasFinalizer(res) {
 		logger.Info("Adding finalizer")
 		if err := r.addFinalizer(ctx, res); err != nil {
-			return ctrl.Result{RequeueAfter: r.RequeueAfter}, MarkStateFailed(ctx, r.Client, res, err)
+			return ctrl.Result{}, MarkStateFailed(ctx, r.Client, res, err)
 		}
 	}
 
@@ -109,28 +113,28 @@ func (r *InfrahubResourceReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		)
 		if err != nil {
 			logger.Error(err, "Failed to download artifact")
-			return ctrl.Result{RequeueAfter: r.RequeueAfter}, MarkStateFailed(ctx, r.Client, res, err)
+			return ctrl.Result{}, MarkStateFailed(ctx, r.Client, res, err)
 		}
 		// Optionally: read contentReader into a string and store in res.Status.Manifests
 		var sb strings.Builder
 		if _, err := io.Copy(&sb, contentReader); err != nil {
 			logger.Error(err, "Failed to read artifact content")
-			return ctrl.Result{RequeueAfter: r.RequeueAfter}, MarkStateFailed(ctx, r.Client, res, err)
+			return ctrl.Result{}, MarkStateFailed(ctx, r.Client, res, err)
 		}
 		res.Status.Manifests = sb.String()
 		contentReader = strings.NewReader(res.Status.Manifests)
 	} else {
 		if res.Status.Manifests == "" {
 			logger.Error(nil, "No manifests available in status to reconcile")
-			return ctrl.Result{RequeueAfter: r.RequeueAfter}, MarkStateFailed(ctx, r.Client, res, fmt.Errorf("no manifests available in status"))
+			return ctrl.Result{}, MarkStateFailed(ctx, r.Client, res, fmt.Errorf("no manifests available in status"))
 		}
 		contentReader = strings.NewReader(res.Status.Manifests)
 	}
 
-	newResources, err := r.decodeAndApplyResources(ctx, res, contentReader, destClient)
+	newResources, gvrList, err := r.decodeAndApplyResources(ctx, res, contentReader, destClient)
 	if err != nil {
 		logger.Error(err, "Failed to decode and apply resources")
-		return ctrl.Result{RequeueAfter: r.RequeueAfter}, MarkStateFailed(ctx, r.Client, res, err)
+		return ctrl.Result{}, MarkStateFailed(ctx, r.Client, res, err)
 	}
 
 	if err := r.cleanupRemovedResources(ctx, res, newResources, destClient); err != nil {
@@ -139,7 +143,7 @@ func (r *InfrahubResourceReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			logger.Error(err, "State is stale, returning error")
 			return ctrl.Result{}, err
 		}
-		return ctrl.Result{RequeueAfter: r.RequeueAfter}, MarkStateFailed(ctx, r.Client, res, err)
+		return ctrl.Result{}, MarkStateFailed(ctx, r.Client, res, err)
 	}
 
 	res.Status.Checksum = res.Spec.IDs.Checksum
@@ -147,41 +151,67 @@ func (r *InfrahubResourceReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	if err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		return r.Status().Update(ctx, res)
 	}); err != nil {
-		return ctrl.Result{RequeueAfter: r.RequeueAfter}, MarkStateFailed(ctx, r.Client, res, err)
+		return ctrl.Result{}, MarkStateFailed(ctx, r.Client, res, err)
 	}
+
+	logger.Info("Starting dynamic watcher for GVRs", "gvrList", gvrList)
+	r.DynamicWatcherFactory.StartWatchingGVRs(
+		r.DynamicClient,
+		gvrList,
+		func(obj *unstructured.Unstructured, gvr schema.GroupVersionResource) {
+			r.handleLabeledResource(obj, gvr)
+			r.triggerReconcileForOwner(obj)
+		},
+	)
+	logger.Info("Started watching GVRs", "gvrList", gvrList)
 
 	if err := MarkState(ctx, r.Client, res, func() {
 		res.Status.LastSyncTime = metav1.Now()
 		res.Status.DeployState = infrahubv1alpha1.StateSucceeded
 	}); err != nil {
 		logger.Error(err, "Failed to update SyncState to Running")
-		return ctrl.Result{RequeueAfter: r.RequeueAfter}, err
+		return ctrl.Result{}, err
 	}
 
 	logger.Info("Reconciliation complete")
-	return ctrl.Result{RequeueAfter: r.RequeueAfter}, nil
+	return ctrl.Result{}, nil
 }
 
 func (r *InfrahubResourceReconciler) handleDeletion(ctx context.Context, res *infrahubv1alpha1.InfrahubResource, destClient client.Client) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 	if !r.hasFinalizer(res) {
-		return ctrl.Result{RequeueAfter: r.RequeueAfter}, nil
+		return ctrl.Result{}, nil
 	}
 	logger.Info("Cleaning up managed resources")
 
 	for _, mr := range res.Status.ManagedResources {
 		if err := r.deleteManagedResource(ctx, res, mr, destClient); err != nil {
-			return ctrl.Result{RequeueAfter: r.RequeueAfter}, MarkStateFailed(ctx, r.Client, res, err)
+			return ctrl.Result{}, MarkStateFailed(ctx, r.Client, res, err)
 		}
 	}
-	return ctrl.Result{RequeueAfter: r.RequeueAfter}, r.removeFinalizer(ctx, res)
+	return ctrl.Result{}, r.removeFinalizer(ctx, res)
 }
 
-func (r *InfrahubResourceReconciler) decodeAndApplyResources(ctx context.Context, res *infrahubv1alpha1.InfrahubResource, contentReader io.Reader, destClient client.Client) (map[string]infrahubv1alpha1.ManagedResourceStatus, error) {
+type KVR struct {
+	Kind     string
+	Version  string
+	Resource string
+}
+
+func (r *InfrahubResourceReconciler) decodeAndApplyResources(
+	ctx context.Context,
+	res *infrahubv1alpha1.InfrahubResource,
+	contentReader io.Reader,
+	destClient client.Client,
+) (map[string]infrahubv1alpha1.ManagedResourceStatus, []schema.GroupVersionResource, error) {
 	logger := log.FromContext(ctx).WithValues("resource", res.Name)
-	reader := bufio.NewReaderSize(contentReader, 4096) // Use a buffered reader for better performance
+
+	reader := bufio.NewReaderSize(contentReader, 4096)
 	decoder := yaml.NewYAMLOrJSONDecoder(reader, 4096)
+
 	resources := map[string]infrahubv1alpha1.ManagedResourceStatus{}
+	gvrList := []schema.GroupVersionResource{}
+	seenGVR := map[schema.GroupVersionResource]struct{}{}
 
 	for {
 		u := &unstructured.Unstructured{}
@@ -190,13 +220,20 @@ func (r *InfrahubResourceReconciler) decodeAndApplyResources(ctx context.Context
 				break
 			}
 			logger.Error(err, "Failed to decode")
-			return nil, fmt.Errorf("decode artifact: %w", err)
+			return nil, nil, fmt.Errorf("decode artifact: %w", err)
 		}
 
 		gvk := u.GroupVersionKind()
 		mapping, err := r.RESTMapper.RESTMapping(gvk.GroupKind(), gvk.Version)
 		if err != nil {
-			return nil, fmt.Errorf("REST mapping: %w", err)
+			return nil, nil, fmt.Errorf("REST mapping: %w", err)
+		}
+
+		// Collect GVRs for dynamic watcher
+		gvr := mapping.Resource
+		if _, exists := seenGVR[gvr]; !exists {
+			gvrList = append(gvrList, gvr)
+			seenGVR[gvr] = struct{}{}
 		}
 
 		if mapping.Scope.Name() == meta.RESTScopeNameNamespace && u.GetNamespace() == "" {
@@ -204,14 +241,14 @@ func (r *InfrahubResourceReconciler) decodeAndApplyResources(ctx context.Context
 		}
 		if destClient == r.Client {
 			if err := ctrl.SetControllerReference(res, u, r.Scheme); err != nil {
-				return nil, fmt.Errorf("set controller reference: %w", err)
+				return nil, nil, fmt.Errorf("set controller reference: %w", err)
 			}
 		}
 
 		annotateWithOwner(u, res.Name)
 		if err := r.applyResource(ctx, res, u, destClient); err != nil {
 			logger.Error(err, "apply resource failed", "GVK", gvk, "Name", u.GetName())
-			return nil, err
+			return nil, nil, err
 		}
 
 		status := infrahubv1alpha1.ManagedResourceStatus{
@@ -222,7 +259,8 @@ func (r *InfrahubResourceReconciler) decodeAndApplyResources(ctx context.Context
 		}
 		resources[resourceKey(status)] = status
 	}
-	return resources, nil
+
+	return resources, gvrList, nil
 }
 
 func (r *InfrahubResourceReconciler) cleanupRemovedResources(
@@ -311,6 +349,7 @@ func (r *InfrahubResourceReconciler) deleteManagedResource(ctx context.Context, 
 
 func (r *InfrahubResourceReconciler) applyResource(ctx context.Context, res *infrahubv1alpha1.InfrahubResource, desired *unstructured.Unstructured, destClient client.Client) error {
 	logger := log.FromContext(ctx)
+
 	// Prepare the existing resource object
 	existing := &unstructured.Unstructured{}
 	existing.SetGroupVersionKind(desired.GroupVersionKind())
@@ -460,6 +499,7 @@ func (r *InfrahubResourceReconciler) removeFinalizer(ctx context.Context, obj *i
 func (r *InfrahubResourceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.InfrahubClient = infrahub.NewClient()
 	r.ClientFactory = k8s.NewDynamicClientFactory()
+	r.DynamicWatcherFactory = NewDynamicWatcherFactory()
 
 	// Create a direct (non-cached) client
 	cfg := mgr.GetConfig()
@@ -478,7 +518,12 @@ func (r *InfrahubResourceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		return fmt.Errorf("failed to initialize config: %w", err)
 	}
 
-	r.StartDynamicWatchers(cfg)
+	r.DynamicClient, err = dynamic.NewForConfig(cfg)
+	if err != nil {
+		panic(fmt.Errorf("failed to create dynamic client: %w", err))
+	}
+
+	// r.StartDynamicWatchers(cfg)
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&infrahubv1alpha1.InfrahubResource{},

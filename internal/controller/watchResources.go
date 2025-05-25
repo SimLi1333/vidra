@@ -3,11 +3,11 @@ package controller
 import (
 	"context"
 	"log"
-	"strings"
 	"sync"
 	"time"
 
 	infrahubv1alpha1 "github.com/simli1333/vidra/api/v1alpha1"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
@@ -15,87 +15,50 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
-func (r *InfrahubResourceReconciler) StartDynamicWatchers(cfg *rest.Config) {
-	discoClient, err := discovery.NewDiscoveryClientForConfig(cfg)
-	if err != nil {
-		log.Printf("[WATCH] Discovery client error: %v", err)
-		return
-	}
+type DynamicWatcherFactory struct {
+	mu       sync.Mutex
+	started  map[schema.GroupVersionResource]struct{}
+	stopChan chan struct{}
+}
 
-	dynamicClient, err := dynamic.NewForConfig(cfg)
-	if err != nil {
-		log.Printf("[WATCH] Dynamic client error: %v", err)
-		return
+func NewDynamicWatcherFactory() *DynamicWatcherFactory {
+	return &DynamicWatcherFactory{
+		started:  make(map[schema.GroupVersionResource]struct{}),
+		stopChan: make(chan struct{}),
 	}
+}
 
-	gvrs, err := discoverWatchableResources(discoClient)
-	if err != nil {
-		log.Printf("[WATCH] Failed to discover resources: %v", err)
-		return
-	}
+type ResourceCallback func(obj *unstructured.Unstructured, gvr schema.GroupVersionResource)
 
-	seen := map[schema.GroupVersionResource]struct{}{}
+func (f *DynamicWatcherFactory) StartWatchingGVRs(
+	dynamicClient dynamic.Interface,
+	gvrs []schema.GroupVersionResource,
+	onEvent ResourceCallback,
+) {
 	for _, gvr := range gvrs {
-		if _, ok := seen[gvr]; ok {
-			continue // Avoid duplicate informer for the same GVR
+		f.mu.Lock()
+		if _, ok := f.started[gvr]; ok {
+			f.mu.Unlock()
+			continue // already watching
 		}
-		seen[gvr] = struct{}{}
-		go r.watchGVR(dynamicClient, gvr)
+		f.started[gvr] = struct{}{}
+		f.mu.Unlock()
+
+		go f.watchGVR(dynamicClient, gvr, onEvent)
 	}
 }
 
-// discoverWatchableResources returns all watchable namespaced GVRs (excluding subresources)
-func discoverWatchableResources(d discovery.DiscoveryInterface) ([]schema.GroupVersionResource, error) {
-	var gvrs []schema.GroupVersionResource
-
-	apiLists, err := d.ServerPreferredResources()
-	if err != nil {
-		return nil, err
-	}
-
-	for _, apiList := range apiLists {
-		gv, err := schema.ParseGroupVersion(apiList.GroupVersion)
-		if err != nil {
-			log.Printf("Skipping malformed GroupVersion: %s", apiList.GroupVersion)
-			continue
-		}
-
-		for _, res := range apiList.APIResources {
-			if strings.Contains(res.Name, "/") {
-				continue // skip subresources
-			}
-			if !res.Namespaced {
-				continue
-			}
-			if !containsVerb(res.Verbs, "watch") {
-				continue
-			}
-			gvr := gv.WithResource(res.Name)
-			gvrs = append(gvrs, gvr)
-		}
-	}
-
-	return gvrs, nil
-}
-
-func containsVerb(verbs []string, target string) bool {
-	for _, v := range verbs {
-		if v == target {
-			return true
-		}
-	}
-	return false
-}
-
-func (r *InfrahubResourceReconciler) watchGVR(client dynamic.Interface, gvr schema.GroupVersionResource) {
+func (f *DynamicWatcherFactory) watchGVR(
+	client dynamic.Interface,
+	gvr schema.GroupVersionResource,
+	onEvent ResourceCallback,
+) {
 	informer := cache.NewSharedInformer(
 		&cache.ListWatch{
 			ListFunc: func(opts v1.ListOptions) (runtime.Object, error) {
@@ -115,68 +78,79 @@ func (r *InfrahubResourceReconciler) watchGVR(client dynamic.Interface, gvr sche
 
 	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
-			r.handleLabeledResource(obj.(*unstructured.Unstructured), gvr)
-			// r.triggerReconcileForOwner(obj.(*unstructured.Unstructured))
+			unstrObj, ok := obj.(*unstructured.Unstructured)
+			if !ok {
+				tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
+				if !ok {
+					log.Printf("AddFunc: unexpected type %T", obj)
+					return
+				}
+				unstrObj, ok = tombstone.Obj.(*unstructured.Unstructured)
+				if !ok {
+					log.Printf("AddFunc: unexpected tombstone type %T", tombstone.Obj)
+					return
+				}
+			}
+			onEvent(unstrObj, gvr)
 		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
-			oldUnstr := oldObj.(*unstructured.Unstructured)
-			newUnstr := newObj.(*unstructured.Unstructured)
-
-			// Only trigger if GenerationChangedPredicate returns true
+			newUnstr, ok1 := newObj.(*unstructured.Unstructured)
+			oldUnstr, ok2 := oldObj.(*unstructured.Unstructured)
+			if !ok1 || !ok2 {
+				log.Printf("UpdateFunc: unexpected types old=%T new=%T", oldObj, newObj)
+				return
+			}
 			if genChanged.Update(event.UpdateEvent{
 				ObjectOld: oldUnstr,
 				ObjectNew: newUnstr,
 			}) {
-				r.handleLabeledResource(newUnstr, gvr)
-				r.triggerReconcileForOwner(newUnstr)
+				onEvent(newUnstr, gvr)
 			}
 		},
 		DeleteFunc: func(obj interface{}) {
-			r.handleLabeledResource(obj.(*unstructured.Unstructured), gvr)
-			// r.triggerReconcileForOwner(obj.(*unstructured.Unstructured))
+			unstrObj, ok := obj.(*unstructured.Unstructured)
+			if !ok {
+				tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
+				if !ok {
+					log.Printf("DeleteFunc: unexpected type %T", obj)
+					return
+				}
+				unstrObj, ok = tombstone.Obj.(*unstructured.Unstructured)
+				if !ok {
+					log.Printf("DeleteFunc: unexpected tombstone type %T", tombstone.Obj)
+					return
+				}
+			}
+			onEvent(unstrObj, gvr)
 		},
 	})
 
-	stopCh := r.setupStopChannel()
 	log.Printf("[WATCH] Started watching: %s", gvr.String())
-	informer.Run(stopCh)
+	informer.Run(f.stopChan)
 }
 
 func (r *InfrahubResourceReconciler) handleLabeledResource(obj *unstructured.Unstructured, gvr schema.GroupVersionResource) {
 	log.Printf("[WATCH] Change detected on resource: %s/%s (%s)", obj.GetNamespace(), obj.GetName(), gvr.Resource)
-	// TODO: Optionally map this to reconcile relevant InfrahubResource
+	r.triggerReconcileForOwner(obj)
 }
 
-var stopOnce sync.Once
-var stopChan chan struct{}
-
-func (r *InfrahubResourceReconciler) setupStopChannel() <-chan struct{} {
-	stopOnce.Do(func() {
-		stopChan = make(chan struct{})
-	})
-	return stopChan
-}
-
-func (r *InfrahubResourceReconciler) triggerReconcileForOwner(dep *unstructured.Unstructured) {
-	for _, owner := range dep.GetOwnerReferences() {
+func (r *InfrahubResourceReconciler) triggerReconcileForOwner(obj *unstructured.Unstructured) {
+	for _, owner := range obj.GetOwnerReferences() {
 		if owner.Kind == "InfrahubResource" && owner.APIVersion == infrahubv1alpha1.GroupVersion.String() {
 			var res infrahubv1alpha1.InfrahubResource
 			err := r.Client.Get(context.Background(), types.NamespacedName{
-				Name: owner.Name,
+				Name:      owner.Name,
+				Namespace: obj.GetNamespace(), // You were missing this
 			}, &res)
 			if err != nil {
-				log.Printf("[WATCH] Failed to get InfrahubResource %s: %v", owner.Name, err)
-				return
+				log.Printf("[WATCH] Failed to get InfrahubResource %s/%s: %v", obj.GetNamespace(), owner.Name, err)
+				continue
 			}
 
-			// Touch the resource to update its annotation (this triggers reconcile)
-			if res.Annotations == nil {
-				res.Annotations = map[string]string{}
-			}
 			res.Spec.ReconciledAt = v1.Time{Time: time.Now()}
 
 			if err := r.Client.Update(context.Background(), &res); err != nil {
-				log.Printf("[WATCH] Failed to patch InfrahubResource %s/%s: %v", res.Namespace, res.Name, err)
+				log.Printf("[WATCH] Failed to update InfrahubResource %s/%s: %v", res.Namespace, res.Name, err)
 			} else {
 				log.Printf("[WATCH] Triggered reconcile of InfrahubResource %s/%s", res.Namespace, res.Name)
 			}
