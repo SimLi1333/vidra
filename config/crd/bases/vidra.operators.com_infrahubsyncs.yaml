@@ -37,7 +37,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: Spec defines the desired state of InfrahubSync
+            description: InfrahubSyncSpec defines the desired state of InfrahubSync
             properties:
               destination:
                 description: Destination contains the destination information for
@@ -82,19 +82,17 @@ spec:
             - source
             type: object
           status:
-            description: Status defines the observed state of InfrahubSync
+            description: InfrahubSyncStatus defines the observed state of InfrahubSync
             properties:
               lastError:
-                description: LastError contains the last error message if any
                 type: string
               lastSyncTime:
-                description: LastSyncTime indicates the last time the synchronization
-                  was performed
                 format: date-time
                 type: string
               syncState:
-                description: SyncState indicates the current state of the synchronization
-                  process
+                description: |-
+                  INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
+                  Important: Run "make" to regenerate code after modifying this file
                 enum:
                 - Pending
                 - Running
