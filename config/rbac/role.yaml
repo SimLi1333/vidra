@@ -31,7 +31,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - infrahub.operators.com
+  - vidra.operators.com
   resources:
   - infrahubresources
   - infrahubsyncs
@@ -44,14 +44,14 @@ rules:
   - update
   - watch
 - apiGroups:
-  - infrahub.operators.com
+  - vidra.operators.com
   resources:
   - infrahubresources/finalizers
   - infrahubsyncs/finalizers
   verbs:
   - update
 - apiGroups:
-  - infrahub.operators.com
+  - vidra.operators.com
   resources:
   - infrahubresources/status
   - infrahubsyncs/status

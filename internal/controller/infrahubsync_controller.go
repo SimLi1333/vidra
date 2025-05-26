@@ -49,12 +49,12 @@ type InfrahubSyncReconciler struct {
 	InfrahubClient domain.InfrahubClient
 }
 
-// +kubebuilder:rbac:groups=infrahub.operators.com,resources=infrahubsyncs,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=infrahub.operators.com,resources=infrahubsyncs/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=infrahub.operators.com,resources=infrahubsyncs/finalizers,verbs=update
-// +kubebuilder:rbac:groups=infrahub.operators.com,resources=infrahubresources,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=infrahub.operators.com,resources=infrahubresources/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=infrahub.operators.com,resources=infrahubresources/finalizers,verbs=update
+// +kubebuilder:rbac:groups=vidra.operators.com,resources=infrahubsyncs,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=vidra.operators.com,resources=infrahubsyncs/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=vidra.operators.com,resources=infrahubsyncs/finalizers,verbs=update
+// +kubebuilder:rbac:groups=vidra.operators.com,resources=infrahubresources,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=vidra.operators.com,resources=infrahubresources/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=vidra.operators.com,resources=infrahubresources/finalizers,verbs=update
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch
 // +kubebuilder:rbac:groups="",resources=configmaps,verbs=get
 
@@ -213,7 +213,7 @@ func (r *InfrahubSyncReconciler) processArtifacts(
 			ObjectMeta: metav1.ObjectMeta{
 				Name: artifact.ID,
 				Finalizers: []string{
-					"infrahubresource.infrahub.operators.com/finalizer",
+					"infrahubresource.vidra.operators.com/finalizer",
 				},
 			},
 		}
