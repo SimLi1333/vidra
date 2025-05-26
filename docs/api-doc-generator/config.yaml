@@ -1,0 +1,20 @@
+apiVersion: v1
+metadata:
+  name: crd-docs
+
+output:
+  description: "Reference for InfraHub CRDs"
+  title: "InfraHub API Reference"
+  version: "v1alpha1"
+
+processor:
+  ignoreTypes: 
+    - "(InfrahubSync|InfrahubResource)List$"
+  ignoreFields:
+    - "TypeMeta$"
+  order:
+    - InfrahubSync
+    - InfrahubResource
+
+render:
+  kubernetesVersion: 1.31
