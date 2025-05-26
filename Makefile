@@ -173,6 +173,16 @@ build-installer: manifests generate kustomize ## Generate a consolidated YAML wi
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default > dist/install.yaml
 
+
+.PHONY:  generate-crd-docs
+generate-crd-docs: ## Generate CRD API docs
+	crd-ref-docs \
+		--source-path api \
+		--config api-doc-generator/config.yaml \
+		--renderer markdown \
+		--output-path docs/docs/api-references/api-references.md
+
+
 ##@ Deployment
 
 ifndef ignore-not-found

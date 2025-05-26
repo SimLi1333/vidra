@@ -2,8 +2,8 @@
 # since it depends on service name and namespace that are out of this kustomize package.
 # It should be run by config/default
 resources:
-- bases/infrahub.operators.com_infrahubresources.yaml
-- bases/infrahub.operators.com_infrahubsyncs.yaml
+- bases/vidra.operators.com_infrahubresources.yaml
+- bases/vidra.operators.com_infrahubsyncs.yaml
 # +kubebuilder:scaffold:crdkustomizeresource
 
 patches:

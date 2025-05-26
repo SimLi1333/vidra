@@ -8,7 +8,7 @@ metadata:
   name: infrahubsync-viewer-role
 rules:
 - apiGroups:
-  - infrahub.operators.com
+  - vidra.operators.com
   resources:
   - infrahubsyncs
   verbs:
@@ -16,7 +16,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - infrahub.operators.com
+  - vidra.operators.com
   resources:
   - infrahubsyncs/status
   verbs:

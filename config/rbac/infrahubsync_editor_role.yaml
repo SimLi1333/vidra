@@ -8,7 +8,7 @@ metadata:
   name: infrahubsync-editor-role
 rules:
 - apiGroups:
-  - infrahub.operators.com
+  - vidra.operators.com
   resources:
   - infrahubsyncs
   verbs:
@@ -20,7 +20,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - infrahub.operators.com
+  - vidra.operators.com
   resources:
   - infrahubsyncs/status
   verbs:

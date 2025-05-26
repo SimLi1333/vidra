@@ -4,9 +4,9 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.16.1
-  name: infrahubresources.infrahub.operators.com
+  name: infrahubresources.vidra.operators.com
 spec:
-  group: infrahub.operators.com
+  group: vidra.operators.com
   names:
     kind: InfrahubResource
     listKind: InfrahubResourceList
@@ -101,6 +101,7 @@ spec:
             description: InfrahubResourceStatus defines the observed state of InfrahubResource
             properties:
               DeployState:
+                description: DeployState indicates the current state of the deployment
                 enum:
                 - Pending
                 - Running
@@ -109,23 +110,28 @@ spec:
                 - Stale
                 type: string
               lastError:
+                description: LastError contains the last error message if any
                 type: string
               lastSyncTime:
+                description: LastSyncTime indicates the last time the resource was
+                  synchronized
                 format: date-time
                 type: string
               managedResources:
-                description: |-
-                  INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-                  Important: Run "make" to regenerate code after modifying this file
+                description: ManagedResources contains the status of managed resources
                 items:
                   properties:
                     apiVersion:
+                      description: APIVersion of the resource (e.g., apps/v1)
                       type: string
                     kind:
+                      description: Kind of the resource (e.g., Deployment, Service)
                       type: string
                     name:
+                      description: Name of the resource
                       type: string
                     namespace:
+                      description: Namespace of the resource
                       type: string
                   required:
                   - apiVersion

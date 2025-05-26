@@ -74,9 +74,13 @@ type InfrahubSyncDestination struct {
 type InfrahubSyncStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+
+	// SyncState indicates the current state of the synchronization process
 	// +kubebuilder:validation:Enum=Pending;Running;Succeeded;Failed;Stale
-	SyncState    State       `json:"syncState,omitempty"`
-	LastError    string      `json:"lastError,omitempty"`
+	SyncState State `json:"syncState,omitempty"`
+	// LastError contains the last error message if any
+	LastError string `json:"lastError,omitempty"`
+	// LastSyncTime indicates the last time the synchronization was performed
 	LastSyncTime metav1.Time `json:"lastSyncTime,omitempty"`
 }
 
@@ -89,7 +93,9 @@ type InfrahubSync struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   InfrahubSyncSpec   `json:"spec,omitempty"`
+	// Spec defines the desired state of InfrahubSync
+	Spec InfrahubSyncSpec `json:"spec,omitempty"`
+	// Status defines the observed state of InfrahubSync
 	Status InfrahubSyncStatus `json:"status,omitempty"`
 }
 

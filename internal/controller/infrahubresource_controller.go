@@ -29,8 +29,8 @@ import (
 )
 
 const (
-	FinalizerName    = "infrahubresource.infrahub.operators.com/finalizer"
-	OwnerAnnotation  = "infrahubresource.infrahub.operators.com/owned-by"
+	FinalizerName    = "infrahubresource.vidra.operators.com/finalizer"
+	OwnerAnnotation  = "infrahubresource.vidra.operators.com/owned-by"
 	infrahubOperator = "vidra"
 )
 
@@ -42,9 +42,9 @@ type InfrahubResourceReconciler struct {
 	ClientFactory  k8s.ClientFactory
 }
 
-// +kubebuilder:rbac:groups=infrahub.operators.com,resources=infrahubresources,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=infrahub.operators.com,resources=infrahubresources/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=infrahub.operators.com,resources=infrahubresources/finalizers,verbs=update
+// +kubebuilder:rbac:groups=vidra.operators.com,resources=infrahubresources,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=vidra.operators.com,resources=infrahubresources/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=vidra.operators.com,resources=infrahubresources/finalizers,verbs=update
 // +kubebuilder:rbac:groups="*",resources="*",verbs=get;list;watch;create;update;patch;delete
 
 func (r *InfrahubResourceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {

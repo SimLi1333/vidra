@@ -54,19 +54,28 @@ type InfrahubResourceIDs struct {
 type InfrahubResourceStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+
+	// ManagedResources contains the status of managed resources
 	ManagedResources []ManagedResourceStatus `json:"managedResources,omitempty"`
 
+	// DeployState indicates the current state of the deployment
 	// +kubebuilder:validation:Enum=Pending;Running;Succeeded;Failed;Stale
-	DeployState  State       `json:"DeployState,omitempty"`
-	LastError    string      `json:"lastError,omitempty"`
+	DeployState State `json:"DeployState,omitempty"`
+	// LastError contains the last error message if any
+	LastError string `json:"lastError,omitempty"`
+	// LastSyncTime indicates the last time the resource was synchronized
 	LastSyncTime metav1.Time `json:"lastSyncTime,omitempty"`
 }
 
 type ManagedResourceStatus struct {
-	Kind       string `json:"kind"`
+	// Kind of the resource (e.g., Deployment, Service)
+	Kind string `json:"kind"`
+	// APIVersion of the resource (e.g., apps/v1)
 	APIVersion string `json:"apiVersion"`
-	Name       string `json:"name"`
-	Namespace  string `json:"namespace,omitempty"`
+	// Name of the resource
+	Name string `json:"name"`
+	// Namespace of the resource
+	Namespace string `json:"namespace,omitempty"`
 }
 
 type State string
@@ -87,7 +96,9 @@ type InfrahubResource struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   InfrahubResourceSpec   `json:"spec,omitempty"`
+	// InfrahubResourceSpec defines the desired state of InfrahubResource
+	Spec InfrahubResourceSpec `json:"spec,omitempty"`
+	// InfrahubResourceStatus defines the observed state of InfrahubResource
 	Status InfrahubResourceStatus `json:"status,omitempty"`
 }
 
