@@ -36,6 +36,7 @@ const config: Config = {
       'classic',
       {
         docs: {
+          routeBasePath: '/', // Serve the docs at the root
           sidebarPath: './sidebars.ts',
         },
         blog: {
