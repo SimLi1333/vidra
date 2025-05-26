@@ -4,20 +4,20 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.16.1
-  name: infrahubsyncs.infrahub.operators.com
+  name: infrahubresources.vidra.operators.com
 spec:
-  group: infrahub.operators.com
+  group: vidra.operators.com
   names:
-    kind: InfrahubSync
-    listKind: InfrahubSyncList
-    plural: infrahubsyncs
-    singular: infrahubsync
+    kind: InfrahubResource
+    listKind: InfrahubResourceList
+    plural: infrahubresources
+    singular: infrahubresource
   scope: Cluster
   versions:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: InfrahubSync is the Schema for the infrahubsyncs API
+        description: InfrahubResource is the Schema for the infrahubresources API
         properties:
           apiVersion:
             description: |-
@@ -37,7 +37,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: InfrahubSyncSpec defines the desired state of InfrahubSync
+            description: InfrahubResourceSpec defines the desired state of InfrahubResource
             properties:
               destination:
                 description: Destination contains the destination information for
@@ -52,10 +52,26 @@ spec:
                       API endpoint)
                     type: string
                 type: object
+              ids:
+                description: IDs contains important identifiers for the resource
+                properties:
+                  artefactID:
+                    description: Unique identifier for the artifact
+                    type: string
+                  checksum:
+                    description: Checksum of the artifact
+                    type: string
+                  storageID:
+                    description: Storage ID for the artifact
+                    type: string
+                required:
+                - artefactID
+                - checksum
+                - storageID
+                type: object
               source:
-                description: |-
-                  Foo is an example field of InfrahubSync. Edit infrahubsync_types.go to remove/update
-                  Source contains the source information for the Infrahub API interaction
+                description: Source contains the source information for the Infrahub
+                  API interaction
                 properties:
                   artefactName:
                     description: Artifact name that is being handled
@@ -82,17 +98,10 @@ spec:
             - source
             type: object
           status:
-            description: InfrahubSyncStatus defines the observed state of InfrahubSync
+            description: InfrahubResourceStatus defines the observed state of InfrahubResource
             properties:
-              lastError:
-                type: string
-              lastSyncTime:
-                format: date-time
-                type: string
-              syncState:
-                description: |-
-                  INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-                  Important: Run "make" to regenerate code after modifying this file
+              DeployState:
+                description: DeployState indicates the current state of the deployment
                 enum:
                 - Pending
                 - Running
@@ -100,6 +109,36 @@ spec:
                 - Failed
                 - Stale
                 type: string
+              lastError:
+                description: LastError contains the last error message if any
+                type: string
+              lastSyncTime:
+                description: LastSyncTime indicates the last time the resource was
+                  synchronized
+                format: date-time
+                type: string
+              managedResources:
+                description: ManagedResources contains the status of managed resources
+                items:
+                  properties:
+                    apiVersion:
+                      description: APIVersion of the resource (e.g., apps/v1)
+                      type: string
+                    kind:
+                      description: Kind of the resource (e.g., Deployment, Service)
+                      type: string
+                    name:
+                      description: Name of the resource
+                      type: string
+                    namespace:
+                      description: Namespace of the resource
+                      type: string
+                  required:
+                  - apiVersion
+                  - kind
+                  - name
+                  type: object
+                type: array
             type: object
         type: object
     served: true
