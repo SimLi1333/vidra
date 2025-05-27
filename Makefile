@@ -178,7 +178,7 @@ build-installer: manifests generate kustomize ## Generate a consolidated YAML wi
 generate-crd-docs: ## Generate CRD API docs
 	crd-ref-docs \
 		--source-path api \
-		--config api-doc-generator/config.yaml \
+		--config docs/api-doc-generator/config.yaml \
 		--renderer markdown \
 		--output-path docs/docs/api-references/api-references.md
 
