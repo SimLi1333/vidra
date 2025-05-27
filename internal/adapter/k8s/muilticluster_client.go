@@ -11,18 +11,18 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type DynamicClientFactory struct {
+type DynamicMulticlusterFactory struct {
 	mu      sync.Mutex
 	clients map[string]client.Client
 }
 
-func NewDynamicClientFactory() *DynamicClientFactory {
-	return &DynamicClientFactory{
+func NewDynamicMulticlusterFactory() *DynamicMulticlusterFactory {
+	return &DynamicMulticlusterFactory{
 		clients: make(map[string]client.Client),
 	}
 }
 
-func (f *DynamicClientFactory) GetCachedClientFor(ctx context.Context, serverURL string, k8sClient client.Client) (client.Client, error) {
+func (f *DynamicMulticlusterFactory) GetCachedClientFor(ctx context.Context, serverURL string, k8sClient client.Client) (client.Client, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
@@ -33,7 +33,7 @@ func (f *DynamicClientFactory) GetCachedClientFor(ctx context.Context, serverURL
 	secretList := &v1.SecretList{}
 
 	trimmedK8SURL := strings.TrimPrefix(strings.Split(serverURL, ":")[1], "//")
-	err := GetSortedListByLabel(ctx, k8sClient, "vidra-kubeconf", trimmedK8SURL, secretList)
+	err := GetSortedListByLabel(ctx, k8sClient, "cluster-kubeconfig", trimmedK8SURL, secretList)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get secrets by label: %w", err)
 	}

@@ -36,7 +36,7 @@ type InfrahubSyncSpec struct {
 	Destination InfrahubSyncDestination `json:"destination,omitempty" protobuf:"bytes,2,name=destination"`
 }
 
-// InfrahubResourceSource contains the source information for the resource
+// VidraResourceSource contains the source information for the resource
 type InfrahubSyncSource struct {
 	// URL for the Infrahub API
 	// +kubebuilder:validation:Required
@@ -59,7 +59,7 @@ type InfrahubSyncSource struct {
 	ArtifactName string `json:"artefactName" protobuf:"bytes,4,name=artefactName"`
 }
 
-// InfrahubResourceDestination contains information about where the resource will be sent
+// VidraResourceDestination contains information about where the resource will be sent
 type InfrahubSyncDestination struct {
 	// Server URL for the destination (usually a Kubernetes API endpoint)
 	// +kubebuilder:validation:Optional
@@ -68,6 +68,10 @@ type InfrahubSyncDestination struct {
 	// Namespace in the Kubernetes cluster where the resource should be sent
 	// +kubebuilder:validation:Optional
 	Namespace string `json:"namespace,omitempty" protobuf:"bytes,2,name=namespace"`
+
+	// If true, the operator will reconcile resources based on k8s events. (default: false)
+	// +kubebuilder:default:=false
+	ReconcileOnEvents bool `json:"reconcileOnEvents,omitempty" protobuf:"varint,4,opt,name=reconcileOnEvents"`
 }
 
 // InfrahubSyncStatus defines the observed state of InfrahubSync
@@ -77,10 +81,17 @@ type InfrahubSyncStatus struct {
 
 	// SyncState indicates the current state of the synchronization process
 	// +kubebuilder:validation:Enum=Pending;Running;Succeeded;Failed;Stale
+
+	// Checksums contains a list of checksums for synced resources
+	Checksums []string `json:"checksums,omitempty"`
+
+	// SyncState indicates the current state of the sync operation
 	SyncState State `json:"syncState,omitempty"`
-	// LastError contains the last error message if any
+
+	// LastError provides details about the last error encountered during the sync operation
 	LastError string `json:"lastError,omitempty"`
-	// LastSyncTime indicates the last time the synchronization was performed
+
+	// LastSyncTime indicates the last time the sync operation was performed
 	LastSyncTime metav1.Time `json:"lastSyncTime,omitempty"`
 }
 

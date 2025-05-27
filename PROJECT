@@ -17,7 +17,7 @@ resources:
   controller: true
   domain: operators.com
   group: infrahub
-  kind: InfrahubResource
+  kind: VidraResource
   path: github.com/simli1333/vidra/api/v1alpha1
   version: v1alpha1
 - api:

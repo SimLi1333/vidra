@@ -23,40 +23,30 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// InfrahubResourceSpec defines the desired state of InfrahubResource
-type InfrahubResourceSpec struct {
-	// Source contains the source information for the Infrahub API interaction
-	Source InfrahubSyncSource `json:"source" protobuf:"bytes,1,name=source"`
-
+// VidraResourceSpec defines the desired state of VidraResource
+type VidraResourceSpec struct {
 	// Destination contains the destination information for the resource
 	Destination InfrahubSyncDestination `json:"destination,omitempty" protobuf:"bytes,2,name=destination"`
 
-	// IDs contains important identifiers for the resource
-	IDs InfrahubResourceIDs `json:"ids,omitempty" protobuf:"bytes,3,name=ids"`
+	// Manifest contains the manifest information for the resource
+	Manifest string `json:"manifest,omitempty" protobuf:"bytes,2,name=manifest"`
+
+	// If true, the operator will reconcile resources based on k8s events. (default: false)
+	// +kubebuilder:default:=false
+	ReconcileOnEvents bool `json:"reconcileOnEvents,omitempty" protobuf:"varint,4,opt,name=reconcileOnEvents"`
+
+	// The last time the resource was reconciled
+	ReconciledAt metav1.Time `json:"reconciledAt,omitempty" protobuf:"bytes,5,name=reconciledAt"`
 }
 
-// InfrahubResourceIDs contains identifiers for the resource
-type InfrahubResourceIDs struct {
-	// Unique identifier for the artifact
-	// +kubebuilder:validation:Required
-	ArtifactID string `json:"artefactID,omitempty" protobuf:"bytes,1,name=artefactID"`
-
-	// Checksum of the artifact
-	// +kubebuilder:validation:Required
-	Checksum string `json:"checksum,omitempty" protobuf:"bytes,2,name=checksum"`
-
-	// Storage ID for the artifact
-	// +kubebuilder:validation:Required
-	StorageID string `json:"storageID,omitempty" protobuf:"bytes,3,name=storageID"`
-}
-
-// InfrahubResourceStatus defines the observed state of InfrahubResource
-type InfrahubResourceStatus struct {
+// VidraResourceStatus defines the observed state of VidraResource
+type VidraResourceStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// ManagedResources contains the status of managed resources
 	ManagedResources []ManagedResourceStatus `json:"managedResources,omitempty"`
+<<<<<<< HEAD:api/v1alpha1/infrahubresource_types.go
 
 	// DeployState indicates the current state of the deployment
 	// +kubebuilder:validation:Enum=Pending;Running;Succeeded;Failed;Stale
@@ -65,6 +55,12 @@ type InfrahubResourceStatus struct {
 	LastError string `json:"lastError,omitempty"`
 	// LastSyncTime indicates the last time the resource was synchronized
 	LastSyncTime metav1.Time `json:"lastSyncTime,omitempty"`
+=======
+	LastSyncTime     metav1.Time             `json:"lastSyncTime,omitempty"`
+	// +kubebuilder:validation:Enum=Pending;Running;Succeeded;Failed;Stale
+	DeployState State  `json:"DeployState,omitempty"`
+	LastError   string `json:"lastError,omitempty"`
+>>>>>>> origin/gitOps-4th-principle:api/v1alpha1/vidraresource_types.go
 }
 
 type ManagedResourceStatus struct {
@@ -91,26 +87,31 @@ const (
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster
 
-// InfrahubResource is the Schema for the infrahubresources API
-type InfrahubResource struct {
+// VidraResource is the Schema for the Vidraresources API
+type VidraResource struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
+<<<<<<< HEAD:api/v1alpha1/infrahubresource_types.go
 	// InfrahubResourceSpec defines the desired state of InfrahubResource
 	Spec InfrahubResourceSpec `json:"spec,omitempty"`
 	// InfrahubResourceStatus defines the observed state of InfrahubResource
 	Status InfrahubResourceStatus `json:"status,omitempty"`
+=======
+	Spec   VidraResourceSpec   `json:"spec,omitempty"`
+	Status VidraResourceStatus `json:"status,omitempty"`
+>>>>>>> origin/gitOps-4th-principle:api/v1alpha1/vidraresource_types.go
 }
 
 // +kubebuilder:object:root=true
 
-// InfrahubResourceList contains a list of InfrahubResource
-type InfrahubResourceList struct {
+// VidraResourceList contains a list of VidraResource
+type VidraResourceList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []InfrahubResource `json:"items"`
+	Items           []VidraResource `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&InfrahubResource{}, &InfrahubResourceList{})
+	SchemeBuilder.Register(&VidraResource{}, &VidraResourceList{})
 }

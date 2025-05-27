@@ -18,9 +18,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-var _ = Describe("DynamicClientFactory", func() {
+var _ = Describe("DynamicMulticlusterFactory", func() {
 	var (
-		factory   *k8s.DynamicClientFactory
+		factory   *k8s.DynamicMulticlusterFactory
 		ctx       context.Context
 		serverURL string
 		k8sClient client.Client
@@ -28,7 +28,7 @@ var _ = Describe("DynamicClientFactory", func() {
 	var namespace = "default"
 
 	BeforeEach(func() {
-		factory = k8s.NewDynamicClientFactory()
+		factory = k8s.NewDynamicMulticlusterFactory()
 		ctx = context.Background()
 		serverURL = "https://my-cluster.example.com"
 
@@ -62,7 +62,7 @@ var _ = Describe("DynamicClientFactory", func() {
 		}
 		// Add labels to the secret
 		secret.Labels = map[string]string{
-			"vidra-kubeconf": "my-cluster.example.com",
+			"cluster-kubeconfig": "my-cluster.example.com",
 		}
 		Expect(infrahubv1alpha1.AddToScheme(scheme.Scheme)).To(Succeed())
 		k8sClient = fake.NewClientBuilder().WithScheme(scheme.Scheme).Build()
@@ -107,7 +107,7 @@ var _ = Describe("DynamicClientFactory", func() {
 
 		_, err = factory.GetCachedClientFor(ctx, serverURL, k8sClient)
 		Expect(err).To(HaveOccurred())
-		Expect(err).To(MatchError(ContainSubstring("failed to get secrets by label: no resources found with label vidra-kubeconf=my-cluster.example.com")))
+		Expect(err).To(MatchError(ContainSubstring("failed to get secrets by label: no resources found with label cluster-kubeconfig=my-cluster.example.com")))
 	})
 
 	It("should fail if kubeconfig is missing", func() {
@@ -122,7 +122,7 @@ var _ = Describe("DynamicClientFactory", func() {
 		}
 		// Add labels to the secret
 		secret.Labels = map[string]string{
-			"vidra-kubeconf": "my-cluster.example.com",
+			"cluster-kubeconfig": "my-cluster.example.com",
 		}
 		err := k8sClient.Update(ctx, secret)
 		Expect(err).ToNot(HaveOccurred())
@@ -137,14 +137,14 @@ var _ = Describe("DynamicClientFactory", func() {
 		}
 		// Add labels to the secret
 		secret2.Labels = map[string]string{
-			"vidra-kubeconf": "my-cluster.example.com",
+			"cluster-kubeconfig": "my-cluster.example.com",
 		}
 		err = k8sClient.Create(ctx, secret2)
 		Expect(err).ToNot(HaveOccurred())
 		Eventually(func(g Gomega) {
 			var secretList v1.SecretList
 			err := k8sClient.List(ctx, &secretList, client.InNamespace(namespace),
-				client.MatchingLabels{"vidra-kubeconf": "my-cluster.example.com"})
+				client.MatchingLabels{"cluster-kubeconfig": "my-cluster.example.com"})
 			g.Expect(err).NotTo(HaveOccurred())
 			g.Expect(secretList.Items).To(HaveLen(2)) // one old, one new
 		}, 5*time.Second, 100*time.Millisecond).Should(Succeed())
@@ -172,7 +172,7 @@ var _ = Describe("DynamicClientFactory", func() {
 		}
 		// Add labels to the secret
 		secret.Labels = map[string]string{
-			"vidra-kubeconf": "my-cluster.example.com",
+			"cluster-kubeconfig": "my-cluster.example.com",
 		}
 		err := k8sClient.Update(ctx, secret)
 		Expect(err).ToNot(HaveOccurred())
@@ -201,14 +201,14 @@ var _ = Describe("DynamicClientFactory", func() {
 		}
 		// Add labels to the secret
 		invalidSecret.Labels = map[string]string{
-			"vidra-kubeconf": "my-cluster.example.com",
+			"cluster-kubeconfig": "my-cluster.example.com",
 		}
 		err = k8sClient.Create(ctx, invalidSecret)
 		Expect(err).ToNot(HaveOccurred())
 		Eventually(func(g Gomega) {
 			var secretList v1.SecretList
 			err := k8sClient.List(ctx, &secretList, client.InNamespace(namespace),
-				client.MatchingLabels{"vidra-kubeconf": "my-cluster.example.com"})
+				client.MatchingLabels{"cluster-kubeconfig": "my-cluster.example.com"})
 			g.Expect(err).NotTo(HaveOccurred())
 			g.Expect(secretList.Items).To(HaveLen(2))
 		}, 5*time.Second, 100*time.Millisecond).Should(Succeed())

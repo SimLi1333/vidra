@@ -6,11 +6,14 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"time"
 
 	infrahubv1alpha1 "github.com/simli1333/vidra/api/v1alpha1"
 	"github.com/simli1333/vidra/internal/adapter/infrahub"
 	"github.com/simli1333/vidra/internal/adapter/k8s"
 	"github.com/simli1333/vidra/internal/domain"
+
+	corev1 "k8s.io/api/core/v1"
 
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -18,8 +21,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/yaml"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
@@ -29,35 +34,51 @@ import (
 )
 
 const (
+<<<<<<< HEAD:internal/controller/infrahubresource_controller.go
 	FinalizerName    = "infrahubresource.vidra.operators.com/finalizer"
 	OwnerAnnotation  = "infrahubresource.vidra.operators.com/owned-by"
 	infrahubOperator = "vidra"
+=======
+	FinalizerName   = "vidraresource.infrahub.operators.com/finalizer"
+	OwnerAnnotation = "vidraresource.infrahub.operators.com/owned-by"
+	vidraOperator   = "vidra"
+>>>>>>> origin/gitOps-4th-principle:internal/controller/vidraresource_controller.go
 )
 
-type InfrahubResourceReconciler struct {
+type VidraResourceReconciler struct {
 	client.Client
-	Scheme         *runtime.Scheme
-	RESTMapper     meta.RESTMapper
-	InfrahubClient domain.InfrahubClient
-	ClientFactory  k8s.ClientFactory
+	Scheme                     *runtime.Scheme
+	RESTMapper                 meta.RESTMapper
+	InfrahubClient             domain.InfrahubClient
+	DynamicMulticlusterFactory domain.DynamicMulticlusterFactory
+	DynamicWatcherFactory      domain.DynamicWatcherFactory
+	DynamicWatcherClient       dynamic.Interface
+	RequeueAfter               time.Duration
+	EventBasedReconcile        bool
 }
 
+<<<<<<< HEAD:internal/controller/infrahubresource_controller.go
 // +kubebuilder:rbac:groups=vidra.operators.com,resources=infrahubresources,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=vidra.operators.com,resources=infrahubresources/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=vidra.operators.com,resources=infrahubresources/finalizers,verbs=update
+=======
+// +kubebuilder:rbac:groups=infrahub.operators.com,resources=vidraresources,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=infrahub.operators.com,resources=vidraresources/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=infrahub.operators.com,resources=vidraresources/finalizers,verbs=update
+>>>>>>> origin/gitOps-4th-principle:internal/controller/vidraresource_controller.go
 // +kubebuilder:rbac:groups="*",resources="*",verbs=get;list;watch;create;update;patch;delete
 
-func (r *InfrahubResourceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *VidraResourceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 	logger.Info("Reconciling", "resource", req.NamespacedName)
 
-	res := &infrahubv1alpha1.InfrahubResource{}
+	res := &infrahubv1alpha1.VidraResource{}
 	if err := r.Get(ctx, req.NamespacedName, res); err != nil {
 		if errors.IsNotFound(err) {
-			logger.Info("InfrahubResource resource not found, skipping")
+			logger.Info("VidraResource resource not found, skipping")
 			return ctrl.Result{}, nil
 		}
-		logger.Error(err, "Failed to get InfrahubResource resource")
+		logger.Error(err, "Failed to get VidraResource resource")
 		return ctrl.Result{}, MarkStateFailed(ctx, r.Client, res, err)
 	}
 	var destClient client.Client
@@ -68,7 +89,7 @@ func (r *InfrahubResourceReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	} else {
 		logger.Info("Using cached client for destination", "server", res.Spec.Destination.Server)
 		var err error
-		destClient, err = r.ClientFactory.GetCachedClientFor(ctx, res.Spec.Destination.Server, r.Client)
+		destClient, err = r.DynamicMulticlusterFactory.GetCachedClientFor(ctx, res.Spec.Destination.Server, r.Client)
 		if err != nil {
 			return ctrl.Result{}, MarkStateFailed(ctx, r.Client, res, fmt.Errorf("failed to get client for destination: %w", err))
 		}
@@ -92,18 +113,13 @@ func (r *InfrahubResourceReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		}
 	}
 
-	contentReader, err := r.InfrahubClient.DownloadArtifact(
-		res.Spec.Source.InfrahubAPIURL,
-		res.Spec.IDs.ArtifactID,
-		res.Spec.Source.TargetBranch,
-		res.Spec.Source.TargetDate,
-	)
-	if err != nil {
-		logger.Error(err, "Failed to download artifact")
-		return ctrl.Result{}, MarkStateFailed(ctx, r.Client, res, err)
+	if res.Spec.Manifest == "" {
+		logger.Error(nil, "No manifests available in spec to reconcile")
+		return ctrl.Result{}, MarkStateFailed(ctx, r.Client, res, fmt.Errorf("No manifests available in spec to reconcile"))
 	}
+	contentReader := strings.NewReader(res.Spec.Manifest)
 
-	newResources, err := r.decodeAndApplyResources(ctx, res, contentReader, destClient)
+	newResources, gvrList, err := r.decodeAndApplyResources(ctx, res, contentReader, destClient)
 	if err != nil {
 		logger.Error(err, "Failed to decode and apply resources")
 		return ctrl.Result{}, MarkStateFailed(ctx, r.Client, res, err)
@@ -125,6 +141,18 @@ func (r *InfrahubResourceReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{}, MarkStateFailed(ctx, r.Client, res, err)
 	}
 
+	if r.EventBasedReconcile || res.Spec.Destination.ReconcileOnEvents {
+		r.DynamicWatcherFactory.StartWatchingGVRs(
+			r.DynamicWatcherClient,
+			gvrList,
+			func(obj *unstructured.Unstructured, gvr schema.GroupVersionResource) {
+				r.handleLabeledResource(obj, gvr)
+				r.triggerReconcileForOwner(obj)
+			},
+		)
+		r.RequeueAfter = 0 // Disable default requeue for event-based reconciliation
+	}
+
 	if err := MarkState(ctx, r.Client, res, func() {
 		res.Status.LastSyncTime = metav1.Now()
 		res.Status.DeployState = infrahubv1alpha1.StateSucceeded
@@ -134,10 +162,10 @@ func (r *InfrahubResourceReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	}
 
 	logger.Info("Reconciliation complete")
-	return ctrl.Result{}, nil
+	return ctrl.Result{RequeueAfter: r.RequeueAfter}, nil
 }
 
-func (r *InfrahubResourceReconciler) handleDeletion(ctx context.Context, res *infrahubv1alpha1.InfrahubResource, destClient client.Client) (ctrl.Result, error) {
+func (r *VidraResourceReconciler) handleDeletion(ctx context.Context, res *infrahubv1alpha1.VidraResource, destClient client.Client) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 	if !r.hasFinalizer(res) {
 		return ctrl.Result{}, nil
@@ -152,11 +180,20 @@ func (r *InfrahubResourceReconciler) handleDeletion(ctx context.Context, res *in
 	return ctrl.Result{}, r.removeFinalizer(ctx, res)
 }
 
-func (r *InfrahubResourceReconciler) decodeAndApplyResources(ctx context.Context, res *infrahubv1alpha1.InfrahubResource, contentReader io.Reader, destClient client.Client) (map[string]infrahubv1alpha1.ManagedResourceStatus, error) {
+func (r *VidraResourceReconciler) decodeAndApplyResources(
+	ctx context.Context,
+	res *infrahubv1alpha1.VidraResource,
+	contentReader io.Reader,
+	destClient client.Client,
+) (map[string]infrahubv1alpha1.ManagedResourceStatus, []schema.GroupVersionResource, error) {
 	logger := log.FromContext(ctx).WithValues("resource", res.Name)
-	reader := bufio.NewReaderSize(contentReader, 4096) // Use a buffered reader for better performance
+
+	reader := bufio.NewReaderSize(contentReader, 4096)
 	decoder := yaml.NewYAMLOrJSONDecoder(reader, 4096)
+
 	resources := map[string]infrahubv1alpha1.ManagedResourceStatus{}
+	gvrList := []schema.GroupVersionResource{}
+	seenGVR := map[schema.GroupVersionResource]struct{}{}
 
 	for {
 		u := &unstructured.Unstructured{}
@@ -165,27 +202,37 @@ func (r *InfrahubResourceReconciler) decodeAndApplyResources(ctx context.Context
 				break
 			}
 			logger.Error(err, "Failed to decode")
-			return nil, fmt.Errorf("decode artifact: %w", err)
+			return nil, nil, fmt.Errorf("decode artifact: %w", err)
 		}
 
 		gvk := u.GroupVersionKind()
 		mapping, err := r.RESTMapper.RESTMapping(gvk.GroupKind(), gvk.Version)
 		if err != nil {
-			return nil, fmt.Errorf("REST mapping: %w", err)
+			return nil, nil, fmt.Errorf("REST mapping: %w", err)
+		}
+
+		// Collect GVRs for dynamic watcher
+		if (r.EventBasedReconcile || res.Spec.Destination.ReconcileOnEvents) && destClient == r.Client {
+			gvr := mapping.Resource
+			if _, exists := seenGVR[gvr]; !exists {
+				gvrList = append(gvrList, gvr)
+				seenGVR[gvr] = struct{}{}
+			}
 		}
 
 		if mapping.Scope.Name() == meta.RESTScopeNameNamespace && u.GetNamespace() == "" {
 			u.SetNamespace(res.Spec.Destination.Namespace)
 		}
-
-		// if err := ctrl.SetControllerReference(res, u, r.Scheme); err != nil {
-		// 	return nil, fmt.Errorf("set controller reference: %w", err)
-		// }
+		if destClient == r.Client {
+			if err := ctrl.SetControllerReference(res, u, r.Scheme); err != nil {
+				return nil, nil, fmt.Errorf("set controller reference: %w", err)
+			}
+		}
 
 		annotateWithOwner(u, res.Name)
 		if err := r.applyResource(ctx, res, u, destClient); err != nil {
 			logger.Error(err, "apply resource failed", "GVK", gvk, "Name", u.GetName())
-			return nil, err
+			return nil, nil, err
 		}
 
 		status := infrahubv1alpha1.ManagedResourceStatus{
@@ -196,12 +243,13 @@ func (r *InfrahubResourceReconciler) decodeAndApplyResources(ctx context.Context
 		}
 		resources[resourceKey(status)] = status
 	}
-	return resources, nil
+
+	return resources, gvrList, nil
 }
 
-func (r *InfrahubResourceReconciler) cleanupRemovedResources(
+func (r *VidraResourceReconciler) cleanupRemovedResources(
 	ctx context.Context,
-	res *infrahubv1alpha1.InfrahubResource,
+	res *infrahubv1alpha1.VidraResource,
 	current map[string]infrahubv1alpha1.ManagedResourceStatus,
 	destClient client.Client,
 ) error {
@@ -227,7 +275,7 @@ func (r *InfrahubResourceReconciler) cleanupRemovedResources(
 	return nil
 }
 
-func (r *InfrahubResourceReconciler) deleteManagedResource(ctx context.Context, res *infrahubv1alpha1.InfrahubResource, old infrahubv1alpha1.ManagedResourceStatus, destClient client.Client) error {
+func (r *VidraResourceReconciler) deleteManagedResource(ctx context.Context, res *infrahubv1alpha1.VidraResource, old infrahubv1alpha1.ManagedResourceStatus, destClient client.Client) error {
 	logger := log.FromContext(ctx).WithValues("kind", old.Kind, "name", old.Name, "namespace", old.Namespace)
 	logger.Info("Deleting stale managed resource")
 
@@ -246,7 +294,7 @@ func (r *InfrahubResourceReconciler) deleteManagedResource(ctx context.Context, 
 		return fmt.Errorf("fetch resource %s: %w", old.Name, err)
 	}
 
-	if obj.GetAnnotations()["managed-by"] != infrahubOperator {
+	if obj.GetAnnotations()["managed-by"] != vidraOperator {
 		logger.Info("Skipping deletion, resource not managed by this Infrahub Operator",
 			"expectedOwner", res.Name,
 			"actualAnnotations", obj.GetAnnotations())
@@ -283,13 +331,21 @@ func (r *InfrahubResourceReconciler) deleteManagedResource(ctx context.Context, 
 	return nil
 }
 
-func (r *InfrahubResourceReconciler) applyResource(ctx context.Context, res *infrahubv1alpha1.InfrahubResource, desired *unstructured.Unstructured, destClient client.Client) error {
+func (r *VidraResourceReconciler) applyResource(ctx context.Context, res *infrahubv1alpha1.VidraResource, desired *unstructured.Unstructured, destClient client.Client) error {
 	logger := log.FromContext(ctx)
+
 	// Prepare the existing resource object
 	existing := &unstructured.Unstructured{}
 	existing.SetGroupVersionKind(desired.GroupVersionKind())
 	existing.SetNamespace(desired.GetNamespace())
 	existing.SetName(desired.GetName())
+	// Add label "managed-by": "vida" to the resource
+	labels := desired.GetLabels()
+	if labels == nil {
+		labels = map[string]string{}
+	}
+	labels["managed-by"] = "vida"
+	desired.SetLabels(labels)
 
 	// Try fetching the existing resource
 	err := destClient.Get(ctx, client.ObjectKeyFromObject(existing), existing)
@@ -304,13 +360,17 @@ func (r *InfrahubResourceReconciler) applyResource(ctx context.Context, res *inf
 	// Log resource existence and check if it's managed by the operator
 	logger.Info("Resource already exists", "name", existing.GetName(), "namespace", existing.GetNamespace())
 
-	if existing.GetAnnotations()["managed-by"] != infrahubOperator {
+	if existing.GetAnnotations()["managed-by"] != vidraOperator && res.Status.LastSyncTime.IsZero() {
+		fmt.Printf("Resource %s/%s already exists but is not managed by this operator\n", existing.GetNamespace(), existing.GetName())
 		return fmt.Errorf("resource %s/%s already exists but is not managed by this operator", existing.GetNamespace(), existing.GetName())
 	}
 
 	// Check if annotations match, if so, update resource
 	if r.shouldUpdateResource(existing, desired) {
-		logger.Info("Resource already exists and is managed, updating", "name", existing.GetName(), "namespace", existing.GetNamespace())
+		logger.Info("Resource already exists and is managed by this vidraResource -> updating", "name", existing.GetName(), "namespace", existing.GetNamespace())
+		if r.isEqual(existing, desired) {
+			return nil
+		}
 		desired.SetResourceVersion(existing.GetResourceVersion())
 		return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 			return destClient.Update(ctx, desired)
@@ -318,42 +378,48 @@ func (r *InfrahubResourceReconciler) applyResource(ctx context.Context, res *inf
 	}
 
 	// Normalize spec maps before comparing
-	if r.isSpecEqual(existing, desired) {
+	if r.isEqual(existing, desired) {
 		// If specs are equal, patch the owner annotation
-		logger.Info("Resource is managed by another infrahubResource, patching owner annotation", "name", existing.GetName(), "namespace", existing.GetNamespace())
+		logger.Info("Resource is managed by another vidraResource, patching owner annotation", "name", existing.GetName(), "namespace", existing.GetNamespace())
 		if err := MarkState(ctx, r.Client, res, func() {
-			res.Status.LastError = fmt.Sprintf("Warning: resource is already managed by infrahubResource: %s", existing.GetAnnotations()[OwnerAnnotation])
+			res.Status.LastError = fmt.Sprintf("Warning: resource is already managed by vidraResource: %s", existing.GetAnnotations()[OwnerAnnotation])
 		}); err != nil {
 			logger.Error(err, "Failed to update LastError with warning")
 			return err
 		}
 		return r.patchOwnerAnnotation(ctx, desired, existing, destClient)
 	}
-
-	return nil
+	logger.Info("updating changed resource", "name", existing.GetName(), "namespace", existing.GetNamespace())
+	desired.SetResourceVersion(existing.GetResourceVersion())
+	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		return destClient.Update(ctx, desired)
+	})
 }
 
-func (r *InfrahubResourceReconciler) shouldUpdateResource(existing, desired *unstructured.Unstructured) bool {
+func (r *VidraResourceReconciler) shouldUpdateResource(existing, desired *unstructured.Unstructured) bool {
 	existingAnnotations := existing.GetAnnotations()
 	desiredAnnotations := desired.GetAnnotations()
 
 	return existingAnnotations[OwnerAnnotation] == desiredAnnotations[OwnerAnnotation]
 }
 
-func (r *InfrahubResourceReconciler) isSpecEqual(existing, desired *unstructured.Unstructured) bool {
+func (r *VidraResourceReconciler) isEqual(existing, desired *unstructured.Unstructured) bool {
 	// Prepare deep copies for safe comparison
 	existingCopy := existing.DeepCopy()
 	desiredCopy := desired.DeepCopy()
 
-	// Normalize both spec maps: remove finalizers
+	// Remove finalizers, status, and metadata from both objects
 	r.removeFinalizers(existingCopy)
 	r.removeFinalizers(desiredCopy)
+	delete(existingCopy.Object, "status")
+	delete(desiredCopy.Object, "status")
+	delete(existingCopy.Object, "metadata")
+	delete(desiredCopy.Object, "metadata")
 
-	// Compare normalized specs
-	return equality.Semantic.DeepEqual(desiredCopy.Object["spec"], existingCopy.Object["spec"])
+	return equality.Semantic.DeepEqual(desiredCopy.Object, existingCopy.Object)
 }
 
-func (r *InfrahubResourceReconciler) removeFinalizers(resource *unstructured.Unstructured) {
+func (r *VidraResourceReconciler) removeFinalizers(resource *unstructured.Unstructured) {
 	if spec, ok := resource.Object["spec"].(map[string]interface{}); ok {
 		delete(spec, "finalizers")
 	} else {
@@ -361,7 +427,7 @@ func (r *InfrahubResourceReconciler) removeFinalizers(resource *unstructured.Uns
 	}
 }
 
-func (r *InfrahubResourceReconciler) patchOwnerAnnotation(ctx context.Context, desired, existing *unstructured.Unstructured, destClient client.Client) error {
+func (r *VidraResourceReconciler) patchOwnerAnnotation(ctx context.Context, desired, existing *unstructured.Unstructured, destClient client.Client) error {
 	// Prepare a patch to update the owner annotation
 	patch := existing.DeepCopy()
 	patchAnnotations := patch.GetAnnotations()
@@ -382,11 +448,11 @@ func (r *InfrahubResourceReconciler) patchOwnerAnnotation(ctx context.Context, d
 }
 
 // Finalizer helpers
-func (r *InfrahubResourceReconciler) hasFinalizer(obj *infrahubv1alpha1.InfrahubResource) bool {
+func (r *VidraResourceReconciler) hasFinalizer(obj *infrahubv1alpha1.VidraResource) bool {
 	return containsString(obj.Finalizers, FinalizerName)
 }
 
-func (r *InfrahubResourceReconciler) addFinalizer(ctx context.Context, obj *infrahubv1alpha1.InfrahubResource) error {
+func (r *VidraResourceReconciler) addFinalizer(ctx context.Context, obj *infrahubv1alpha1.VidraResource) error {
 	if containsString(obj.Finalizers, FinalizerName) {
 		return nil
 	}
@@ -397,7 +463,7 @@ func (r *InfrahubResourceReconciler) addFinalizer(ctx context.Context, obj *infr
 	})
 }
 
-func (r *InfrahubResourceReconciler) removeFinalizer(ctx context.Context, obj *infrahubv1alpha1.InfrahubResource) error {
+func (r *VidraResourceReconciler) removeFinalizer(ctx context.Context, obj *infrahubv1alpha1.VidraResource) error {
 	patch := client.MergeFrom(obj.DeepCopy())
 	obj.Finalizers = removeString(obj.Finalizers, FinalizerName)
 	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
@@ -406,13 +472,87 @@ func (r *InfrahubResourceReconciler) removeFinalizer(ctx context.Context, obj *i
 }
 
 // Setup
-func (r *InfrahubResourceReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *VidraResourceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.InfrahubClient = infrahub.NewClient()
-	r.ClientFactory = k8s.NewDynamicClientFactory()
+	r.DynamicMulticlusterFactory = k8s.NewDynamicMulticlusterFactory()
+
+	// Create a direct (non-cached) client
+	cfg := mgr.GetConfig()
+	scheme := mgr.GetScheme()
+
+	nonCachedClient, err := client.New(cfg, client.Options{Scheme: scheme})
+	if err != nil {
+		return fmt.Errorf("failed to create non-cached client: %w", err)
+	}
+
+	// Use the non-cached client to fetch the config map via label selector
+	labelKey := "app"
+	labelValue := "vidra"
+
+	if err := r.InitConfigWithClient(context.Background(), nonCachedClient, labelKey, labelValue); err != nil {
+		return fmt.Errorf("failed to initialize config: %w", err)
+	}
+	// Set up the dynamic watcher factory and dynamic client
+	r.DynamicWatcherFactory = k8s.NewDynamicWatcherFactory()
+	r.DynamicWatcherClient, err = dynamic.NewForConfig(cfg)
+	if err != nil {
+		panic(fmt.Errorf("failed to create dynamic client: %w", err))
+	}
+
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&infrahubv1alpha1.InfrahubResource{},
+		For(&infrahubv1alpha1.VidraResource{},
 			builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		Complete(r)
+}
+
+func (r *VidraResourceReconciler) InitConfigWithClient(ctx context.Context, k8sClient client.Client, labelKey, labelValue string) error {
+	const defaultRequeue = 10 * time.Minute
+	const defaultQueryName = "ArtifactIDs"
+
+	// Start with the default values
+	r.RequeueAfter = defaultRequeue
+	var configMaps corev1.ConfigMapList
+	if err := k8s.GetSortedListByLabel(ctx, k8sClient, labelKey, labelValue, &configMaps); err != nil {
+		if strings.Contains(err.Error(), "no resources found with label") {
+			return nil // Use default values and continue
+		}
+		return err
+	}
+
+	// If no ConfigMap is found, return with defaults
+	if len(configMaps.Items) == 0 {
+		return nil
+	}
+
+	var configMap *corev1.ConfigMap
+	for _, cm := range configMaps.Items {
+		if cm.Data["requeueRecourcesAfter"] != "" {
+			configMap = &cm
+			break
+		}
+	}
+	// Check for 'requeueAfter' and update if available
+	requeueAfter, ok := configMap.Data["requeueRecourcesAfter"]
+	if ok {
+		duration, err := time.ParseDuration(requeueAfter)
+		if err == nil {
+			r.RequeueAfter = duration
+		}
+	}
+
+	eventBasedReconcileStr, ok := configMap.Data["eventBasedReconcile"]
+	if ok {
+		val := strings.ToLower(strings.TrimSpace(eventBasedReconcileStr))
+		if val == "true" {
+			r.EventBasedReconcile = true
+		} else {
+			r.EventBasedReconcile = false
+		}
+	} else {
+		r.EventBasedReconcile = false
+	}
+
+	return nil
 }
 
 // Utilities
@@ -439,12 +579,13 @@ func annotateWithOwner(obj *unstructured.Unstructured, owner string) {
 		ann = map[string]string{}
 	}
 	ann[OwnerAnnotation] = owner
-	ann["managed-by"] = infrahubOperator
+	ann["managed-by"] = vidraOperator
 	obj.SetAnnotations(ann)
 }
 func resourceKey(res infrahubv1alpha1.ManagedResourceStatus) string {
 	return fmt.Sprintf("%s:%s:%s:%s", res.APIVersion, res.Kind, res.Namespace, res.Name)
 }
+
 func buildFinalResourceList(existing []infrahubv1alpha1.ManagedResourceStatus, new map[string]infrahubv1alpha1.ManagedResourceStatus) []infrahubv1alpha1.ManagedResourceStatus {
 	result := existing[:0]
 	seen := map[string]bool{}

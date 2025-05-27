@@ -1,5 +1,5 @@
 ## Append samples of your project ##
 resources:
-- infrahub_v1alpha1_infrahubresource.yaml
+- infrahub_v1alpha1_vidraresource.yaml
 - infrahub_v1alpha1_infrahubsync.yaml
 # +kubebuilder:scaffold:manifestskustomizesamples

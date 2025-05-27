@@ -2,8 +2,13 @@
 # since it depends on service name and namespace that are out of this kustomize package.
 # It should be run by config/default
 resources:
+<<<<<<< HEAD
 - bases/vidra.operators.com_infrahubresources.yaml
 - bases/vidra.operators.com_infrahubsyncs.yaml
+=======
+- bases/infrahub.operators.com_vidraresources.yaml
+- bases/infrahub.operators.com_infrahubsyncs.yaml
+>>>>>>> origin/gitOps-4th-principle
 # +kubebuilder:scaffold:crdkustomizeresource
 
 patches:
@@ -13,7 +18,7 @@ patches:
 
 # [CERTMANAGER] To enable cert-manager, uncomment all the sections with [CERTMANAGER] prefix.
 # patches here are for enabling the CA injection for each CRD
-#- path: patches/cainjection_in_infrahubresources.yaml
+#- path: patches/cainjection_in_vidraresources.yaml
 #- path: patches/cainjection_in_infrahubsyncs.yaml
 # +kubebuilder:scaffold:crdkustomizecainjectionpatch
 

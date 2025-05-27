@@ -1,4 +1,4 @@
-package k8s
+package domain
 
 import (
 	"context"
@@ -6,6 +6,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type ClientFactory interface {
+type DynamicMulticlusterFactory interface {
 	GetCachedClientFor(ctx context.Context, serverURL string, k8sClient client.Client) (client.Client, error)
 }

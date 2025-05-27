@@ -1,17 +1,18 @@
-// File: infrahubresource_controller_test.go
+// File: vidraresource_controller_test.go
 
 package controller
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io"
 	"strings"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	infrahubv1alpha1 "github.com/simli1333/vidra/api/v1alpha1"
+	"github.com/simli1333/vidra/internal/domain"
 	mock "github.com/simli1333/vidra/internal/mocks"
 	"go.uber.org/mock/gomock"
 	appsv1 "k8s.io/api/apps/v1"
@@ -23,6 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/dynamic"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -40,42 +42,39 @@ var _ = Describe("should reconcile correctly with different Destination.Server v
 
 		Context(fmt.Sprintf("Destination.Server = '%s'", destinationServer), func() {
 			var (
-				mockCtrl          *gomock.Controller
-				mockClient        *mock.MockInfrahubClient
-				mockRESTMapper    *mock.MockRESTMapper
-				mockClientFactory *mock.MockClientFactory
-				ctx               context.Context
-				namespacedName    types.NamespacedName
-				reconciler        *InfrahubResourceReconciler
+				mockCtrl                       *gomock.Controller
+				mockClient                     *mock.MockInfrahubClient
+				mockRESTMapper                 *mock.MockRESTMapper
+				mockDynamicMulticlusterFactory *mock.MockDynamicMulticlusterFactory
+				mockWatcherFactory             *mock.MockDynamicWatcherFactory
+				ctx                            context.Context
+				namespacedName                 types.NamespacedName
+				reconciler                     *VidraResourceReconciler
 			)
 
 			const (
 				resourceName  = "test-resource"
-				apiURL        = "https://example.com"
 				targetBranche = "main"
 				targetDate    = "2025-01-01T00:00:00Z"
-				artifactName  = "test-artifact"
-				artifactID    = "artifact-12345"
-				checksum      = "checksum-12345"
-				storageID     = "storage-12345"
 				namespace     = "default"
 			)
 
 			BeforeEach(func() {
 				mockCtrl = gomock.NewController(GinkgoT())
 				mockClient = mock.NewMockInfrahubClient(mockCtrl)
-				mockClientFactory = mock.NewMockClientFactory(mockCtrl)
+				mockDynamicMulticlusterFactory = mock.NewMockDynamicMulticlusterFactory(mockCtrl)
+				mockWatcherFactory = mock.NewMockDynamicWatcherFactory(mockCtrl)
 				mockRESTMapper = mock.NewMockRESTMapper(mockCtrl)
 				ctx = context.Background()
 				namespacedName = types.NamespacedName{
 					Name: resourceName,
 				}
-				reconciler = &InfrahubResourceReconciler{
-					Client:         k8sClient,
-					Scheme:         k8sClient.Scheme(),
-					InfrahubClient: mockClient,
-					RESTMapper:     mockRESTMapper,
-					ClientFactory:  mockClientFactory,
+				reconciler = &VidraResourceReconciler{
+					Client:                     k8sClient,
+					Scheme:                     k8sClient.Scheme(),
+					InfrahubClient:             mockClient,
+					RESTMapper:                 mockRESTMapper,
+					DynamicMulticlusterFactory: mockDynamicMulticlusterFactory,
 				}
 			})
 
@@ -86,30 +85,19 @@ var _ = Describe("should reconcile correctly with different Destination.Server v
 
 			Context("When reconciling a local resource", func() {
 				BeforeEach(func() {
-					By("creating the custom resource for the Kind InfrahubResource if not exists")
-					instance := &infrahubv1alpha1.InfrahubResource{}
+					By("creating the custom resource for the Kind VidraResource if not exists")
+					instance := &infrahubv1alpha1.VidraResource{}
 					err := k8sClient.Get(ctx, namespacedName, instance)
 					if err != nil && k8serrors.IsNotFound(err) {
-						resource := &infrahubv1alpha1.InfrahubResource{
+						resource := &infrahubv1alpha1.VidraResource{
 							ObjectMeta: metav1.ObjectMeta{
 								Name:      resourceName,
 								Namespace: namespace,
 							},
-							Spec: infrahubv1alpha1.InfrahubResourceSpec{
-								Source: infrahubv1alpha1.InfrahubSyncSource{
-									InfrahubAPIURL: apiURL,
-									TargetBranch:   targetBranche,
-									TargetDate:     targetDate,
-									ArtifactName:   artifactName,
-								},
+							Spec: infrahubv1alpha1.VidraResourceSpec{
 								Destination: infrahubv1alpha1.InfrahubSyncDestination{
 									Server:    destinationServer,
 									Namespace: namespace,
-								},
-								IDs: infrahubv1alpha1.InfrahubResourceIDs{
-									ArtifactID: artifactID,
-									Checksum:   checksum,
-									StorageID:  storageID,
 								},
 							},
 						}
@@ -119,7 +107,7 @@ var _ = Describe("should reconcile correctly with different Destination.Server v
 
 				AfterEach(func() {
 					By("deleting the custom resource for cleanup")
-					instance := &infrahubv1alpha1.InfrahubResource{}
+					instance := &infrahubv1alpha1.VidraResource{}
 					err := k8sClient.Get(ctx, namespacedName, instance)
 					if err == nil {
 						// Wait for the finalizer to be removed before deleting the resource
@@ -134,15 +122,12 @@ var _ = Describe("should reconcile correctly with different Destination.Server v
 				Context("Once the resource exists", func() {
 					It("should successfully reconcile the resource (json) and call InfrahubClient methods", func() {
 						By("setting up the mock client to return a JSON ConfigMap response")
-						mockClient.EXPECT().
-							DownloadArtifact(apiURL, artifactID, targetBranche, targetDate).
-							Return(bytes.NewReader([]byte(`{
-							"apiVersion": "v1", 
-							"kind": "ConfigMap", 
-							"metadata": {
-								"name": "example"
-							}
-						}`)), nil)
+						instance := &infrahubv1alpha1.VidraResource{}
+						err := k8sClient.Get(ctx, namespacedName, instance)
+						Expect(err).NotTo(HaveOccurred())
+						instance.Spec.Manifest = `{"apiVersion":"v1","kind":"ConfigMap","metadata":{"name":"example"},"data":{"key":"value"}}`
+
+						Expect(k8sClient.Update(ctx, instance)).To(Succeed())
 
 						mockRESTMapper.EXPECT().
 							RESTMapping(gomock.Any(), gomock.Any()).
@@ -150,9 +135,9 @@ var _ = Describe("should reconcile correctly with different Destination.Server v
 							AnyTimes()
 
 						By("reconciling the resource on the destination server")
-						deployK8sClient := setupClientFactoryMock(ctx, k8sClient, mockClientFactory, namespacedName, secondK8sClient)
+						deployK8sClient := setupDynamicMulticlusterFactoryMock(ctx, k8sClient, mockDynamicMulticlusterFactory, namespacedName, secondK8sClient)
 
-						_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
+						_, err = reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
 						Expect(err).NotTo(HaveOccurred())
 
 						Eventually(func() error {
@@ -163,9 +148,10 @@ var _ = Describe("should reconcile correctly with different Destination.Server v
 
 					It("should reconcile multiple resources from artifact", func() {
 						By("setting up the mock client to return multiple resources")
-						mockClient.EXPECT().
-							DownloadArtifact(apiURL, artifactID, targetBranche, targetDate).
-							Return(bytes.NewReader([]byte(`
+						instance := &infrahubv1alpha1.VidraResource{}
+						err := k8sClient.Get(ctx, namespacedName, instance)
+						Expect(err).NotTo(HaveOccurred())
+						instance.Spec.Manifest = `
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -175,7 +161,8 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: config2
-`)), nil)
+`
+						Expect(k8sClient.Update(ctx, instance)).To(Succeed())
 
 						mockRESTMapper.EXPECT().
 							RESTMapping(gomock.Any(), gomock.Any()).
@@ -183,9 +170,9 @@ metadata:
 							AnyTimes()
 
 						By("reconciling the resource on the destination server")
-						deployK8sClient := setupClientFactoryMock(ctx, k8sClient, mockClientFactory, namespacedName, secondK8sClient)
+						deployK8sClient := setupDynamicMulticlusterFactoryMock(ctx, k8sClient, mockDynamicMulticlusterFactory, namespacedName, secondK8sClient)
 
-						_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
+						_, err = reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
 						Expect(err).NotTo(HaveOccurred())
 
 						created1 := &v1.ConfigMap{}
@@ -201,7 +188,7 @@ metadata:
 						Expect(created2.Namespace).To(Equal(namespace))
 					})
 
-					It("should update the deployed resource (yaml) if the checksum changes", func() {
+					It("should update the deployed resource (yaml) if the manifest changes", func() {
 						By("setting up the mock client to return a YAML webserver (1 replica) response")
 						webserver := `
 apiVersion: v1
@@ -225,14 +212,17 @@ spec:
         app: test-app
     spec:
       containers:
-      - name: test-container
-        image: nginx:latest
-        ports:
-        - containerPort: 80
+        - name: test-container
+          image: nginx:latest
+          ports:
+            - containerPort: 80
 `
-						mockClient.EXPECT().
-							DownloadArtifact(apiURL, artifactID, targetBranche, targetDate).
-							Return(io.NopCloser(strings.NewReader(webserver)), nil)
+						instance := &infrahubv1alpha1.VidraResource{}
+						err := k8sClient.Get(ctx, namespacedName, instance)
+						Expect(err).NotTo(HaveOccurred())
+						instance.Spec.Manifest = webserver
+						Expect(k8sClient.Update(ctx, instance)).To(Succeed())
+
 						mockRESTMapper.EXPECT().
 							RESTMapping(schema.GroupKind{Group: "", Kind: "Namespace"}, "v1").
 							Return(&meta.RESTMapping{
@@ -247,9 +237,9 @@ spec:
 							}, nil)
 
 						By("reconciling the resource on the destination server")
-						deployK8sClient := setupClientFactoryMock(ctx, k8sClient, mockClientFactory, namespacedName, secondK8sClient)
+						deployK8sClient := setupDynamicMulticlusterFactoryMock(ctx, k8sClient, mockDynamicMulticlusterFactory, namespacedName, secondK8sClient)
 
-						_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
+						_, err = reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
 						Expect(err).NotTo(HaveOccurred())
 
 						Eventually(func() error {
@@ -262,6 +252,10 @@ spec:
 						}).Should(Succeed())
 
 						By("updating the artifact to have 2 replicas")
+						err = k8sClient.Get(ctx, namespacedName, instance)
+						Expect(err).NotTo(HaveOccurred())
+						Expect(k8sClient.Status().Update(ctx, instance)).To(Succeed())
+
 						yamlDataUpdated := `
 apiVersion: v1
 kind: Namespace
@@ -284,14 +278,15 @@ spec:
         app: test-app
     spec:
       containers:
-      - name: test-container
-        image: nginx:latest
-        ports:
-        - containerPort: 80
+        - name: test-container
+          image: nginx:latest
+          ports:
+            - containerPort: 80
 `
-						mockClient.EXPECT().
-							DownloadArtifact(apiURL, artifactID, targetBranche, targetDate).
-							Return(io.NopCloser(strings.NewReader(yamlDataUpdated)), nil)
+						err = k8sClient.Get(ctx, namespacedName, instance)
+						Expect(err).NotTo(HaveOccurred())
+						instance.Spec.Manifest = yamlDataUpdated
+						Expect(k8sClient.Update(ctx, instance)).To(Succeed())
 						mockRESTMapper.EXPECT().
 							RESTMapping(schema.GroupKind{Group: "", Kind: "Namespace"}, "v1").
 							Return(&meta.RESTMapping{
@@ -391,18 +386,19 @@ spec:
             port:
               number: 80
 `
-
-						mockClient.EXPECT().
-							DownloadArtifact(apiURL, artifactID, targetBranche, targetDate).
-							Return(io.NopCloser(strings.NewReader(yaml)), nil)
+						instance := &infrahubv1alpha1.VidraResource{}
+						err := k8sClient.Get(ctx, namespacedName, instance)
+						Expect(err).NotTo(HaveOccurred())
+						instance.Spec.Manifest = yaml
+						Expect(k8sClient.Update(ctx, instance)).To(Succeed())
 
 						mockRESTMapper.EXPECT().
 							RESTMapping(gomock.Any(), gomock.Any()).
 							Return(&meta.RESTMapping{Scope: meta.RESTScopeNamespace}, nil).
 							AnyTimes()
-						deployK8sClient := setupClientFactoryMock(ctx, k8sClient, mockClientFactory, namespacedName, secondK8sClient)
+						deployK8sClient := setupDynamicMulticlusterFactoryMock(ctx, k8sClient, mockDynamicMulticlusterFactory, namespacedName, secondK8sClient)
 						// Run reconciliation
-						_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
+						_, err = reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
 						Expect(err).NotTo(HaveOccurred())
 
 						// Check Deployment exists and has 3 replicas
@@ -424,11 +420,134 @@ spec:
 						Expect(ing.Spec.Rules).NotTo(BeEmpty())
 					})
 
+					It("should reconcile the cached resource form the crd if the manifest does not change", func() {
+						By("setting up the mock client to return a YAML with a resource")
+						yamlData := `
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: resource
+  namespace: ` + namespace + `
+data:
+  key: value`
+						instance := &infrahubv1alpha1.VidraResource{}
+						err := k8sClient.Get(ctx, namespacedName, instance)
+						Expect(err).NotTo(HaveOccurred())
+						instance.Spec.Manifest = yamlData
+						Expect(k8sClient.Update(ctx, instance)).To(Succeed())
+
+						mockRESTMapper.EXPECT().
+							RESTMapping(schema.GroupKind{Group: "", Kind: "ConfigMap"}, "v1").
+							Return(&meta.RESTMapping{
+								Resource: schema.GroupVersionResource{Group: "", Version: "v1", Resource: "configmaps"},
+								Scope:    meta.RESTScopeNamespace,
+							}, nil).AnyTimes()
+						By("reconciling the resource on the destination server")
+						deployK8sClient := setupDynamicMulticlusterFactoryMock(ctx, k8sClient, mockDynamicMulticlusterFactory, namespacedName, secondK8sClient)
+						// First reconciliation - should create resource
+						_, err = reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
+						Expect(err).NotTo(HaveOccurred())
+						// resource should exist
+						Eventually(func() error {
+							res := &unstructured.Unstructured{}
+							res.SetAPIVersion("v1")
+							res.SetKind("ConfigMap")
+							return deployK8sClient.Get(ctx, types.NamespacedName{Name: "resource", Namespace: namespace}, res)
+						}).Should(Succeed())
+
+						By("running reconciliation again with the same manifest")
+
+						// The mock client should not be called again
+						mockClient.EXPECT().
+							DownloadArtifact(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+							Return(io.NopCloser(strings.NewReader(yamlData)), nil).
+							Times(0)
+					})
+
+					It("should overwrite the resource if it was manually changed", func() {
+						By("setting up the mock client to return a YAML with a resource")
+						yamlData := `
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: resource
+  namespace: ` + namespace + `
+data:
+  key: value
+`
+						instance := &infrahubv1alpha1.VidraResource{}
+						err := k8sClient.Get(ctx, namespacedName, instance)
+						Expect(err).NotTo(HaveOccurred())
+						instance.Spec.Manifest = yamlData
+						Expect(k8sClient.Update(ctx, instance)).To(Succeed())
+
+						mockRESTMapper.EXPECT().
+							RESTMapping(schema.GroupKind{Group: "", Kind: "ConfigMap"}, "v1").
+							Return(&meta.RESTMapping{
+								Resource: schema.GroupVersionResource{Group: "", Version: "v1", Resource: "configmaps"},
+								Scope:    meta.RESTScopeNamespace,
+							}, nil).AnyTimes()
+						By("reconciling the resource on the destination server")
+						deployK8sClient := setupDynamicMulticlusterFactoryMock(ctx, k8sClient, mockDynamicMulticlusterFactory, namespacedName, secondK8sClient)
+						// First reconciliation - should create resource
+						_, err = reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
+						Expect(err).NotTo(HaveOccurred())
+						// resource should exist
+						Eventually(func() error {
+							res := &unstructured.Unstructured{}
+							res.SetAPIVersion("v1")
+							res.SetKind("ConfigMap")
+							return deployK8sClient.Get(ctx, types.NamespacedName{Name: "resource", Namespace: namespace}, res)
+						}).Should(Succeed())
+
+						// Simulate manual change to the resource
+						updatedResource := &unstructured.Unstructured{}
+						updatedResource.SetAPIVersion("v1")
+						updatedResource.SetKind("ConfigMap")
+						updatedResource.SetName("resource")
+						updatedResource.SetNamespace(namespace)
+						updatedResource.Object["data"] = map[string]interface{}{
+							"key": "new-value",
+						}
+						err = deployK8sClient.Update(ctx, updatedResource)
+						Expect(err).NotTo(HaveOccurred())
+						// Check if the resource was updated
+						Eventually(func() error {
+							res := &unstructured.Unstructured{}
+							res.SetAPIVersion("v1")
+							res.SetKind("ConfigMap")
+							err := deployK8sClient.Get(ctx, types.NamespacedName{Name: "resource", Namespace: namespace}, res)
+							if err != nil {
+								return err
+							}
+							if res.Object["data"].(map[string]interface{})["key"] != "new-value" {
+								return fmt.Errorf("resource was not updated")
+							}
+							return nil
+						}).Should(Succeed())
+						// Now run reconciliation again
+						_, err = reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
+						Expect(err).NotTo(HaveOccurred())
+						// Check if the resource was overwritten
+						Eventually(func() error {
+							res := &unstructured.Unstructured{}
+							res.SetAPIVersion("v1")
+							res.SetKind("ConfigMap")
+							err := deployK8sClient.Get(ctx, types.NamespacedName{Name: "resource", Namespace: namespace}, res)
+							if err != nil {
+								return err
+							}
+							if res.Object["data"].(map[string]interface{})["key"] != "value" {
+								return fmt.Errorf("resource was not overwritten")
+							}
+							return nil
+						}).Should(Succeed())
+					})
+
 					It("should reconcile resources in to its namespace if a namespace is in the artifact", func() {
 						By("setting up the mock client to return a YAML with a namespace and resources in it")
-						mockClient.EXPECT().
-							DownloadArtifact(apiURL, artifactID, targetBranche, targetDate).
-							Return(bytes.NewReader([]byte(`
+
+						yaml := `
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -450,17 +569,23 @@ kind: ConfigMap
 metadata:
   name: config2
   namespace: test-namespace2
-`)), nil)
+`
 
+						instance := &infrahubv1alpha1.VidraResource{}
+						err := k8sClient.Get(ctx, namespacedName, instance)
+						Expect(err).NotTo(HaveOccurred())
+						instance.Spec.Manifest = yaml
+
+						Expect(k8sClient.Update(ctx, instance)).To(Succeed())
 						mockRESTMapper.EXPECT().
 							RESTMapping(gomock.Any(), gomock.Any()).
 							Return(&meta.RESTMapping{Scope: meta.RESTScopeNamespace}, nil).
 							AnyTimes()
 
 						By("reconciling the resource on the destination server")
-						deployK8sClient := setupClientFactoryMock(ctx, k8sClient, mockClientFactory, namespacedName, secondK8sClient)
+						deployK8sClient := setupDynamicMulticlusterFactoryMock(ctx, k8sClient, mockDynamicMulticlusterFactory, namespacedName, secondK8sClient)
 
-						_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
+						_, err = reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
 						Expect(err).NotTo(HaveOccurred())
 
 						created1 := &v1.ConfigMap{}
@@ -489,9 +614,11 @@ metadata:
   name: resource-old
   namespace: ` + namespace + `
 `
-						mockClient.EXPECT().
-							DownloadArtifact(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-							Return(io.NopCloser(strings.NewReader(yamlData)), nil)
+						instance := &infrahubv1alpha1.VidraResource{}
+						err := k8sClient.Get(ctx, namespacedName, instance)
+						Expect(err).NotTo(HaveOccurred())
+						instance.Spec.Manifest = yamlData
+						Expect(k8sClient.Update(ctx, instance)).To(Succeed())
 
 						mockRESTMapper.EXPECT().
 							RESTMapping(schema.GroupKind{Group: "", Kind: "ConfigMap"}, "v1").
@@ -501,10 +628,10 @@ metadata:
 							}, nil).AnyTimes()
 
 						By("reconciling the resource on the destination server")
-						deployK8sClient := setupClientFactoryMock(ctx, k8sClient, mockClientFactory, namespacedName, secondK8sClient)
+						deployK8sClient := setupDynamicMulticlusterFactoryMock(ctx, k8sClient, mockDynamicMulticlusterFactory, namespacedName, secondK8sClient)
 
 						// First reconciliation - should create resource-old
-						_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
+						_, err = reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
 						Expect(err).NotTo(HaveOccurred())
 
 						// resource-old should exist
@@ -516,6 +643,10 @@ metadata:
 						}).Should(Succeed())
 
 						By("reconciling the resource on the destination server again with a new name")
+						err = k8sClient.Get(ctx, namespacedName, instance)
+						Expect(err).NotTo(HaveOccurred())
+						Expect(k8sClient.Status().Update(ctx, instance)).To(Succeed())
+
 						yamlDataNew := `
 apiVersion: v1
 kind: ConfigMap
@@ -523,9 +654,10 @@ metadata:
   name: resource-new
   namespace: ` + namespace + `
 `
-						mockClient.EXPECT().
-							DownloadArtifact(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-							Return(io.NopCloser(strings.NewReader(yamlDataNew)), nil)
+						err = k8sClient.Get(ctx, namespacedName, instance)
+						Expect(err).NotTo(HaveOccurred())
+						instance.Spec.Manifest = yamlDataNew
+						Expect(k8sClient.Update(ctx, instance)).To(Succeed())
 
 						mockRESTMapper.EXPECT().
 							RESTMapping(schema.GroupKind{Group: "", Kind: "ConfigMap"}, "v1").
@@ -566,7 +698,7 @@ metadata:
 								Name:      "example-config",
 								Namespace: "default",
 								Annotations: map[string]string{
-									"managed-by":    infrahubOperator,
+									"managed-by":    vidraOperator,
 									OwnerAnnotation: resourceName,
 								},
 							},
@@ -574,7 +706,7 @@ metadata:
 								"key1": "value1",
 							},
 						}
-						deployK8sClient := setupClientFactoryMock(ctx, k8sClient, mockClientFactory, namespacedName, secondK8sClient)
+						deployK8sClient := setupDynamicMulticlusterFactoryMock(ctx, k8sClient, mockDynamicMulticlusterFactory, namespacedName, secondK8sClient)
 						Expect(deployK8sClient.Create(ctx, existingConfigMap)).To(Succeed())
 
 						defer (func() {
@@ -583,16 +715,19 @@ metadata:
 						})()
 
 						By("setting up the mock client to return a YAML with an updated ConfigMap")
-						mockClient.EXPECT().
-							DownloadArtifact(apiURL, artifactID, targetBranche, targetDate).
-							Return(bytes.NewReader([]byte(`
+						yaml := `
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: example-config
 data:
   key1: updated-value
-`)), nil)
+`
+						instance := &infrahubv1alpha1.VidraResource{}
+						err := k8sClient.Get(ctx, namespacedName, instance)
+						Expect(err).NotTo(HaveOccurred())
+						instance.Spec.Manifest = yaml
+						Expect(k8sClient.Update(ctx, instance)).To(Succeed())
 
 						mockRESTMapper.EXPECT().
 							RESTMapping(gomock.Any(), gomock.Any()).
@@ -600,7 +735,7 @@ data:
 							AnyTimes()
 
 						By("reconciling the resource on the destination server")
-						_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
+						_, err = reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
 						Expect(err).NotTo(HaveOccurred())
 
 						updatedConfigMap := &v1.ConfigMap{}
@@ -623,7 +758,7 @@ data:
 							},
 						}
 
-						deployK8sClient := setupClientFactoryMock(ctx, k8sClient, mockClientFactory, namespacedName, secondK8sClient)
+						deployK8sClient := setupDynamicMulticlusterFactoryMock(ctx, k8sClient, mockDynamicMulticlusterFactory, namespacedName, secondK8sClient)
 
 						Expect(deployK8sClient.Create(ctx, existingConfigMap)).To(Succeed())
 
@@ -633,16 +768,19 @@ data:
 						})()
 
 						By("setting up the mock client to return a YAML with an updated ConfigMap")
-						mockClient.EXPECT().
-							DownloadArtifact(apiURL, artifactID, targetBranche, targetDate).
-							Return(bytes.NewReader([]byte(`
+						yaml := `
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: example-config
 data:
   key1: updated-value
-`)), nil)
+`
+						instance := &infrahubv1alpha1.VidraResource{}
+						err := k8sClient.Get(ctx, namespacedName, instance)
+						Expect(err).NotTo(HaveOccurred())
+						instance.Spec.Manifest = yaml
+						Expect(k8sClient.Update(ctx, instance)).To(Succeed())
 
 						mockRESTMapper.EXPECT().
 							RESTMapping(gomock.Any(), gomock.Any()).
@@ -650,7 +788,7 @@ data:
 							AnyTimes()
 
 						By("reconciling the resource on the destination server")
-						_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
+						_, err = reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
 						Expect(err).To(HaveOccurred())
 						Expect(err.Error()).To(ContainSubstring("already exists but is not managed by this operator"))
 
@@ -668,7 +806,7 @@ data:
 				Context("Once the managed resource is removed from infrahub", func() {
 					It("should clean up stale resources during reconciliation", func() {
 						By("setting up the mock client to return a YAML with multiple resources")
-						yamlData := `
+						yaml := `
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -681,9 +819,11 @@ metadata:
   name: resource-b
   namespace: ` + namespace + `
 `
-						mockClient.EXPECT().
-							DownloadArtifact(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-							Return(io.NopCloser(strings.NewReader(yamlData)), nil)
+						instance := &infrahubv1alpha1.VidraResource{}
+						err := k8sClient.Get(ctx, namespacedName, instance)
+						Expect(err).NotTo(HaveOccurred())
+						instance.Spec.Manifest = yaml
+						Expect(k8sClient.Update(ctx, instance)).To(Succeed())
 
 						mockRESTMapper.EXPECT().
 							RESTMapping(schema.GroupKind{Group: "", Kind: "ConfigMap"}, "v1").
@@ -692,10 +832,10 @@ metadata:
 								Scope:    meta.RESTScopeNamespace,
 							}, nil).AnyTimes()
 
-						deployK8sClient := setupClientFactoryMock(ctx, k8sClient, mockClientFactory, namespacedName, secondK8sClient)
+						deployK8sClient := setupDynamicMulticlusterFactoryMock(ctx, k8sClient, mockDynamicMulticlusterFactory, namespacedName, secondK8sClient)
 
 						By("reconciling the resource on the destination server")
-						_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
+						_, err = reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
 						Expect(err).NotTo(HaveOccurred())
 
 						// resource-a should exist
@@ -715,6 +855,10 @@ metadata:
 						}).Should(Succeed())
 
 						By("setting up the mock client to return a YAML with only resource-a")
+						err = k8sClient.Get(ctx, namespacedName, instance)
+						Expect(err).NotTo(HaveOccurred())
+						Expect(k8sClient.Status().Update(ctx, instance)).To(Succeed())
+
 						yamlDataNew := `
 apiVersion: v1
 kind: ConfigMap
@@ -722,9 +866,10 @@ metadata:
   name: resource-a
   namespace: ` + namespace + `
 `
-						mockClient.EXPECT().
-							DownloadArtifact(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-							Return(io.NopCloser(strings.NewReader(yamlDataNew)), nil)
+						err = k8sClient.Get(ctx, namespacedName, instance)
+						Expect(err).NotTo(HaveOccurred())
+						instance.Spec.Manifest = yamlDataNew
+						Expect(k8sClient.Update(ctx, instance)).To(Succeed())
 
 						mockRESTMapper.EXPECT().
 							RESTMapping(schema.GroupKind{Group: "", Kind: "ConfigMap"}, "v1").
@@ -769,18 +914,20 @@ metadata:
   name: resource-a
   namespace: ` + namespace + `
 `
-						mockClient.EXPECT().
-							DownloadArtifact(apiURL, artifactID, targetBranche, targetDate).
-							Return(io.NopCloser(strings.NewReader(yamlData)), nil)
+						instance := &infrahubv1alpha1.VidraResource{}
+						err := k8sClient.Get(ctx, namespacedName, instance)
+						Expect(err).NotTo(HaveOccurred())
+						instance.Spec.Manifest = yamlData
+						Expect(k8sClient.Update(ctx, instance)).To(Succeed())
 
 						mockRESTMapper.EXPECT().
 							RESTMapping(gomock.Any(), gomock.Any()).
 							Return(&meta.RESTMapping{Scope: meta.RESTScopeNamespace}, nil).
 							AnyTimes()
 						By("reconciling the resource on the destination server")
-						deployK8sClient := setupClientFactoryMock(ctx, k8sClient, mockClientFactory, namespacedName, secondK8sClient)
+						deployK8sClient := setupDynamicMulticlusterFactoryMock(ctx, k8sClient, mockDynamicMulticlusterFactory, namespacedName, secondK8sClient)
 
-						_, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: namespacedName})
+						_, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: namespacedName})
 						Expect(err).NotTo(HaveOccurred())
 
 						Eventually(func() error {
@@ -797,6 +944,10 @@ metadata:
 						})
 						Expect(err).NotTo(HaveOccurred())
 						By("renaming the ConfigMap to resource-b and reconciling again")
+						err = k8sClient.Get(ctx, namespacedName, instance)
+						Expect(err).NotTo(HaveOccurred())
+						Expect(k8sClient.Status().Update(ctx, instance)).To(Succeed())
+
 						yaml := `
 apiVersion: v1
 kind: ConfigMap
@@ -806,9 +957,8 @@ metadata:
 data:
   key1: value1
 `
-						mockClient.EXPECT().
-							DownloadArtifact(apiURL, artifactID, targetBranche, targetDate).
-							Return(io.NopCloser(strings.NewReader(yaml)), nil)
+						instance.Spec.Manifest = yaml
+						Expect(k8sClient.Update(ctx, instance)).To(Succeed())
 
 						mockRESTMapper.EXPECT().
 							RESTMapping(gomock.Any(), gomock.Any()).
@@ -851,9 +1001,11 @@ metadata:
   name: resource-b
   namespace: ` + namespace + `
 `
-						mockClient.EXPECT().
-							DownloadArtifact(apiURL, artifactID, targetBranche, targetDate).
-							Return(io.NopCloser(strings.NewReader(yamlData)), nil)
+						instance := &infrahubv1alpha1.VidraResource{}
+						err := k8sClient.Get(ctx, namespacedName, instance)
+						Expect(err).NotTo(HaveOccurred())
+						instance.Spec.Manifest = yamlData
+						Expect(k8sClient.Update(ctx, instance)).To(Succeed())
 
 						mockRESTMapper.EXPECT().
 							RESTMapping(gomock.Any(), gomock.Any()).
@@ -861,9 +1013,9 @@ metadata:
 							AnyTimes()
 
 						By("reconciling the resource on the destination server")
-						deployK8sClient := setupClientFactoryMock(ctx, k8sClient, mockClientFactory, namespacedName, secondK8sClient)
+						deployK8sClient := setupDynamicMulticlusterFactoryMock(ctx, k8sClient, mockDynamicMulticlusterFactory, namespacedName, secondK8sClient)
 
-						_, err := reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: namespacedName})
+						_, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: namespacedName})
 						Expect(err).NotTo(HaveOccurred())
 
 						Eventually(func() error {
@@ -888,6 +1040,10 @@ metadata:
 						}()
 
 						By("reconciling the resource on the destination server again with just resource-b")
+						err = k8sClient.Get(ctx, namespacedName, instance)
+						Expect(err).NotTo(HaveOccurred())
+						Expect(k8sClient.Status().Update(ctx, instance)).To(Succeed())
+
 						yaml := `
 apiVersion: v1
 kind: ConfigMap
@@ -897,9 +1053,8 @@ metadata:
 data:
   key1: value1
 `
-						mockClient.EXPECT().
-							DownloadArtifact(apiURL, artifactID, targetBranche, targetDate).
-							Return(io.NopCloser(strings.NewReader(yaml)), nil)
+						instance.Spec.Manifest = yaml
+						Expect(k8sClient.Update(ctx, instance)).To(Succeed())
 
 						mockRESTMapper.EXPECT().
 							RESTMapping(gomock.Any(), gomock.Any()).
@@ -921,9 +1076,9 @@ data:
 						}).Should(Succeed())
 					})
 
-					It("should handle it grasefully if the managed resource is already managed by another instance of inrfrahubResource (managed by two infrahubResources)", func() {
+					It("should handle it grasefully if the managed resource is already managed by another instance of inrfrahubResource (managed by two vidraResources)", func() {
 						By("setting up the mock client to return a YAML with resources a in a namespace")
-						infrahubRes := &infrahubv1alpha1.InfrahubResource{}
+						infrahubRes := &infrahubv1alpha1.VidraResource{}
 						err := k8sClient.Get(ctx, namespacedName, infrahubRes)
 						Expect(err).NotTo(HaveOccurred())
 						// Simulate downloading deployment resource
@@ -939,9 +1094,9 @@ metadata:
   name: resource-a
   namespace: test
 `
-						mockClient.EXPECT().
-							DownloadArtifact(apiURL, artifactID, targetBranche, targetDate).
-							Return(io.NopCloser(strings.NewReader(yamlData)), nil)
+						infrahubRes.Spec.Manifest = yamlData
+						Expect(k8sClient.Update(ctx, infrahubRes)).To(Succeed())
+
 						mockRESTMapper.EXPECT().
 							RESTMapping(schema.GroupKind{Group: "", Kind: "Namespace"}, "v1").
 							Return(&meta.RESTMapping{
@@ -956,7 +1111,7 @@ metadata:
 							}, nil).AnyTimes()
 
 						By("reconciling the resource on the destination server")
-						deployK8sClient := setupClientFactoryMock(ctx, k8sClient, mockClientFactory, namespacedName, secondK8sClient)
+						deployK8sClient := setupDynamicMulticlusterFactoryMock(ctx, k8sClient, mockDynamicMulticlusterFactory, namespacedName, secondK8sClient)
 
 						_, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: namespacedName})
 						Expect(err).NotTo(HaveOccurred())
@@ -966,33 +1121,23 @@ metadata:
 							return deployK8sClient.Get(ctx, types.NamespacedName{Name: "resource-a", Namespace: "test"}, cm)
 						}).Should(Succeed())
 
-						By("creating a new InfrahubResource that manages the same resource")
-						newInfrahubRes := &infrahubv1alpha1.InfrahubResource{
+						By("creating a new VidraResource that manages the same resource")
+						newInfrahubRes := &infrahubv1alpha1.VidraResource{
 							ObjectMeta: metav1.ObjectMeta{
 								Name:      "new-resource",
 								Namespace: namespace,
 							},
-							Spec: infrahubv1alpha1.InfrahubResourceSpec{
-								Source: infrahubv1alpha1.InfrahubSyncSource{
-									InfrahubAPIURL: apiURL,
-									TargetBranch:   targetBranche,
-									TargetDate:     targetDate,
-									ArtifactName:   artifactName,
-								},
+							Spec: infrahubv1alpha1.VidraResourceSpec{
 								Destination: infrahubv1alpha1.InfrahubSyncDestination{
 									Server:    destinationServer,
 									Namespace: namespace,
-								},
-								IDs: infrahubv1alpha1.InfrahubResourceIDs{
-									ArtifactID: artifactID,
-									Checksum:   checksum,
-									StorageID:  storageID,
 								},
 							},
 						}
 
 						Expect(k8sClient.Create(ctx, newInfrahubRes)).To(Succeed())
-						By("reconciling the same namespace and an other resource in the second InfrahubResource")
+
+						By("reconciling the same namespace and an other resource in the second VidraResource")
 						yamlData2 := `
 apiVersion: v1
 kind: Namespace
@@ -1005,11 +1150,13 @@ metadata:
   name: resource-b
   namespace: test
 `
-						mockClient.EXPECT().
-							DownloadArtifact(apiURL, artifactID, targetBranche, targetDate).
-							Return(io.NopCloser(strings.NewReader(yamlData2)), nil)
+						infrahubRes2 := &infrahubv1alpha1.VidraResource{}
+						err = k8sClient.Get(ctx, types.NamespacedName{Name: "new-resource", Namespace: namespace}, infrahubRes2)
+						Expect(err).NotTo(HaveOccurred())
+						infrahubRes2.Spec.Manifest = yamlData2
+						Expect(k8sClient.Update(ctx, infrahubRes2)).To(Succeed())
 
-						deployK8sClient = setupClientFactoryMock(ctx, k8sClient, mockClientFactory, namespacedName, secondK8sClient)
+						deployK8sClient = setupDynamicMulticlusterFactoryMock(ctx, k8sClient, mockDynamicMulticlusterFactory, namespacedName, secondK8sClient)
 
 						_, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: types.NamespacedName{Name: "new-resource", Namespace: namespace}})
 						Expect(err).NotTo(HaveOccurred())
@@ -1032,16 +1179,22 @@ metadata:
 						Expect(testNamespace.Annotations[OwnerAnnotation]).To(ContainSubstring(infrahubRes.Name))
 
 						// Fetch the updated newInfrahubRes
-						updatedNewInfrahubRes := &infrahubv1alpha1.InfrahubResource{}
+						updatedNewInfrahubRes := &infrahubv1alpha1.VidraResource{}
 						err = k8sClient.Get(ctx, types.NamespacedName{Name: "new-resource", Namespace: namespace}, updatedNewInfrahubRes)
 						Expect(err).NotTo(HaveOccurred())
 
 						// Expect the updated newInfrahubRes to have a warning in Status.LastError
 						Expect(updatedNewInfrahubRes.Status.LastError).To(ContainSubstring(fmt.Sprintf(
-							"Warning: resource is already managed by infrahubResource: %s", infrahubRes.Name,
+							"Warning: resource is already managed by vidraResource: %s", infrahubRes.Name,
 						)))
 
-						By("Deleting the new infrahubResources again / namespace should stay")
+						By("Deleting the new vidraResources again / namespace should stay")
+						instance := &infrahubv1alpha1.VidraResource{}
+						err = k8sClient.Get(ctx, namespacedName, instance)
+						Expect(err).NotTo(HaveOccurred())
+
+						Expect(k8sClient.Status().Update(ctx, instance)).To(Succeed())
+
 						err = k8sClient.Delete(ctx, newInfrahubRes)
 						Expect(err).NotTo(HaveOccurred())
 						_, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: types.NamespacedName{Name: "new-resource", Namespace: namespace}})
@@ -1068,15 +1221,16 @@ metadata:
 						Expect(err).NotTo(HaveOccurred())
 						Expect(testNamespace.Annotations[OwnerAnnotation]).To(ContainSubstring(infrahubRes.Name))
 
-						mockClient.EXPECT().
-							DownloadArtifact(apiURL, artifactID, targetBranche, targetDate).
-							Return(io.NopCloser(strings.NewReader("")), nil)
 						mockRESTMapper.EXPECT().
 							RESTMapping(gomock.Any(), gomock.Any()).
 							Return(&meta.RESTMapping{Scope: meta.RESTScopeNamespace}, nil).
 							AnyTimes()
 
-						By("reconciling the first infrahubResource on the destination server again with empty yaml")
+						By("deleting the original vidraResource")
+						err = k8sClient.Get(ctx, namespacedName, instance)
+						Expect(err).NotTo(HaveOccurred())
+						Expect(k8sClient.Delete(ctx, instance)).To(Succeed())
+
 						_, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: namespacedName})
 						Expect(err).NotTo(HaveOccurred())
 						// Check if the resource-a id deleted
@@ -1102,8 +1256,87 @@ metadata:
 
 					})
 
+					It("should start watching and trigger reconciliation on event", func() {
+						By("setting up the VidraResource with reconcileOnEvents=true")
+						instance := &infrahubv1alpha1.VidraResource{}
+						err := k8sClient.Get(ctx, namespacedName, instance)
+						Expect(err).NotTo(HaveOccurred())
+						instance.Spec.Manifest = `{"apiVersion":"v1","kind":"ConfigMap","metadata":{"name":"example"},"data":{"key":"value"}}`
+						instance.Spec.Destination.ReconcileOnEvents = true
+						Expect(k8sClient.Update(ctx, instance)).To(Succeed())
+
+						mockRESTMapper.EXPECT().
+							RESTMapping(gomock.Any(), gomock.Any()).
+							Return(&meta.RESTMapping{Scope: meta.RESTScopeNamespace}, nil).
+							AnyTimes()
+
+						cfg := ctrl.GetConfigOrDie()
+
+						dynClient, err := dynamic.NewForConfig(cfg)
+						ExpectWithOffset(1, err).NotTo(HaveOccurred(), "failed to create dynamic client")
+
+						reconciler := &VidraResourceReconciler{
+							Client:                     k8sClient,
+							Scheme:                     k8sClient.Scheme(),
+							InfrahubClient:             mockClient,
+							RESTMapper:                 mockRESTMapper,
+							DynamicMulticlusterFactory: mockDynamicMulticlusterFactory,
+							DynamicWatcherFactory:      mockWatcherFactory,
+							DynamicWatcherClient:       dynClient,
+							EventBasedReconcile:        true,
+						}
+
+						deployK8sClient := setupDynamicMulticlusterFactoryMock(ctx, k8sClient, mockDynamicMulticlusterFactory, namespacedName, secondK8sClient)
+						By("mocking the WatcherFactory to expect watching setup")
+						mockWatcherFactory.EXPECT().
+							StartWatchingGVRs(gomock.Any(), gomock.Any(), gomock.AssignableToTypeOf(func(*unstructured.Unstructured, schema.GroupVersionResource) {})).
+							Do(func(_ dynamic.Interface, _ []schema.GroupVersionResource, cb domain.ResourceCallback) {
+								By("simulating an external event")
+								u := &unstructured.Unstructured{}
+								u.SetAPIVersion("vidra.simli.dev/v1alpha1")
+								u.SetKind("ConfigMap")
+								u.SetNamespace(namespace)
+								u.SetName("example")
+								u.SetOwnerReferences([]metav1.OwnerReference{{
+									APIVersion: infrahubv1alpha1.GroupVersion.String(),
+									Kind:       "VidraResource",
+									Name:       instance.Name,
+								}})
+								cb(u, schema.GroupVersionResource{Group: "", Version: "v1", Resource: "configmaps"})
+							})
+
+						By("reconciling the resource")
+						_, err = reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
+						Expect(err).NotTo(HaveOccurred())
+
+						Eventually(func() error {
+							cm := &v1.ConfigMap{}
+							return deployK8sClient.Get(ctx, types.NamespacedName{Name: "example", Namespace: namespace}, cm)
+						}).Should(Succeed())
+
+						By("editing the ConfigMap to trigger another reconciliation")
+						cm := &v1.ConfigMap{}
+						err = deployK8sClient.Get(ctx, types.NamespacedName{Name: "example", Namespace: namespace}, cm)
+						Expect(err).NotTo(HaveOccurred())
+						cm.Data["key"] = "new-value"
+						Expect(deployK8sClient.Update(ctx, cm)).To(Succeed())
+						// Wait for the reconciliation to complete
+						Eventually(func() error {
+							updatedCM := &v1.ConfigMap{}
+							err := deployK8sClient.Get(ctx, types.NamespacedName{Name: "example", Namespace: namespace}, updatedCM)
+							if err != nil {
+								return err
+							}
+							if updatedCM.Data["key"] != "new-value" {
+								return fmt.Errorf("expected key to be 'new-value', got '%s'", updatedCM.Data["key"])
+							}
+							return nil
+						}).Should(Succeed(), "expected ConfigMap to be updated with new value")
+
+					})
+
 				})
-				Context("When the infrahubresource is deleted", func() {
+				Context("When the vidraresource is deleted", func() {
 					It("should ignore not found error of a resource", func() {
 						By("calling the reconcile function on a non-existent resource")
 						result, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: types.NamespacedName{Name: "nonexistent", Namespace: "default"}})
@@ -1115,7 +1348,7 @@ metadata:
 
 					It("should not delete the managed resource if it was overwritten before finalizer handling", func() {
 						By("setting up the mock client to return a YAML with resources a and b")
-						res := &infrahubv1alpha1.InfrahubResource{}
+						res := &infrahubv1alpha1.VidraResource{}
 						err := k8sClient.Get(ctx, namespacedName, res)
 						Expect(err).NotTo(HaveOccurred())
 
@@ -1132,16 +1365,15 @@ metadata:
   name: resource-b
   namespace: ` + namespace + `
 `
-						mockClient.EXPECT().
-							DownloadArtifact(apiURL, artifactID, targetBranche, targetDate).
-							Return(io.NopCloser(strings.NewReader(yamlData)), nil)
+						res.Spec.Manifest = yamlData
+						Expect(k8sClient.Update(ctx, res)).To(Succeed())
 
 						mockRESTMapper.EXPECT().
 							RESTMapping(gomock.Any(), gomock.Any()).
 							Return(&meta.RESTMapping{Scope: meta.RESTScopeNamespace}, nil).
 							AnyTimes()
 
-						deployK8sClient := setupClientFactoryMock(ctx, k8sClient, mockClientFactory, namespacedName, secondK8sClient)
+						deployK8sClient := setupDynamicMulticlusterFactoryMock(ctx, k8sClient, mockDynamicMulticlusterFactory, namespacedName, secondK8sClient)
 
 						By("reconciling the resource on the destination server")
 						_, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: namespacedName})
@@ -1163,7 +1395,7 @@ metadata:
 						Expect(deployK8sClient.Delete(ctx, newConfigMap)).To(Succeed())
 						Expect(deployK8sClient.Create(ctx, newConfigMap)).To(Succeed())
 
-						By("deleting the InfrahubResource and reconciling again")
+						By("deleting the VidraResource and reconciling again")
 						Expect(k8sClient.Delete(ctx, res)).To(Succeed())
 
 						_, err = reconciler.Reconcile(ctx, ctrl.Request{NamespacedName: namespacedName})
@@ -1171,7 +1403,7 @@ metadata:
 
 						// res should be deleted
 						Eventually(func() error {
-							res := &infrahubv1alpha1.InfrahubResource{}
+							res := &infrahubv1alpha1.VidraResource{}
 							err := k8sClient.Get(ctx, namespacedName, res)
 							if k8serrors.IsNotFound(err) {
 								return nil
@@ -1206,84 +1438,61 @@ metadata:
 				})
 
 				Context("Once a Error happens", func() {
-
-					It("should return error if DownloadArtifact fails", func() {
-						By("setting up the mock client to return an error and reconcile")
-						mockClient.EXPECT().
-							DownloadArtifact(apiURL, artifactID, targetBranche, targetDate).
-							Return(nil, fmt.Errorf("download error"))
-
-						setupClientFactoryMock(ctx, k8sClient, mockClientFactory, namespacedName, secondK8sClient)
-
-						_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
-						Expect(err).To(HaveOccurred())
-						Expect(err.Error()).To(ContainSubstring("download error"))
-
-						// Check that the InfrahubResource status is updated to failed
-						instance := &infrahubv1alpha1.InfrahubResource{}
-						err = k8sClient.Get(ctx, namespacedName, instance)
-						Expect(err).NotTo(HaveOccurred())
-						Expect(instance.Status.DeployState).To(Equal(infrahubv1alpha1.StateFailed))
-						Expect(instance.Status.LastError).To(Equal("download error"))
-					})
-
 					It("should return error if decoding fails", func() {
 						By("setting up the mock client to return invalid YAML and reconcile")
-						mockClient.EXPECT().
-							DownloadArtifact(apiURL, artifactID, targetBranche, targetDate).
-							Return(bytes.NewReader([]byte("\x00\x00\x00invalid")), nil)
+						instance := &infrahubv1alpha1.VidraResource{}
+						err := k8sClient.Get(ctx, namespacedName, instance)
+						Expect(err).NotTo(HaveOccurred())
+						instance.Spec.Manifest = "invalid: yaml: content"
+						Expect(k8sClient.Update(ctx, instance)).To(Succeed())
+
 						mockRESTMapper.EXPECT().
 							RESTMapping(gomock.Any(), gomock.Any()).
 							Return(&meta.RESTMapping{Scope: meta.RESTScopeNamespace}, nil).
 							AnyTimes()
 
-						setupClientFactoryMock(ctx, k8sClient, mockClientFactory, namespacedName, secondK8sClient)
+						setupDynamicMulticlusterFactoryMock(ctx, k8sClient, mockDynamicMulticlusterFactory, namespacedName, secondK8sClient)
 
-						_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
+						_, err = reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
 						Expect(err).To(HaveOccurred())
 						Expect(err.Error()).To(ContainSubstring("decode artifact: error converting YAML to JSON: yaml"))
 					})
 
 					It("should return error if RESTMapping fails", func() {
 						By("setting up the mock client to return a valid YAML but RESTMapping fails")
-						mockClient.EXPECT().
-							DownloadArtifact(apiURL, artifactID, targetBranche, targetDate).
-							Return(bytes.NewReader([]byte(`{"apiVersion":"v1","kind":"ConfigMap","metadata":{"name":"test"}}`)), nil)
+						instance := &infrahubv1alpha1.VidraResource{}
+						err := k8sClient.Get(ctx, namespacedName, instance)
+						Expect(err).NotTo(HaveOccurred())
+						instance.Spec.Manifest = `{"apiVersion":"v1","kind":"ConfigMap","metadata":{"name":"test"}}`
+						Expect(k8sClient.Update(ctx, instance)).To(Succeed())
 
 						mockRESTMapper.EXPECT().
 							RESTMapping(schema.GroupKind{Group: "", Kind: "ConfigMap"}, "v1").
 							Return(nil, fmt.Errorf("REST mapping error"))
 
-						setupClientFactoryMock(ctx, k8sClient, mockClientFactory, namespacedName, secondK8sClient)
+						setupDynamicMulticlusterFactoryMock(ctx, k8sClient, mockDynamicMulticlusterFactory, namespacedName, secondK8sClient)
 
-						_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
+						_, err = reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
 						Expect(err).To(HaveOccurred())
 						Expect(err.Error()).To(ContainSubstring("REST mapping error"))
 					})
 
 					It("should return an error when resource creation fails", func() {
 						By("setting up the mock client to return a valid YAML and simulate a failure during resource creation")
-						reconciler := &InfrahubResourceReconciler{
-							Client:         failingK8sClient,
-							Scheme:         k8sClient.Scheme(),
-							InfrahubClient: mockClient,
-							RESTMapper:     mockRESTMapper,
-							ClientFactory:  mockClientFactory,
+						reconciler := &VidraResourceReconciler{
+							Client:                     failingK8sClient,
+							Scheme:                     k8sClient.Scheme(),
+							InfrahubClient:             mockClient,
+							RESTMapper:                 mockRESTMapper,
+							DynamicMulticlusterFactory: mockDynamicMulticlusterFactory,
 						}
 
-						mockClient.EXPECT().
-							DownloadArtifact(apiURL, artifactID, targetBranche, targetDate).
-							Return(bytes.NewReader([]byte(`{
-						"apiVersion": "v1",
-						"kind": "ConfigMap",
-						"metadata": {
-							"name": "example-config",
-							"namespace": "default"
-						},
-						"data": {
-							"key1": "value1"
-						}
-					}`)), nil)
+						instance := &infrahubv1alpha1.VidraResource{}
+						err := k8sClient.Get(ctx, namespacedName, instance)
+						Expect(err).NotTo(HaveOccurred())
+						instance.Spec.Manifest = `{"apiVersion":"v1","kind":"ConfigMap","metadata":{"name":"example-config","namespace":"default"},"data":{"key1":"value1"}}`
+						Expect(k8sClient.Update(ctx, instance)).To(Succeed())
+
 						mockRESTMapper.EXPECT().
 							RESTMapping(gomock.Any(), gomock.Any()).
 							Return(&meta.RESTMapping{Scope: meta.RESTScopeNamespace}, nil).
@@ -1294,15 +1503,14 @@ metadata:
 							failingClient.FailingMethod = "Create"
 						}
 
-						setupClientFactoryMock(ctx, failingK8sClient, mockClientFactory, namespacedName, failingK8sClient)
+						setupDynamicMulticlusterFactoryMock(ctx, failingK8sClient, mockDynamicMulticlusterFactory, namespacedName, failingK8sClient)
 
 						result, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
 
 						// Assert: Check for the expected error
 						Expect(err).To(HaveOccurred())
 						Expect(err.Error()).To(ContainSubstring("simulated failure: Create - &{map[apiVersion:v1 data:map[key1:value1]"))
-						// Assert: Ensure the state of the InfrahubResource is marked as failed
-						instance := &infrahubv1alpha1.InfrahubResource{}
+						// Assert: Ensure the state of the VidraResource is marked as failed
 						err = k8sClient.Get(ctx, namespacedName, instance)
 						Expect(err).NotTo(HaveOccurred())
 						Expect(instance.Status.DeployState).To(Equal(infrahubv1alpha1.StateFailed))
@@ -1320,7 +1528,7 @@ metadata:
 								Name:      "example-config",
 								Namespace: "default",
 								Annotations: map[string]string{
-									"managed-by":    infrahubOperator,
+									"managed-by":    vidraOperator,
 									OwnerAnnotation: resourceName,
 								},
 							},
@@ -1329,7 +1537,7 @@ metadata:
 							},
 						}
 
-						deployK8sClient := setupClientFactoryMock(ctx, failingK8sClient, mockClientFactory, namespacedName, failingK8sClient)
+						deployK8sClient := setupDynamicMulticlusterFactoryMock(ctx, failingK8sClient, mockDynamicMulticlusterFactory, namespacedName, failingK8sClient)
 
 						defer (func() {
 							err := deployK8sClient.Delete(ctx, &v1.ConfigMap{
@@ -1344,38 +1552,29 @@ metadata:
 						Expect(deployK8sClient.Create(ctx, existingConfigMap)).To(Succeed())
 
 						// Add a finalizer to the existing resource
-						instance := &infrahubv1alpha1.InfrahubResource{}
+						instance := &infrahubv1alpha1.VidraResource{}
 						err := k8sClient.Get(ctx, namespacedName, instance)
 						Expect(err).NotTo(HaveOccurred())
 						instance.SetFinalizers([]string{FinalizerName})
 						Expect(k8sClient.Update(ctx, instance)).To(Succeed())
 
-						// Mock InfrahubClient behavior
-						mockClient.EXPECT().
-							DownloadArtifact(apiURL, artifactID, targetBranche, targetDate).
-							Return(bytes.NewReader([]byte(`{
-							"apiVersion": "v1", 
-							"kind": "ConfigMap", 
-							"metadata": {
-								"name": "example-config",
-								"namespace": "default"
-							},
-							"data": {
-								"key1": "updated-value"
-							}
-						}`)), nil)
+						instance = &infrahubv1alpha1.VidraResource{}
+						err = k8sClient.Get(ctx, namespacedName, instance)
+						Expect(err).NotTo(HaveOccurred())
+						instance.Spec.Manifest = `{"apiVersion":"v1","kind":"ConfigMap","metadata":{"name":"example-config","namespace":"default"},"data":{"key1":"updated-value"}}`
+						Expect(k8sClient.Update(ctx, instance)).To(Succeed())
 
 						mockRESTMapper.EXPECT().
 							RESTMapping(gomock.Any(), gomock.Any()).
 							Return(&meta.RESTMapping{Scope: meta.RESTScopeNamespace}, nil).
 							AnyTimes()
 
-						reconciler := &InfrahubResourceReconciler{
-							Client:         failingK8sClient,
-							Scheme:         k8sClient.Scheme(),
-							InfrahubClient: mockClient,
-							RESTMapper:     mockRESTMapper,
-							ClientFactory:  mockClientFactory,
+						reconciler := &VidraResourceReconciler{
+							Client:                     failingK8sClient,
+							Scheme:                     k8sClient.Scheme(),
+							InfrahubClient:             mockClient,
+							RESTMapper:                 mockRESTMapper,
+							DynamicMulticlusterFactory: mockDynamicMulticlusterFactory,
 						}
 						if failingClient, ok := failingK8sClient.(*mock.FailingUpdateClient); ok {
 							failingClient.FailingMethod = "Update"
@@ -1399,19 +1598,19 @@ metadata:
 						}
 					})
 
-					It("should return an error when patching the state of infrahubResource with finalizer fails", func() {
+					It("should return an error when patching the state of vidraResource with finalizer fails", func() {
 						By("creating an existing ConfigMap and simulating a failure during Patch (State)")
-						reconciler := &InfrahubResourceReconciler{
-							Client:         failingK8sClient,
-							Scheme:         k8sClient.Scheme(),
-							InfrahubClient: mockClient,
-							RESTMapper:     mockRESTMapper,
-							ClientFactory:  mockClientFactory,
+						reconciler := &VidraResourceReconciler{
+							Client:                     failingK8sClient,
+							Scheme:                     k8sClient.Scheme(),
+							InfrahubClient:             mockClient,
+							RESTMapper:                 mockRESTMapper,
+							DynamicMulticlusterFactory: mockDynamicMulticlusterFactory,
 						}
 						if failingClient, ok := failingK8sClient.(*mock.FailingUpdateClient); ok {
 							failingClient.FailingMethod = "Patch"
 						}
-						setupClientFactoryMock(ctx, failingK8sClient, mockClientFactory, namespacedName, failingK8sClient)
+						setupDynamicMulticlusterFactoryMock(ctx, failingK8sClient, mockDynamicMulticlusterFactory, namespacedName, failingK8sClient)
 
 						_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
 						Expect(err).To(HaveOccurred())
@@ -1424,19 +1623,11 @@ metadata:
 
 					It("should return an error when deleting an existing managed resource fails and mark the resource stail", func() {
 						By("creating an existing ConfigMap by reconcyling it and simulating a failure during update")
-						mockClient.EXPECT().
-							DownloadArtifact(apiURL, artifactID, targetBranche, targetDate).
-							Return(bytes.NewReader([]byte(`{
-							"apiVersion": "v1", 
-							"kind": "ConfigMap", 
-							"metadata": {
-								"name": "example-config",
-								"namespace": "default"
-							},
-							"data": {
-								"key1": "value1"
-							}
-						}`)), nil)
+						instance := &infrahubv1alpha1.VidraResource{}
+						err := k8sClient.Get(ctx, namespacedName, instance)
+						Expect(err).NotTo(HaveOccurred())
+						instance.Spec.Manifest = `{"apiVersion":"v1","kind":"ConfigMap","metadata":{"name":"example-config","namespace":"default"},"data":{"key1":"value1"}}`
+						Expect(k8sClient.Update(ctx, instance)).To(Succeed())
 
 						mockRESTMapper.EXPECT().
 							RESTMapping(gomock.Any(), gomock.Any()).
@@ -1444,31 +1635,24 @@ metadata:
 							AnyTimes()
 
 						// Set up the initial resource in the cluster
-						reconciler := &InfrahubResourceReconciler{
-							Client:         failingK8sClient,
-							Scheme:         k8sClient.Scheme(),
-							InfrahubClient: mockClient,
-							RESTMapper:     mockRESTMapper,
-							ClientFactory:  mockClientFactory,
+						reconciler := &VidraResourceReconciler{
+							Client:                     failingK8sClient,
+							Scheme:                     k8sClient.Scheme(),
+							InfrahubClient:             mockClient,
+							RESTMapper:                 mockRESTMapper,
+							DynamicMulticlusterFactory: mockDynamicMulticlusterFactory,
 						}
-						deployK8sClient := setupClientFactoryMock(ctx, failingK8sClient, mockClientFactory, namespacedName, failingK8sClient)
-						_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
+						deployK8sClient := setupDynamicMulticlusterFactoryMock(ctx, failingK8sClient, mockDynamicMulticlusterFactory, namespacedName, failingK8sClient)
+						_, err = reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
 						Expect(err).NotTo(HaveOccurred())
 
 						By("updating the existing ConfigMap and recycling it with Delete failure")
-						mockClient.EXPECT().
-							DownloadArtifact(apiURL, artifactID, targetBranche, targetDate).
-							Return(bytes.NewReader([]byte(`{
-							"apiVersion": "v1", 
-							"kind": "ConfigMap", 
-							"metadata": {
-								"name": "example-config2",
-								"namespace": "default"
-							},
-							"data": {
-								"key1": "updated-value"
-							}
-						}`)), nil)
+						err = k8sClient.Get(ctx, namespacedName, instance)
+						Expect(err).NotTo(HaveOccurred())
+						Expect(k8sClient.Status().Update(ctx, instance)).To(Succeed())
+
+						instance.Spec.Manifest = `{"apiVersion":"v1","kind":"ConfigMap","metadata":{"name":"example-config2","namespace":"default"},"data":{"key1":"updated-value"}}`
+						Expect(k8sClient.Update(ctx, instance)).To(Succeed())
 
 						mockRESTMapper.EXPECT().
 							RESTMapping(gomock.Any(), gomock.Any()).
@@ -1507,7 +1691,6 @@ metadata:
 						})
 						Expect(err).NotTo(HaveOccurred())
 
-						instance := &infrahubv1alpha1.InfrahubResource{}
 						// Verify that the DeployState is set to StateStale
 						err = k8sClient.Get(ctx, namespacedName, instance)
 						Expect(err).NotTo(HaveOccurred())
@@ -1517,17 +1700,17 @@ metadata:
 
 					It("should return error if Get fails with unexpected error", func() {
 						By("setting up the mock client to return a valid YAML and simulate a failure during Get")
-						reconciler := &InfrahubResourceReconciler{
-							Client:         failingK8sClient,
-							Scheme:         nil, // Not needed for this test
-							InfrahubClient: mockClient,
-							RESTMapper:     mockRESTMapper,
-							ClientFactory:  mockClientFactory,
+						reconciler := &VidraResourceReconciler{
+							Client:                     failingK8sClient,
+							Scheme:                     nil, // Not needed for this test
+							InfrahubClient:             mockClient,
+							RESTMapper:                 mockRESTMapper,
+							DynamicMulticlusterFactory: mockDynamicMulticlusterFactory,
 						}
 						if failingClient, ok := failingK8sClient.(*mock.FailingUpdateClient); ok {
 							failingClient.FailingMethod = "Get"
 						}
-						setupClientFactoryMock(ctx, k8sClient, mockClientFactory, namespacedName, secondK8sClient)
+						setupDynamicMulticlusterFactoryMock(ctx, k8sClient, mockDynamicMulticlusterFactory, namespacedName, secondK8sClient)
 
 						result, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
 
@@ -1543,10 +1726,10 @@ metadata:
 	}
 })
 
-var _ = Describe("InfrahubResourceReconciler SetupWithManager", func() {
+var _ = Describe("VidraResourceReconciler SetupWithManager", func() {
 	var (
 		mgr        manager.Manager
-		reconciler *InfrahubResourceReconciler
+		reconciler *VidraResourceReconciler
 		mockClient *mock.MockInfrahubClient
 		mockCtrl   *gomock.Controller
 	)
@@ -1561,7 +1744,7 @@ var _ = Describe("InfrahubResourceReconciler SetupWithManager", func() {
 		})
 		Expect(err).NotTo(HaveOccurred())
 
-		reconciler = &InfrahubResourceReconciler{
+		reconciler = &VidraResourceReconciler{
 			Client:         mgr.GetClient(),
 			Scheme:         mgr.GetScheme(),
 			InfrahubClient: mockClient,
@@ -1572,8 +1755,40 @@ var _ = Describe("InfrahubResourceReconciler SetupWithManager", func() {
 		mockCtrl.Finish()
 	})
 
-	It("should set up the controller with the manager successfully", func() {
-		err := reconciler.SetupWithManager(mgr)
+	It("should create a ConfigMap for the controller and set RequeueAfter", func() {
+		By("creating the ConfigMap for the controller")
+		configMap := &v1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "vidra-config",
+				Namespace: "default",
+				Labels: map[string]string{
+					"app": "vidra",
+				},
+			},
+			Data: map[string]string{
+				"requeueRecourcesAfter": "12m",
+				"eventBasedReconcile":   "true",
+			},
+		}
+		err := k8sClient.Create(ctx, configMap)
 		Expect(err).NotTo(HaveOccurred())
+		defer func() {
+			By("deleting the ConfigMap for cleanup")
+			err := k8sClient.Delete(ctx, configMap)
+			Expect(err).NotTo(HaveOccurred())
+		}()
+
+		By("setting up the reconciler with the manager")
+		err = reconciler.SetupWithManager(mgr)
+		Expect(err).NotTo(HaveOccurred())
+
+		configMap = &v1.ConfigMap{}
+		err = k8sClient.Get(ctx, types.NamespacedName{
+			Name:      "vidra-config",
+			Namespace: "default",
+		}, configMap)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(reconciler.RequeueAfter).To(Equal(12 * time.Minute))
+		Expect(reconciler.EventBasedReconcile).To(BeTrue(), "EventBasedReconcile should be true")
 	})
 })

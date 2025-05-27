@@ -33,8 +33,9 @@ rules:
 - apiGroups:
   - vidra.operators.com
   resources:
-  - infrahubresources
+  - Vidraresources
   - infrahubsyncs
+  - vidraresources
   verbs:
   - create
   - delete
@@ -46,15 +47,17 @@ rules:
 - apiGroups:
   - vidra.operators.com
   resources:
-  - infrahubresources/finalizers
+  - Vidraresources/finalizers
   - infrahubsyncs/finalizers
+  - vidraresources/finalizers
   verbs:
   - update
 - apiGroups:
   - vidra.operators.com
   resources:
-  - infrahubresources/status
+  - Vidraresources/status
   - infrahubsyncs/status
+  - vidraresources/status
   verbs:
   - get
   - patch

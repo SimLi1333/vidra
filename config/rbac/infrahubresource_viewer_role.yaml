@@ -1,16 +1,16 @@
-# permissions for end users to view infrahubresources.
+# permissions for end users to view vidraresources.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   labels:
     app.kubernetes.io/name: vidra
     app.kubernetes.io/managed-by: kustomize
-  name: infrahubresource-viewer-role
+  name: vidraresource-viewer-role
 rules:
 - apiGroups:
   - vidra.operators.com
   resources:
-  - infrahubresources
+  - vidraresources
   verbs:
   - get
   - list
@@ -18,6 +18,6 @@ rules:
 - apiGroups:
   - vidra.operators.com
   resources:
-  - infrahubresources/status
+  - vidraresources/status
   verbs:
   - get

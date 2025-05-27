@@ -127,20 +127,20 @@ var _ = AfterSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 })
 
-func setupClientFactoryMock(
+func setupDynamicMulticlusterFactoryMock(
 	ctx context.Context,
 	k8sClient client.Client,
-	mockClientFactory *mock.MockClientFactory,
+	mockClientFactory *mock.MockDynamicMulticlusterFactory,
 	namespacedName types.NamespacedName,
 	secondK8sClient client.Client,
 ) client.Client {
-	infrahubResource := &infrahubv1alpha1.InfrahubResource{}
-	err := k8sClient.Get(ctx, namespacedName, infrahubResource)
+	vidraResource := &infrahubv1alpha1.VidraResource{}
+	err := k8sClient.Get(ctx, namespacedName, vidraResource)
 	Expect(err).NotTo(HaveOccurred())
 
-	if infrahubResource.Spec.Destination.Server != "" || infrahubResource.Spec.Destination.Server == "https://kubernetes.default.svc" {
+	if vidraResource.Spec.Destination.Server != "" || vidraResource.Spec.Destination.Server == "https://kubernetes.default.svc" {
 		mockClientFactory.EXPECT().
-			GetCachedClientFor(ctx, infrahubResource.Spec.Destination.Server, k8sClient).
+			GetCachedClientFor(ctx, vidraResource.Spec.Destination.Server, k8sClient).
 			Return(secondK8sClient, nil).AnyTimes()
 		return secondK8sClient
 	}
