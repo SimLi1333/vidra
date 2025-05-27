@@ -11,18 +11,18 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type DynamicClientFactory struct {
+type DynamicMulticlusterFactory struct {
 	mu      sync.Mutex
 	clients map[string]client.Client
 }
 
-func NewDynamicClientFactory() *DynamicClientFactory {
-	return &DynamicClientFactory{
+func NewDynamicMulticlusterFactory() *DynamicMulticlusterFactory {
+	return &DynamicMulticlusterFactory{
 		clients: make(map[string]client.Client),
 	}
 }
 
-func (f *DynamicClientFactory) GetCachedClientFor(ctx context.Context, serverURL string, k8sClient client.Client) (client.Client, error) {
+func (f *DynamicMulticlusterFactory) GetCachedClientFor(ctx context.Context, serverURL string, k8sClient client.Client) (client.Client, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 

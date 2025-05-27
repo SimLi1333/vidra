@@ -18,9 +18,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-var _ = Describe("DynamicClientFactory", func() {
+var _ = Describe("DynamicMulticlusterFactory", func() {
 	var (
-		factory   *k8s.DynamicClientFactory
+		factory   *k8s.DynamicMulticlusterFactory
 		ctx       context.Context
 		serverURL string
 		k8sClient client.Client
@@ -28,7 +28,7 @@ var _ = Describe("DynamicClientFactory", func() {
 	var namespace = "default"
 
 	BeforeEach(func() {
-		factory = k8s.NewDynamicClientFactory()
+		factory = k8s.NewDynamicMulticlusterFactory()
 		ctx = context.Background()
 		serverURL = "https://my-cluster.example.com"
 

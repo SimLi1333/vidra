@@ -144,12 +144,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controller.InfrahubResourceReconciler{
+	if err = (&controller.VidraResourceReconciler{
 		Client:     mgr.GetClient(),
 		Scheme:     mgr.GetScheme(),
 		RESTMapper: mgr.GetRESTMapper(),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "InfrahubResource")
+		setupLog.Error(err, "unable to create controller", "controller", "VidraResource")
 		os.Exit(1)
 	}
 	if err = (&controller.InfrahubSyncReconciler{

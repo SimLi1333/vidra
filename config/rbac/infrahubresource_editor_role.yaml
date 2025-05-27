@@ -1,16 +1,16 @@
-# permissions for end users to edit infrahubresources.
+# permissions for end users to edit vidraresources.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   labels:
     app.kubernetes.io/name: vidra
     app.kubernetes.io/managed-by: kustomize
-  name: infrahubresource-editor-role
+  name: vidraresource-editor-role
 rules:
 - apiGroups:
   - infrahub.operators.com
   resources:
-  - infrahubresources
+  - vidraresources
   verbs:
   - create
   - delete
@@ -22,6 +22,6 @@ rules:
 - apiGroups:
   - infrahub.operators.com
   resources:
-  - infrahubresources/status
+  - vidraresources/status
   verbs:
   - get

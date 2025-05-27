@@ -24,6 +24,6 @@ resources:
 # if you do not want those helpers be installed with your Project.
 - infrahubsync_editor_role.yaml
 - infrahubsync_viewer_role.yaml
-- infrahubresource_editor_role.yaml
-- infrahubresource_viewer_role.yaml
+- vidraresource_editor_role.yaml
+- vidraresource_viewer_role.yaml
 

@@ -14,3 +14,4 @@ spec:
   destination:
     # server: 'https://k8s-cldop-test-0.network.garden:6443'
     namespace: 'default'
+    reconcileOnEvents: true

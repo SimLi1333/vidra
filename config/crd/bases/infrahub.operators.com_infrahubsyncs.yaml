@@ -47,6 +47,11 @@ spec:
                     description: Namespace in the Kubernetes cluster where the resource
                       should be sent
                     type: string
+                  reconcileOnEvents:
+                    default: false
+                    description: 'If true, the operator will reconcile resources based
+                      on k8s events. (default: false)'
+                    type: boolean
                   server:
                     description: Server URL for the destination (usually a Kubernetes
                       API endpoint)
@@ -84,21 +89,28 @@ spec:
           status:
             description: InfrahubSyncStatus defines the observed state of InfrahubSync
             properties:
-              lastError:
-                type: string
-              lastSyncTime:
-                format: date-time
-                type: string
-              syncState:
-                description: |-
-                  INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-                  Important: Run "make" to regenerate code after modifying this file
+              checksums:
+                description: Checksums contains a list of checksums for synced resources
                 enum:
                 - Pending
                 - Running
                 - Succeeded
                 - Failed
                 - Stale
+                items:
+                  type: string
+                type: array
+              lastError:
+                description: LastError provides details about the last error encountered
+                  during the sync operation
+                type: string
+              lastSyncTime:
+                description: LastSyncTime indicates the last time the sync operation
+                  was performed
+                format: date-time
+                type: string
+              syncState:
+                description: SyncState indicates the current state of the sync operation
                 type: string
             type: object
         type: object
