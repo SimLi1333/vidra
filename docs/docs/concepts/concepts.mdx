@@ -29,9 +29,9 @@ An `InfrahubSync` is a Kubernetes Custom Resource that defines a desired sync op
 
 The Vidra Operator watches these resources and ensures the corresponding Kubernetes resources are created or updated as needed.
 
-## InfrahubResource
+## VidraResource
 
-An `InfrahubResource` is a Kubernetes CR created and managed by the Vidra Operator based on the results of an `InfrahubSync`. Each `InfrahubResource` corresponds to a specific resource from Infrahub and contains:
+An `VidraResource` is a Kubernetes CR created and managed by the Vidra Operator based on the results of an `InfrahubSync`. Each `VidraResource` corresponds to a specific resource from Infrahub and contains:
 
 - A **artifact ID** identifying the unique Artifact in Infrahub.
 - **storage ID** and **checksum** for tracking the artifact version.
@@ -58,7 +58,7 @@ The domain model includes types like:
 
 - `Artifact`
 
-The `Manifest` itselfe is not saved in the domain model, but rather in the `InfrahubResource` CR. The domain model focuses on the core logic and operations related to artifacts. 
+The `Manifest` itselfe is not saved in the domain model, but rather in the `VidraResource` CR. The domain model focuses on the core logic and operations related to artifacts. 
 
 This promotes testability and modularity.
 

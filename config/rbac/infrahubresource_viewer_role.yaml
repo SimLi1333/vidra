@@ -8,7 +8,7 @@ metadata:
   name: vidraresource-viewer-role
 rules:
 - apiGroups:
-  - vidra.operators.com
+  - infrahub.operators.com
   resources:
   - vidraresources
   verbs:
@@ -16,7 +16,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - vidra.operators.com
+  - infrahub.operators.com
   resources:
   - vidraresources/status
   verbs:

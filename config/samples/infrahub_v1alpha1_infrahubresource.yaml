@@ -1,5 +1,5 @@
 <<<<<<< HEAD
-apiVersion: vidra.operators.com/v1alpha1
+apiVersion: infrahub.operators.com/v1alpha1
 kind: InfrahubResource
 =======
 apiVersion: infrahub.operators.com/v1alpha1

@@ -730,7 +730,7 @@ var _ = Describe("InfrahubSync Controller", func() {
 				err = k8sClient.Get(ctx, namespacedName, instance)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(instance.Status.SyncState).To(Equal(infrahubv1alpha1.StateFailed))
-				Expect(instance.Status.LastError).To(Equal("Failed to download artifact: download error"))
+				Expect(instance.Status.LastError).To(Equal("failed to download artifact: download error"))
 			})
 
 			It("should ignore the resource if it is not found", func() {

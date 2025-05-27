@@ -3,8 +3,8 @@
 # It should be run by config/default
 resources:
 <<<<<<< HEAD
-- bases/vidra.operators.com_infrahubresources.yaml
-- bases/vidra.operators.com_infrahubsyncs.yaml
+- bases/infrahub.operators.com_infrahubresources.yaml
+- bases/infrahub.operators.com_infrahubsyncs.yaml
 =======
 - bases/infrahub.operators.com_vidraresources.yaml
 - bases/infrahub.operators.com_infrahubsyncs.yaml

@@ -1,91 +1,17 @@
 # API Reference
 
 ## Packages
-- [vidra.operators.com/v1alpha1](#vidraoperatorscomv1alpha1)
+- [infrahub.operators.com/v1alpha1](#vidraoperatorscomv1alpha1)
 
 
-## vidra.operators.com/v1alpha1
+## infrahub.operators.com/v1alpha1
 
 Package v1alpha1 contains API Schema definitions for the infrahub v1alpha1 API group
 
 ### Resource Types
-- [InfrahubResource](#infrahubresource)
 - [InfrahubSync](#infrahubsync)
+- [VidraResource](#vidraresource)
 
-
-
-#### InfrahubResource
-
-
-
-InfrahubResource is the Schema for the infrahubresources API
-
-
-
-
-
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `apiVersion` _string_ | `vidra.operators.com/v1alpha1` | | |
-| `kind` _string_ | `InfrahubResource` | | |
-| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
-| `spec` _[InfrahubResourceSpec](#infrahubresourcespec)_ | InfrahubResourceSpec defines the desired state of InfrahubResource |  |  |
-| `status` _[InfrahubResourceStatus](#infrahubresourcestatus)_ | InfrahubResourceStatus defines the observed state of InfrahubResource |  |  |
-
-
-#### InfrahubResourceIDs
-
-
-
-InfrahubResourceIDs contains identifiers for the resource
-
-
-
-_Appears in:_
-- [InfrahubResourceSpec](#infrahubresourcespec)
-
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `artefactID` _string_ | Unique identifier for the artifact |  | Required: \{\} <br /> |
-| `checksum` _string_ | Checksum of the artifact |  | Required: \{\} <br /> |
-| `storageID` _string_ | Storage ID for the artifact |  | Required: \{\} <br /> |
-
-
-#### InfrahubResourceSpec
-
-
-
-InfrahubResourceSpec defines the desired state of InfrahubResource
-
-
-
-_Appears in:_
-- [InfrahubResource](#infrahubresource)
-
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `source` _[InfrahubSyncSource](#infrahubsyncsource)_ | Source contains the source information for the Infrahub API interaction |  |  |
-| `destination` _[InfrahubSyncDestination](#infrahubsyncdestination)_ | Destination contains the destination information for the resource |  |  |
-| `ids` _[InfrahubResourceIDs](#infrahubresourceids)_ | IDs contains important identifiers for the resource |  |  |
-
-
-#### InfrahubResourceStatus
-
-
-
-InfrahubResourceStatus defines the observed state of InfrahubResource
-
-
-
-_Appears in:_
-- [InfrahubResource](#infrahubresource)
-
-| Field | Description | Default | Validation |
-| --- | --- | --- | --- |
-| `managedResources` _[ManagedResourceStatus](#managedresourcestatus) array_ | ManagedResources contains the status of managed resources |  |  |
-| `DeployState` _[State](#state)_ | DeployState indicates the current state of the deployment |  | Enum: [Pending Running Succeeded Failed Stale] <br /> |
-| `lastError` _string_ | LastError contains the last error message if any |  |  |
-| `lastSyncTime` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#time-v1-meta)_ | LastSyncTime indicates the last time the resource was synchronized |  |  |
 
 
 #### InfrahubSync
@@ -100,7 +26,7 @@ InfrahubSync is the Schema for the infrahubsyncs API
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `apiVersion` _string_ | `vidra.operators.com/v1alpha1` | | |
+| `apiVersion` _string_ | `infrahub.operators.com/v1alpha1` | | |
 | `kind` _string_ | `InfrahubSync` | | |
 | `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
 | `spec` _[InfrahubSyncSpec](#infrahubsyncspec)_ | Spec defines the desired state of InfrahubSync |  |  |
@@ -111,30 +37,30 @@ InfrahubSync is the Schema for the infrahubsyncs API
 
 
 
-InfrahubResourceDestination contains information about where the resource will be sent
+VidraResourceDestination contains information about where the resource will be sent
 
 
 
 _Appears in:_
-- [InfrahubResourceSpec](#infrahubresourcespec)
 - [InfrahubSyncSpec](#infrahubsyncspec)
+- [VidraResourceSpec](#vidraresourcespec)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `server` _string_ | Server URL for the destination (usually a Kubernetes API endpoint) |  | Optional: \{\} <br /> |
 | `namespace` _string_ | Namespace in the Kubernetes cluster where the resource should be sent |  | Optional: \{\} <br /> |
+| `reconcileOnEvents` _boolean_ | If true, the operator will reconcile resources based on k8s events. (default: false) | false |  |
 
 
 #### InfrahubSyncSource
 
 
 
-InfrahubResourceSource contains the source information for the resource
+VidraResourceSource contains the source information for the resource
 
 
 
 _Appears in:_
-- [InfrahubResourceSpec](#infrahubresourcespec)
 - [InfrahubSyncSpec](#infrahubsyncspec)
 
 | Field | Description | Default | Validation |
@@ -175,9 +101,10 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `syncState` _[State](#state)_ | SyncState indicates the current state of the synchronization process |  | Enum: [Pending Running Succeeded Failed Stale] <br /> |
-| `lastError` _string_ | LastError contains the last error message if any |  |  |
-| `lastSyncTime` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#time-v1-meta)_ | LastSyncTime indicates the last time the synchronization was performed |  |  |
+| `checksums` _string array_ | Checksums contains a list of checksums for synced resources |  | Enum: [Pending Running Succeeded Failed Stale] <br /> |
+| `syncState` _[State](#state)_ | SyncState indicates the current state of the sync operation |  |  |
+| `lastError` _string_ | LastError provides details about the last error encountered during the sync operation |  |  |
+| `lastSyncTime` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#time-v1-meta)_ | LastSyncTime indicates the last time the sync operation was performed |  |  |
 
 
 #### ManagedResourceStatus
@@ -189,7 +116,7 @@ _Appears in:_
 
 
 _Appears in:_
-- [InfrahubResourceStatus](#infrahubresourcestatus)
+- [VidraResourceStatus](#vidraresourcestatus)
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
@@ -208,8 +135,8 @@ _Underlying type:_ _string_
 
 
 _Appears in:_
-- [InfrahubResourceStatus](#infrahubresourcestatus)
 - [InfrahubSyncStatus](#infrahubsyncstatus)
+- [VidraResourceStatus](#vidraresourcestatus)
 
 | Field | Description |
 | --- | --- |
@@ -217,5 +144,62 @@ _Appears in:_
 | `Succeeded` |  |
 | `Failed` |  |
 | `Stale` |  |
+
+
+#### VidraResource
+
+
+
+VidraResource is the Schema for the Vidraresources API
+
+
+
+
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `apiVersion` _string_ | `infrahub.operators.com/v1alpha1` | | |
+| `kind` _string_ | `VidraResource` | | |
+| `metadata` _[ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#objectmeta-v1-meta)_ | Refer to Kubernetes API documentation for fields of `metadata`. |  |  |
+| `spec` _[VidraResourceSpec](#vidraresourcespec)_ | VidraResourceSpec defines the desired state of VidraResource |  |  |
+| `status` _[VidraResourceStatus](#vidraresourcestatus)_ | VidraResourceStatus defines the observed state of VidraResource |  |  |
+
+
+#### VidraResourceSpec
+
+
+
+VidraResourceSpec defines the desired state of VidraResource
+
+
+
+_Appears in:_
+- [VidraResource](#vidraresource)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `destination` _[InfrahubSyncDestination](#infrahubsyncdestination)_ | Destination contains the destination information for the resource |  |  |
+| `manifest` _string_ | Manifest contains the manifest information for the resource |  |  |
+| `reconcileOnEvents` _boolean_ | If true, the operator will reconcile resources based on k8s events. (default: false) | false |  |
+| `reconciledAt` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#time-v1-meta)_ | The last time the resource was reconciled |  |  |
+
+
+#### VidraResourceStatus
+
+
+
+VidraResourceStatus defines the observed state of VidraResource
+
+
+
+_Appears in:_
+- [VidraResource](#vidraresource)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `managedResources` _[ManagedResourceStatus](#managedresourcestatus) array_ | ManagedResources contains the status of managed resources |  |  |
+| `DeployState` _[State](#state)_ | DeployState indicates the current state of the deployment |  | Enum: [Pending Running Succeeded Failed Stale] <br /> |
+| `lastError` _string_ | LastError contains the last error message if any |  |  |
+| `lastSyncTime` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#time-v1-meta)_ | LastSyncTime indicates the last time the resource was synchronized |  |  |
 
 

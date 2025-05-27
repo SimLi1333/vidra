@@ -4,13 +4,9 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.16.1
-<<<<<<< HEAD:config/crd/bases/infrahub.operators.com_infrahubresources.yaml
-  name: infrahubresources.vidra.operators.com
-=======
   name: vidraresources.infrahub.operators.com
->>>>>>> origin/gitOps-4th-principle:config/crd/bases/infrahub.operators.com_vidraresources.yaml
 spec:
-  group: vidra.operators.com
+  group: infrahub.operators.com
   names:
     kind: VidraResource
     listKind: VidraResourceList

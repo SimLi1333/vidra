@@ -8,7 +8,7 @@ metadata:
   name: vidraresource-editor-role
 rules:
 - apiGroups:
-  - vidra.operators.com
+  - infrahub.operators.com
   resources:
   - vidraresources
   verbs:
@@ -20,7 +20,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - vidra.operators.com
+  - infrahub.operators.com
   resources:
   - vidraresources/status
   verbs:

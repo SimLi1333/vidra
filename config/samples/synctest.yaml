@@ -1,4 +1,4 @@
-apiVersion: vidra.operators.com/v1alpha1
+apiVersion: infrahub.operators.com/v1alpha1
 kind: InfrahubSync
 metadata:
   name: sync-main-x

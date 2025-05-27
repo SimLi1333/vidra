@@ -9,12 +9,12 @@ output:
 
 processor:
   ignoreTypes: 
-    - "(InfrahubSync|InfrahubResource)List$"
+    - "(InfrahubSync|VidraResource)List$"
   ignoreFields:
     - "TypeMeta$"
   order:
     - InfrahubSync
-    - InfrahubResource
+    - VidraResource
 
 render:
   kubernetesVersion: 1.31

@@ -2,8 +2,6 @@ module github.com/simli1333/vidra
 
 go 1.23.0
 
-toolchain go1.24.2
-
 require (
 	github.com/onsi/ginkgo/v2 v2.23.4
 	github.com/onsi/gomega v1.37.0

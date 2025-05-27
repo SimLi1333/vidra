@@ -50,21 +50,12 @@ type InfrahubSyncReconciler struct {
 	InfrahubClient domain.InfrahubClient
 }
 
-<<<<<<< HEAD
-// +kubebuilder:rbac:groups=vidra.operators.com,resources=infrahubsyncs,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=vidra.operators.com,resources=infrahubsyncs/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=vidra.operators.com,resources=infrahubsyncs/finalizers,verbs=update
-// +kubebuilder:rbac:groups=vidra.operators.com,resources=infrahubresources,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=vidra.operators.com,resources=infrahubresources/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=vidra.operators.com,resources=infrahubresources/finalizers,verbs=update
-=======
 // +kubebuilder:rbac:groups=infrahub.operators.com,resources=infrahubsyncs,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=infrahub.operators.com,resources=infrahubsyncs/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=infrahub.operators.com,resources=infrahubsyncs/finalizers,verbs=update
-// +kubebuilder:rbac:groups=infrahub.operators.com,resources=Vidraresources,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=infrahub.operators.com,resources=Vidraresources/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=infrahub.operators.com,resources=Vidraresources/finalizers,verbs=update
->>>>>>> origin/gitOps-4th-principle
+// +kubebuilder:rbac:groups=infrahub.operators.com,resources=infrahubresources,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=infrahub.operators.com,resources=infrahubresources/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=infrahub.operators.com,resources=infrahubresources/finalizers,verbs=update
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch
 // +kubebuilder:rbac:groups="",resources=configmaps,verbs=get
 
@@ -217,13 +208,6 @@ func (r *InfrahubSyncReconciler) processArtifacts(
 
 	// Create or update resources for current artifacts
 	for _, artifact := range *artifacts {
-<<<<<<< HEAD
-		resource := &infrahubv1alpha1.InfrahubResource{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: artifact.ID,
-				Finalizers: []string{
-					"infrahubresource.vidra.operators.com/finalizer",
-=======
 
 		found := false
 		for _, checksum := range infrahubSync.Status.Checksums {
@@ -240,7 +224,7 @@ func (r *InfrahubSyncReconciler) processArtifacts(
 				infrahubSync.Spec.Source.TargetDate,
 			)
 			if err != nil {
-				return fmt.Errorf("Failed to download artifact: %w", err)
+				return fmt.Errorf("failed to download artifact: %w", err)
 			}
 			var sb strings.Builder
 			if _, err := io.Copy(&sb, contentReader); err != nil {
@@ -253,7 +237,6 @@ func (r *InfrahubSyncReconciler) processArtifacts(
 					Finalizers: []string{
 						"vidraresource.infrahub.operators.com/finalizer",
 					},
->>>>>>> origin/gitOps-4th-principle
 				},
 			}
 

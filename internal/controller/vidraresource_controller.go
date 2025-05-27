@@ -34,15 +34,9 @@ import (
 )
 
 const (
-<<<<<<< HEAD:internal/controller/infrahubresource_controller.go
-	FinalizerName    = "infrahubresource.vidra.operators.com/finalizer"
-	OwnerAnnotation  = "infrahubresource.vidra.operators.com/owned-by"
-	infrahubOperator = "vidra"
-=======
 	FinalizerName   = "vidraresource.infrahub.operators.com/finalizer"
 	OwnerAnnotation = "vidraresource.infrahub.operators.com/owned-by"
 	vidraOperator   = "vidra"
->>>>>>> origin/gitOps-4th-principle:internal/controller/vidraresource_controller.go
 )
 
 type VidraResourceReconciler struct {
@@ -57,15 +51,9 @@ type VidraResourceReconciler struct {
 	EventBasedReconcile        bool
 }
 
-<<<<<<< HEAD:internal/controller/infrahubresource_controller.go
-// +kubebuilder:rbac:groups=vidra.operators.com,resources=infrahubresources,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=vidra.operators.com,resources=infrahubresources/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=vidra.operators.com,resources=infrahubresources/finalizers,verbs=update
-=======
-// +kubebuilder:rbac:groups=infrahub.operators.com,resources=vidraresources,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=infrahub.operators.com,resources=vidraresources/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=infrahub.operators.com,resources=vidraresources/finalizers,verbs=update
->>>>>>> origin/gitOps-4th-principle:internal/controller/vidraresource_controller.go
+// +kubebuilder:rbac:groups=infrahub.operators.com,resources=infrahubresources,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=infrahub.operators.com,resources=infrahubresources/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=infrahub.operators.com,resources=infrahubresources/finalizers,verbs=update
 // +kubebuilder:rbac:groups="*",resources="*",verbs=get;list;watch;create;update;patch;delete
 
 func (r *VidraResourceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -115,7 +103,7 @@ func (r *VidraResourceReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	if res.Spec.Manifest == "" {
 		logger.Error(nil, "No manifests available in spec to reconcile")
-		return ctrl.Result{}, MarkStateFailed(ctx, r.Client, res, fmt.Errorf("No manifests available in spec to reconcile"))
+		return ctrl.Result{}, MarkStateFailed(ctx, r.Client, res, fmt.Errorf("no manifests available in spec to reconcile"))
 	}
 	contentReader := strings.NewReader(res.Spec.Manifest)
 
@@ -507,7 +495,6 @@ func (r *VidraResourceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 func (r *VidraResourceReconciler) InitConfigWithClient(ctx context.Context, k8sClient client.Client, labelKey, labelValue string) error {
 	const defaultRequeue = 10 * time.Minute
-	const defaultQueryName = "ArtifactIDs"
 
 	// Start with the default values
 	r.RequeueAfter = defaultRequeue

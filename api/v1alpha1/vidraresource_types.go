@@ -46,7 +46,6 @@ type VidraResourceStatus struct {
 
 	// ManagedResources contains the status of managed resources
 	ManagedResources []ManagedResourceStatus `json:"managedResources,omitempty"`
-<<<<<<< HEAD:api/v1alpha1/infrahubresource_types.go
 
 	// DeployState indicates the current state of the deployment
 	// +kubebuilder:validation:Enum=Pending;Running;Succeeded;Failed;Stale
@@ -55,12 +54,6 @@ type VidraResourceStatus struct {
 	LastError string `json:"lastError,omitempty"`
 	// LastSyncTime indicates the last time the resource was synchronized
 	LastSyncTime metav1.Time `json:"lastSyncTime,omitempty"`
-=======
-	LastSyncTime     metav1.Time             `json:"lastSyncTime,omitempty"`
-	// +kubebuilder:validation:Enum=Pending;Running;Succeeded;Failed;Stale
-	DeployState State  `json:"DeployState,omitempty"`
-	LastError   string `json:"lastError,omitempty"`
->>>>>>> origin/gitOps-4th-principle:api/v1alpha1/vidraresource_types.go
 }
 
 type ManagedResourceStatus struct {
@@ -92,15 +85,10 @@ type VidraResource struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-<<<<<<< HEAD:api/v1alpha1/infrahubresource_types.go
-	// InfrahubResourceSpec defines the desired state of InfrahubResource
-	Spec InfrahubResourceSpec `json:"spec,omitempty"`
-	// InfrahubResourceStatus defines the observed state of InfrahubResource
-	Status InfrahubResourceStatus `json:"status,omitempty"`
-=======
-	Spec   VidraResourceSpec   `json:"spec,omitempty"`
+	// VidraResourceSpec defines the desired state of VidraResource
+	Spec VidraResourceSpec `json:"spec,omitempty"`
+	// VidraResourceStatus defines the observed state of VidraResource
 	Status VidraResourceStatus `json:"status,omitempty"`
->>>>>>> origin/gitOps-4th-principle:api/v1alpha1/vidraresource_types.go
 }
 
 // +kubebuilder:object:root=true

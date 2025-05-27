@@ -109,7 +109,11 @@ func (c *infrahubClient) RunQuery(queryName string, apiURL string, artifactName 
 	if err != nil {
 		return nil, fmt.Errorf("query request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if cerr := resp.Body.Close(); cerr != nil {
+			fmt.Printf("warning: failed to close response body: %v\n", cerr)
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
@@ -151,7 +155,11 @@ func (c *infrahubClient) Login(apiURL, username, password string) (string, error
 	if err != nil {
 		return "", fmt.Errorf("login request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			fmt.Printf("warning: failed to close response body: %v\n", err)
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
@@ -191,10 +199,13 @@ func (c *infrahubClient) DownloadArtifact(apiURL string, artifactID string, targ
 
 	// Check if the response status is OK
 	if resp.StatusCode != http.StatusOK {
-		defer resp.Body.Close()
 		body, err := io.ReadAll(resp.Body)
+		closeErr := resp.Body.Close()
 		if err != nil {
 			return nil, fmt.Errorf("failed to read response body: %v", err)
+		}
+		if closeErr != nil {
+			return nil, fmt.Errorf("failed to close response body: %v", closeErr)
 		}
 		return nil, fmt.Errorf("failed to download artifact, status code: %d, response: %s", resp.StatusCode, body)
 	}

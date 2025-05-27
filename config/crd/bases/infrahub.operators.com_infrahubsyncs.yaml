@@ -4,9 +4,9 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.16.1
-  name: infrahubsyncs.vidra.operators.com
+  name: infrahubsyncs.infrahub.operators.com
 spec:
-  group: vidra.operators.com
+  group: infrahub.operators.com
   names:
     kind: InfrahubSync
     listKind: InfrahubSyncList
@@ -37,7 +37,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: InfrahubSyncSpec defines the desired state of InfrahubSync
+            description: Spec defines the desired state of InfrahubSync
             properties:
               destination:
                 description: Destination contains the destination information for
@@ -87,24 +87,10 @@ spec:
             - source
             type: object
           status:
-            description: InfrahubSyncStatus defines the observed state of InfrahubSync
+            description: Status defines the observed state of InfrahubSync
             properties:
-<<<<<<< HEAD
-              lastError:
-                description: LastError contains the last error message if any
-                type: string
-              lastSyncTime:
-                description: LastSyncTime indicates the last time the synchronization
-                  was performed
-                format: date-time
-                type: string
-              syncState:
-                description: SyncState indicates the current state of the synchronization
-                  process
-=======
               checksums:
                 description: Checksums contains a list of checksums for synced resources
->>>>>>> origin/gitOps-4th-principle
                 enum:
                 - Pending
                 - Running
