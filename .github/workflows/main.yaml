@@ -76,7 +76,15 @@ jobs:
 
   unit-test:
     name: Unit Tests
-    runs-on: ubuntu-24.04
+    runs-on: macos-14
+    defaults:
+      run:
+      shell: bash
+    strategy:
+      matrix:
+      arch: [arm64]
+    env:
+      GOARCH: arm64
     container: golang:1.24
     env:
       GOFLAGS: "-buildvcs=false"
