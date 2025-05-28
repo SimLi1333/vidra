@@ -39,6 +39,11 @@ permissions:
   contents: write
 
 env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  OPERATOR_SDK_VERSION: v1.39.2
+  OS: linux
+  TARGETARCH: amd64
   GO111MODULE: "on"
   GOCACHE: ${{ github.workspace }}/.cache/go-build
   GOPATH: ${{ github.workspace }}/.cache/go
