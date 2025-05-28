@@ -1,39 +1,39 @@
 name: Operator CI
 on:
-    push:
-        branches: [ "main" ]
-        # Publish semver tags as releases
-        tags: [ 'v*.*.*' ]
-        paths:
-            - 'cmd/**'
-            - 'go.*'
-            - 'api/**'
-            - 'controllers/**'
-            - 'config/**'
-            - 'hack/**'
-            - 'test/**'
-            - 'Dockerfile'
-            - 'chart/**'
-            - 'bundle.Dockerfile'
-            - '.dockerignore'
-            - 'Makefile'
-            - '.github/workflows/main.yaml'
-    pull_request:
-        branches: [ "main" ]
-        paths:
-            - 'cmd/**'
-            - 'go.*'
-            - 'api/**'
-            - 'controllers/**'
-            - 'config/**'
-            - 'hack/**'
-            - 'test/**'
-            - 'Dockerfile'
-            - 'chart/**'
-            - 'bundle.Dockerfile'
-            - '.dockerignore'
-            - 'Makefile'
-            - '.github/workflows/main.yaml'
+  push:
+      branches: [ "main" ]
+      # Publish semver tags as releases
+      tags: [ 'v*.*.*' ]
+      paths:
+          - 'cmd/**'
+          - 'go.*'
+          - 'api/**'
+          - 'controllers/**'
+          - 'config/**'
+          - 'hack/**'
+          - 'test/**'
+          - 'Dockerfile'
+          - 'chart/**'
+          - 'bundle.Dockerfile'
+          - '.dockerignore'
+          - 'Makefile'
+          - '.github/workflows/main.yaml'
+  pull_request:
+      branches: [ "main" ]
+      paths:
+          - 'cmd/**'
+          - 'go.*'
+          - 'api/**'
+          - 'controllers/**'
+          - 'config/**'
+          - 'hack/**'
+          - 'test/**'
+          - 'Dockerfile'
+          - 'chart/**'
+          - 'bundle.Dockerfile'
+          - '.dockerignore'
+          - 'Makefile'
+          - '.github/workflows/main.yaml'
 
 permissions:
   contents: write

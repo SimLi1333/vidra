@@ -2,7 +2,17 @@ name: Deploy Docusaurus to GitHub Pages
 
 on:
   push:
-    branches: [main]  # or "master"
+      branches: [ "main" ]
+      # Publish semver tags as releases
+      tags: [ 'v*.*.*' ]
+      paths:
+          - 'docs/**'
+          - '.github/workflows/docs.yaml'
+  pull_request:
+      branches: [ "main" ]
+      paths:
+          - 'docs/**'
+          - '.github/workflows/docs.yaml'
 
 permissions:
   contents: write  # allows pushing to gh-pages
