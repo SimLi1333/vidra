@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/simli1333/vidra/internal/domain"
+	"github.com/infrahub-operator/vidra/internal/domain"
 )
 
 type infrahubClient struct{}

@@ -1,4 +1,4 @@
-module github.com/simli1333/vidra
+module github.com/infrahub-operator/vidra
 
 go 1.23.0
 

@@ -24,7 +24,7 @@ import (
 	"strings"
 	"time"
 
-	infrahubv1alpha1 "github.com/simli1333/vidra/api/v1alpha1"
+	infrahubv1alpha1 "github.com/infrahub-operator/vidra/api/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,9 +37,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
-	"github.com/simli1333/vidra/internal/adapter/infrahub"
-	"github.com/simli1333/vidra/internal/adapter/k8s"
-	"github.com/simli1333/vidra/internal/domain"
+	"github.com/infrahub-operator/vidra/internal/adapter/infrahub"
+	"github.com/infrahub-operator/vidra/internal/adapter/k8s"
+	"github.com/infrahub-operator/vidra/internal/domain"
 )
 
 type InfrahubSyncReconciler struct {

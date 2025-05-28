@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	infrahubv1alpha1 "github.com/simli1333/vidra/api/v1alpha1"
-	"github.com/simli1333/vidra/internal/adapter/infrahub"
-	"github.com/simli1333/vidra/internal/adapter/k8s"
-	"github.com/simli1333/vidra/internal/domain"
+	infrahubv1alpha1 "github.com/infrahub-operator/vidra/api/v1alpha1"
+	"github.com/infrahub-operator/vidra/internal/adapter/infrahub"
+	"github.com/infrahub-operator/vidra/internal/adapter/k8s"
+	"github.com/infrahub-operator/vidra/internal/domain"
 
 	corev1 "k8s.io/api/core/v1"
 

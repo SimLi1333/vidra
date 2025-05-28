@@ -12,7 +12,7 @@ package mock
 import (
 	reflect "reflect"
 
-	domain "github.com/simli1333/vidra/internal/domain"
+	domain "github.com/infrahub-operator/vidra/internal/domain"
 	gomock "go.uber.org/mock/gomock"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	dynamic "k8s.io/client-go/dynamic"
