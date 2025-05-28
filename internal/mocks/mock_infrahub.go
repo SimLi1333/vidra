@@ -42,18 +42,18 @@ func (m *MockInfrahubClient) EXPECT() *MockInfrahubClientMockRecorder {
 }
 
 // DownloadArtifact mocks base method.
-func (m *MockInfrahubClient) DownloadArtifact(apiURL, artifactID, targetBranche, targetDate string) (io.Reader, error) {
+func (m *MockInfrahubClient) DownloadArtifact(apiURL, artifactID, targetBranche, targetDate, token string) (io.Reader, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DownloadArtifact", apiURL, artifactID, targetBranche, targetDate)
+	ret := m.ctrl.Call(m, "DownloadArtifact", apiURL, artifactID, targetBranche, targetDate, token)
 	ret0, _ := ret[0].(io.Reader)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // DownloadArtifact indicates an expected call of DownloadArtifact.
-func (mr *MockInfrahubClientMockRecorder) DownloadArtifact(apiURL, artifactID, targetBranche, targetDate any) *gomock.Call {
+func (mr *MockInfrahubClientMockRecorder) DownloadArtifact(apiURL, artifactID, targetBranche, targetDate, token any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DownloadArtifact", reflect.TypeOf((*MockInfrahubClient)(nil).DownloadArtifact), apiURL, artifactID, targetBranche, targetDate)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DownloadArtifact", reflect.TypeOf((*MockInfrahubClient)(nil).DownloadArtifact), apiURL, artifactID, targetBranche, targetDate, token)
 }
 
 // Login mocks base method.
