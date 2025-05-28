@@ -16,7 +16,7 @@ on:
             - 'bundle.Dockerfile'
             - '.dockerignore'
             - 'Makefile'
-            - '.github/workflows/main.yml'
+            - '.github/workflows/main.yaml'
     pull_request:
         branches: [ "main" ]
         paths:
@@ -31,7 +31,7 @@ on:
             - 'bundle.Dockerfile'
             - '.dockerignore'
             - 'Makefile'
-            - '.github/workflows/main.yml'
+            - '.github/workflows/main.yaml'
 
 permissions:
   contents: write
