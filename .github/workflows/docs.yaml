@@ -2,7 +2,17 @@ name: Deploy Docusaurus to GitHub Pages
 
 on:
   push:
-    branches: [main]  # or "master"
+      branches: [ "main" ]
+      # Publish semver tags as releases
+      tags: [ 'v*.*.*' ]
+      paths:
+          - 'docs/**'
+          - '.github/workflows/docs.yaml'
+  pull_request:
+      branches: [ "main" ]
+      paths:
+          - 'docs/**'
+          - '.github/workflows/docs.yaml'
 
 permissions:
   contents: write  # allows pushing to gh-pages
@@ -15,9 +25,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
       
-      - name: Change to the docs directory
-        run: cd docs  
-
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
@@ -25,12 +32,15 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+        working-directory: docs
 
       - name: Build website
         run: npm run build
+        working-directory: docs
 
+      - name: Deploy to GitHub Pages
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build
+          publish_dir: ./docs/build

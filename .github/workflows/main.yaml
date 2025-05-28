@@ -1,39 +1,39 @@
 name: Operator CI
 on:
-    push:
-        branches: [ "main" ]
-        # Publish semver tags as releases
-        tags: [ 'v*.*.*' ]
-        paths:
-            - 'cmd/**'
-            - 'go.*'
-            - 'api/**'
-            - 'controllers/**'
-            - 'config/**'
-            - 'hack/**'
-            - 'test/**'
-            - 'Dockerfile'
-            - 'chart/**'
-            - 'bundle.Dockerfile'
-            - '.dockerignore'
-            - 'Makefile'
-            - '.github/workflows/main.yml'
-    pull_request:
-        branches: [ "main" ]
-        paths:
-            - 'cmd/**'
-            - 'go.*'
-            - 'api/**'
-            - 'controllers/**'
-            - 'config/**'
-            - 'hack/**'
-            - 'test/**'
-            - 'Dockerfile'
-            - 'chart/**'
-            - 'bundle.Dockerfile'
-            - '.dockerignore'
-            - 'Makefile'
-            - '.github/workflows/main.yml'
+  push:
+      branches: [ "main" ]
+      # Publish semver tags as releases
+      tags: [ 'v*.*.*' ]
+      paths:
+          - 'cmd/**'
+          - 'go.*'
+          - 'api/**'
+          - 'controllers/**'
+          - 'config/**'
+          - 'hack/**'
+          - 'test/**'
+          - 'Dockerfile'
+          - 'chart/**'
+          - 'bundle.Dockerfile'
+          - '.dockerignore'
+          - 'Makefile'
+          - '.github/workflows/main.yaml'
+  pull_request:
+      branches: [ "main" ]
+      paths:
+          - 'cmd/**'
+          - 'go.*'
+          - 'api/**'
+          - 'controllers/**'
+          - 'config/**'
+          - 'hack/**'
+          - 'test/**'
+          - 'Dockerfile'
+          - 'chart/**'
+          - 'bundle.Dockerfile'
+          - '.dockerignore'
+          - 'Makefile'
+          - '.github/workflows/main.yaml'
 
 permissions:
   contents: write
@@ -88,7 +88,13 @@ jobs:
       - run: go version
       - run: make fmt
       - run: make vet
-      - run: make test
+      - run: make test | tee test-results.txt
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results.txt
+          retention-days: 7
       - name: Save coverage
         run: echo "Saving coverage..."
       - name: Upload coverage.out

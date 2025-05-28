@@ -1,8 +1,6 @@
 package k8s
 
 import (
-	"reflect"
-	"sync"
 	"testing"
 	"time"
 
@@ -113,18 +111,4 @@ func TestStartWatchingGVRs_SkipAlreadyStarted(t *testing.T) {
 
 	// Expect callback to have been called once
 	cb.AssertExpectations(t)
-}
-
-func factoryStartedMap(factory *DynamicWatcherFactory) map[schema.GroupVersionResource]struct{} {
-	factoryMu := getUnexportedField(factory, "mu").(*sync.Mutex)
-	factoryMu.Lock()
-	defer factoryMu.Unlock()
-	return getUnexportedField(factory, "started").(map[schema.GroupVersionResource]struct{})
-}
-
-// getUnexportedField uses reflection to get a private field for testing
-func getUnexportedField(obj interface{}, fieldName string) interface{} {
-	rv := reflect.ValueOf(obj).Elem()
-	f := rv.FieldByName(fieldName)
-	return f.Interface()
 }

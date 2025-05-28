@@ -5,7 +5,7 @@ import (
 	"log"
 	"sync"
 
-	"github.com/simli1333/vidra/internal/domain"
+	"github.com/infrahub-operator/vidra/internal/domain"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"

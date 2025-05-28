@@ -1,6 +1,6 @@
 # Vidra
-[![Go Report Card](https://goreportcard.com/badge/github.com/kubernetes/kubernetes)](https://goreportcard.com/report/https://github.com/SimLi1333/vidra) 
-[![GoDoc](https://pkg.go.dev/badge/github.com/SimLi1333/vidra)](https://pkg.go.dev/github.com/SimLi1333/vidra)
+[![Go Report Card](https://goreportcard.com/badge/github.com/kubernetes/kubernetes)](https://goreportcard.com/report/https://github.com/infrahub-operator/vidra) 
+[![GoDoc](https://pkg.go.dev/badge/github.com/infrahub-operator/vidra)](https://pkg.go.dev/github.com/infrahub-operator/vidra)
 ![GitHub Release](https://img.shields.io/github/v/release/SimLi1333/vidra?include_prereleases&sort=semver)
 ![Test Status](https://img.shields.io/github/actions/workflow/status/SimLi1333/vidra/main.yaml?label=Tests)
 ![Coverage](https://img.shields.io/endpoint?url=https://simli1333.github.io/vidra/coverage-badge.json)

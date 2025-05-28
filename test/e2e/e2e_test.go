@@ -24,7 +24,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/simli1333/vidra/test/utils"
+	"github.com/infrahub-operator/vidra/test/utils"
 )
 
 const namespace = "vidra-system"

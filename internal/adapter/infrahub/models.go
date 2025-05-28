@@ -1,7 +1,7 @@
 package infrahub
 
 import (
-	"github.com/simli1333/vidra/internal/domain"
+	"github.com/infrahub-operator/vidra/internal/domain"
 )
 
 // API Request and Response Models
