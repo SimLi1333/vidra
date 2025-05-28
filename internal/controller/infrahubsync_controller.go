@@ -53,9 +53,9 @@ type InfrahubSyncReconciler struct {
 // +kubebuilder:rbac:groups=infrahub.operators.com,resources=infrahubsyncs,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=infrahub.operators.com,resources=infrahubsyncs/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=infrahub.operators.com,resources=infrahubsyncs/finalizers,verbs=update
-// +kubebuilder:rbac:groups=infrahub.operators.com,resources=Vidraresources,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=infrahub.operators.com,resources=Vidraresources/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=infrahub.operators.com,resources=Vidraresources/finalizers,verbs=update
+// +kubebuilder:rbac:groups=infrahub.operators.com,resources=infrahubresources,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=infrahub.operators.com,resources=infrahubresources/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=infrahub.operators.com,resources=infrahubresources/finalizers,verbs=update
 // +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch
 // +kubebuilder:rbac:groups="",resources=configmaps,verbs=get
 
@@ -115,7 +115,7 @@ func (r *InfrahubSyncReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	logger.Info("Query executed successfully", "result", queryResult)
 
 	// Process query results and compare with existing resources
-	err = r.processArtifacts(ctx, infrahubSync, queryResult)
+	err = r.processArtifacts(ctx, infrahubSync, queryResult, token)
 	if err != nil {
 		logger.Error(err, "Error processing artifacts")
 		return ctrl.Result{RequeueAfter: r.RequeueAfter}, MarkStateFailed(ctx, r.Client, infrahubSync, err)
@@ -171,6 +171,7 @@ func (r *InfrahubSyncReconciler) processArtifacts(
 	ctx context.Context,
 	infrahubSync *infrahubv1alpha1.InfrahubSync,
 	artifacts *[]domain.Artifact,
+	token string,
 ) error {
 	log := log.FromContext(ctx)
 
@@ -222,9 +223,10 @@ func (r *InfrahubSyncReconciler) processArtifacts(
 				artifact.ID,
 				infrahubSync.Spec.Source.TargetBranch,
 				infrahubSync.Spec.Source.TargetDate,
+				token,
 			)
 			if err != nil {
-				return fmt.Errorf("Failed to download artifact: %w", err)
+				return fmt.Errorf("failed to download artifact: %w", err)
 			}
 			var sb strings.Builder
 			if _, err := io.Copy(&sb, contentReader); err != nil {

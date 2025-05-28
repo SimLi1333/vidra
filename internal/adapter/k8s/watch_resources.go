@@ -71,7 +71,7 @@ func (f *DynamicWatcherFactory) watchGVR(
 
 	genChanged := predicate.GenerationChangedPredicate{}
 
-	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+	_, err := informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			unstrObj, ok := obj.(*unstructured.Unstructured)
 			if !ok {
@@ -119,6 +119,10 @@ func (f *DynamicWatcherFactory) watchGVR(
 			onEvent(unstrObj, gvr)
 		},
 	})
+	if err != nil {
+		log.Printf("Error adding event handler for %s: %v", gvr.String(), err)
+		return
+	}
 
 	log.Printf("[WATCH] Started watching: %s", gvr.String())
 	informer.Run(f.stopChan)

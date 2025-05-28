@@ -1,5 +1,10 @@
+<<<<<<< HEAD
+apiVersion: infrahub.operators.com/v1alpha1
+kind: InfrahubResource
+=======
 apiVersion: infrahub.operators.com/v1alpha1
 kind: VidraResource
+>>>>>>> origin/gitOps-4th-principle
 metadata:
   labels:
     app.kubernetes.io/name: vidra

@@ -5,8 +5,6 @@ package controller
 import (
 	"context"
 	"fmt"
-	"io"
-	"strings"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -43,7 +41,6 @@ var _ = Describe("should reconcile correctly with different Destination.Server v
 		Context(fmt.Sprintf("Destination.Server = '%s'", destinationServer), func() {
 			var (
 				mockCtrl                       *gomock.Controller
-				mockClient                     *mock.MockInfrahubClient
 				mockRESTMapper                 *mock.MockRESTMapper
 				mockDynamicMulticlusterFactory *mock.MockDynamicMulticlusterFactory
 				mockWatcherFactory             *mock.MockDynamicWatcherFactory
@@ -61,7 +58,6 @@ var _ = Describe("should reconcile correctly with different Destination.Server v
 
 			BeforeEach(func() {
 				mockCtrl = gomock.NewController(GinkgoT())
-				mockClient = mock.NewMockInfrahubClient(mockCtrl)
 				mockDynamicMulticlusterFactory = mock.NewMockDynamicMulticlusterFactory(mockCtrl)
 				mockWatcherFactory = mock.NewMockDynamicWatcherFactory(mockCtrl)
 				mockRESTMapper = mock.NewMockRESTMapper(mockCtrl)
@@ -72,7 +68,6 @@ var _ = Describe("should reconcile correctly with different Destination.Server v
 				reconciler = &VidraResourceReconciler{
 					Client:                     k8sClient,
 					Scheme:                     k8sClient.Scheme(),
-					InfrahubClient:             mockClient,
 					RESTMapper:                 mockRESTMapper,
 					DynamicMulticlusterFactory: mockDynamicMulticlusterFactory,
 				}
@@ -111,9 +106,13 @@ var _ = Describe("should reconcile correctly with different Destination.Server v
 					err := k8sClient.Get(ctx, namespacedName, instance)
 					if err == nil {
 						// Wait for the finalizer to be removed before deleting the resource
-						instance.SetFinalizers(nil)
+						// instance.SetFinalizers(nil)
 						Expect(k8sClient.Update(ctx, instance)).To(Succeed())
 						Expect(k8sClient.Delete(ctx, instance)).To(Succeed())
+						_ = setupDynamicMulticlusterFactoryMock(ctx, k8sClient, mockDynamicMulticlusterFactory, namespacedName, secondK8sClient)
+
+						_, err = reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
+						Expect(err).NotTo(HaveOccurred())
 					}
 					if failingClient, ok := failingK8sClient.(*mock.FailingUpdateClient); ok {
 						failingClient.FailingMethod = ""
@@ -125,8 +124,15 @@ var _ = Describe("should reconcile correctly with different Destination.Server v
 						instance := &infrahubv1alpha1.VidraResource{}
 						err := k8sClient.Get(ctx, namespacedName, instance)
 						Expect(err).NotTo(HaveOccurred())
-						instance.Spec.Manifest = `{"apiVersion":"v1","kind":"ConfigMap","metadata":{"name":"example"},"data":{"key":"value"}}`
-
+						instance.Spec.Manifest = `
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example
+  namespace: ` + namespace + `
+data:
+  key: value
+`
 						Expect(k8sClient.Update(ctx, instance)).To(Succeed())
 
 						mockRESTMapper.EXPECT().
@@ -457,11 +463,15 @@ data:
 
 						By("running reconciliation again with the same manifest")
 
-						// The mock client should not be called again
-						mockClient.EXPECT().
-							DownloadArtifact(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-							Return(io.NopCloser(strings.NewReader(yamlData)), nil).
-							Times(0)
+						_, err = reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
+						Expect(err).NotTo(HaveOccurred())
+						// Check if the resource still exists and has the same data
+						Eventually(func() error {
+							res := &unstructured.Unstructured{}
+							res.SetAPIVersion("v1")
+							res.SetKind("ConfigMap")
+							return deployK8sClient.Get(ctx, types.NamespacedName{Name: "resource", Namespace: namespace}, res)
+						}).Should(Succeed())
 					})
 
 					It("should overwrite the resource if it was manually changed", func() {
@@ -551,24 +561,24 @@ data:
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: test-namespace
+  name: test2-namespace
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: config1
-  namespace: test-namespace
+  namespace: test2-namespace
 ---
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: test-namespace2
+  name: test2-namespace2
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: config2
-  namespace: test-namespace2
+  namespace: test2-namespace2
 `
 
 						instance := &infrahubv1alpha1.VidraResource{}
@@ -590,19 +600,19 @@ metadata:
 
 						created1 := &v1.ConfigMap{}
 						namespace := &v1.Namespace{}
-						err = deployK8sClient.Get(ctx, types.NamespacedName{Name: "test-namespace"}, namespace)
+						err = deployK8sClient.Get(ctx, types.NamespacedName{Name: "test2-namespace"}, namespace)
 						Expect(err).NotTo(HaveOccurred())
-						Expect(namespace.Name).To(Equal("test-namespace"))
-						err = deployK8sClient.Get(ctx, types.NamespacedName{Name: "config1", Namespace: "test-namespace"}, created1)
+						Expect(namespace.Name).To(Equal("test2-namespace"))
+						err = deployK8sClient.Get(ctx, types.NamespacedName{Name: "config1", Namespace: "test2-namespace"}, created1)
 						Expect(err).NotTo(HaveOccurred())
 						Expect(created1.Name).To(Equal("config1"))
-						Expect(created1.Namespace).To(Equal("test-namespace"))
+						Expect(created1.Namespace).To(Equal("test2-namespace"))
 
 						created2 := &v1.ConfigMap{}
-						err = deployK8sClient.Get(ctx, types.NamespacedName{Name: "config2", Namespace: "test-namespace2"}, created2)
+						err = deployK8sClient.Get(ctx, types.NamespacedName{Name: "config2", Namespace: "test2-namespace2"}, created2)
 						Expect(err).NotTo(HaveOccurred())
 						Expect(created2.Name).To(Equal("config2"))
-						Expect(created2.Namespace).To(Equal("test-namespace2"))
+						Expect(created2.Namespace).To(Equal("test2-namespace2"))
 					})
 
 					It("should remove old resources and create new ones if the name changes", func() {
@@ -1278,7 +1288,6 @@ metadata:
 						reconciler := &VidraResourceReconciler{
 							Client:                     k8sClient,
 							Scheme:                     k8sClient.Scheme(),
-							InfrahubClient:             mockClient,
 							RESTMapper:                 mockRESTMapper,
 							DynamicMulticlusterFactory: mockDynamicMulticlusterFactory,
 							DynamicWatcherFactory:      mockWatcherFactory,
@@ -1482,7 +1491,6 @@ metadata:
 						reconciler := &VidraResourceReconciler{
 							Client:                     failingK8sClient,
 							Scheme:                     k8sClient.Scheme(),
-							InfrahubClient:             mockClient,
 							RESTMapper:                 mockRESTMapper,
 							DynamicMulticlusterFactory: mockDynamicMulticlusterFactory,
 						}
@@ -1572,7 +1580,6 @@ metadata:
 						reconciler := &VidraResourceReconciler{
 							Client:                     failingK8sClient,
 							Scheme:                     k8sClient.Scheme(),
-							InfrahubClient:             mockClient,
 							RESTMapper:                 mockRESTMapper,
 							DynamicMulticlusterFactory: mockDynamicMulticlusterFactory,
 						}
@@ -1603,7 +1610,6 @@ metadata:
 						reconciler := &VidraResourceReconciler{
 							Client:                     failingK8sClient,
 							Scheme:                     k8sClient.Scheme(),
-							InfrahubClient:             mockClient,
 							RESTMapper:                 mockRESTMapper,
 							DynamicMulticlusterFactory: mockDynamicMulticlusterFactory,
 						}
@@ -1638,7 +1644,6 @@ metadata:
 						reconciler := &VidraResourceReconciler{
 							Client:                     failingK8sClient,
 							Scheme:                     k8sClient.Scheme(),
-							InfrahubClient:             mockClient,
 							RESTMapper:                 mockRESTMapper,
 							DynamicMulticlusterFactory: mockDynamicMulticlusterFactory,
 						}
@@ -1703,7 +1708,6 @@ metadata:
 						reconciler := &VidraResourceReconciler{
 							Client:                     failingK8sClient,
 							Scheme:                     nil, // Not needed for this test
-							InfrahubClient:             mockClient,
 							RESTMapper:                 mockRESTMapper,
 							DynamicMulticlusterFactory: mockDynamicMulticlusterFactory,
 						}
@@ -1730,14 +1734,12 @@ var _ = Describe("VidraResourceReconciler SetupWithManager", func() {
 	var (
 		mgr        manager.Manager
 		reconciler *VidraResourceReconciler
-		mockClient *mock.MockInfrahubClient
 		mockCtrl   *gomock.Controller
 	)
 
 	BeforeEach(func() {
 		var err error
 		mockCtrl = gomock.NewController(GinkgoT())
-		mockClient = mock.NewMockInfrahubClient(mockCtrl)
 
 		mgr, err = ctrl.NewManager(cfg, ctrl.Options{
 			Scheme: k8sClient.Scheme(),
@@ -1745,9 +1747,8 @@ var _ = Describe("VidraResourceReconciler SetupWithManager", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		reconciler = &VidraResourceReconciler{
-			Client:         mgr.GetClient(),
-			Scheme:         mgr.GetScheme(),
-			InfrahubClient: mockClient,
+			Client: mgr.GetClient(),
+			Scheme: mgr.GetScheme(),
 		}
 	})
 

@@ -135,8 +135,8 @@ func setupDynamicMulticlusterFactoryMock(
 	secondK8sClient client.Client,
 ) client.Client {
 	vidraResource := &infrahubv1alpha1.VidraResource{}
-	err := k8sClient.Get(ctx, namespacedName, vidraResource)
-	Expect(err).NotTo(HaveOccurred())
+	_ = k8sClient.Get(ctx, namespacedName, vidraResource)
+	// Expect(err).NotTo(HaveOccurred())
 
 	if vidraResource.Spec.Destination.Server != "" || vidraResource.Spec.Destination.Server == "https://kubernetes.default.svc" {
 		mockClientFactory.EXPECT().

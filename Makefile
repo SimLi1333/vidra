@@ -29,7 +29,7 @@ BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 #
 # For example, running 'make bundle-build bundle-push catalog-build catalog-push' will build and push both
 # operators.com/vidra-bundle:$VERSION and operators.com/vidra-catalog:$VERSION.
-IMAGE_TAG_BASE ?= ghcr.io/simli1333/vidra
+IMAGE_TAG_BASE ?= ghcr.io/infrahub-operator/vidra
 
 # BUNDLE_IMG defines the image:tag used for the bundle.
 # You can use it as an arg. (E.g make bundle-build BUNDLE_IMG=<some-registry>/<project-name-bundle>:<tag>)
@@ -172,6 +172,16 @@ build-installer: manifests generate kustomize ## Generate a consolidated YAML wi
 	mkdir -p dist
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default > dist/install.yaml
+
+
+.PHONY:  generate-crd-docs
+generate-crd-docs: ## Generate CRD API docs
+	crd-ref-docs \
+		--source-path api \
+		--config docs/api-doc-generator/config.yaml \
+		--renderer markdown \
+		--output-path docs/docs/api-references/api-references.md
+
 
 ##@ Deployment
 
@@ -324,3 +334,14 @@ catalog-build: opm ## Build a catalog image.
 .PHONY: catalog-push
 catalog-push: ## Push a catalog image.
 	$(MAKE) docker-push IMG=$(CATALOG_IMG)
+
+######################### Helmify
+HELMIFY ?= $(LOCALBIN)/helmify
+
+.PHONY: helmify
+helmify: $(HELMIFY) ## Download helmify locally if necessary.
+$(HELMIFY): $(LOCALBIN)
+	test -s $(LOCALBIN)/helmify || GOBIN=$(LOCALBIN) go install github.com/arttor/helmify/cmd/helmify@v0.4.5
+
+helm: manifests kustomize helmify
+	$(KUSTOMIZE) build config/default | $(HELMIFY) charts/ceph-s3-operator

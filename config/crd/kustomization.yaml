@@ -2,8 +2,13 @@
 # since it depends on service name and namespace that are out of this kustomize package.
 # It should be run by config/default
 resources:
+<<<<<<< HEAD
+- bases/infrahub.operators.com_infrahubresources.yaml
+- bases/infrahub.operators.com_infrahubsyncs.yaml
+=======
 - bases/infrahub.operators.com_vidraresources.yaml
 - bases/infrahub.operators.com_infrahubsyncs.yaml
+>>>>>>> origin/gitOps-4th-principle
 # +kubebuilder:scaffold:crdkustomizeresource
 
 patches:

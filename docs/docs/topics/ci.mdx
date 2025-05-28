@@ -1,0 +1,60 @@
+---
+title: Continuos Integration
+sidebar_position: 7
+---
+import Admonition from '@theme/Admonition';
+
+# Continuous Integration
+
+We use **GitHub Actions** as our CI/CD tool to automate testing, building, and documentation deployment for the **Vidra Operator**. Currently, we maintain two main workflows:
+
+- **Deploy Docs**
+- **Operator CI**
+
+## Deploy Docs
+
+This workflow is responsible for deploying the MkDocs-generated documentation to GitHub Pages.
+
+### Trigger
+
+- Any push to the `main` branch that affects documentation files.
+- Specifically triggered when:
+  - A file in the `docs/` directory is changed.
+
+Check the [`docs.yaml`](.github/workflows/docs.yaml) workflow file for detailed configuration.
+
+## Operator CI
+
+This workflow handles testing, building, and publishing the Vidra Operator artifacts to the GitHub Container Registry.
+
+### Trigger
+
+- Every push to a pull request.
+- Every push to the `main` branch.
+
+You can find the workflow definition in [`main.yaml`](.github/workflows/main.yaml).
+
+### Test
+
+- Executes all tests for the Vidra Operator using `go test` and Ginkgo-based test suites.
+- Tests are run using `envtest` to provide a realistic Kubernetes API server.
+- A test coverage report is generated and uploaded to **Codecov**.
+- Pull requests will **fail to merge** if coverage drops below **80%**, as enforced by the `codecov.yml` configuration and GitHub integration.
+
+### Build
+
+- Uses the official **Docker GitHub Actions** to build the Vidra Operator image.
+- Pushes the image to the **GitHub Container Registry (GHCR)**.
+- The image is signed using **cosign**, allowing users to verify its authenticity and integrity.
+
+### Additional Deployment Artifacts
+
+To support installation via the **Operator Lifecycle Manager (OLM)**, additional artifacts are created and published:
+
+- **Bundle**: Generated using `operator-sdk generate bundle`.
+- **CatalogSource**: Generated using `operator-sdk generate catalog`.
+
+These tasks are defined in the `Makefile` to keep the workflow configuration minimal and maintainable.
+
+---
+

@@ -37,7 +37,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: InfrahubSyncSpec defines the desired state of InfrahubSync
+            description: Spec defines the desired state of InfrahubSync
             properties:
               destination:
                 description: Destination contains the destination information for
@@ -87,7 +87,7 @@ spec:
             - source
             type: object
           status:
-            description: InfrahubSyncStatus defines the observed state of InfrahubSync
+            description: Status defines the observed state of InfrahubSync
             properties:
               checksums:
                 description: Checksums contains a list of checksums for synced resources

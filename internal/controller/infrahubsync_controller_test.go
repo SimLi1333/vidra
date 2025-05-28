@@ -177,7 +177,7 @@ var _ = Describe("InfrahubSync Controller", func() {
 					Return(&[]domain.Artifact{*artifact1}, nil)
 
 				mockClient.EXPECT().
-					DownloadArtifact(apiURL, artifact1.ID, targetBranche, targetDate).
+					DownloadArtifact(apiURL, artifact1.ID, targetBranche, targetDate, "mock-token").
 					Return(bytes.NewReader([]byte(`{
 							"apiVersion": "v1", 
 							"kind": "ConfigMap", 
@@ -226,7 +226,7 @@ var _ = Describe("InfrahubSync Controller", func() {
 					Return(&[]domain.Artifact{*artifact1}, nil)
 
 				mockClient.EXPECT().
-					DownloadArtifact(apiURL, artifact1.ID, targetBranche, targetDate).
+					DownloadArtifact(apiURL, artifact1.ID, targetBranche, targetDate, "mock-token").
 					Return(bytes.NewReader([]byte(`{
 							"apiVersion": "v1", 
 							"kind": "ConfigMap", 
@@ -269,7 +269,7 @@ var _ = Describe("InfrahubSync Controller", func() {
 					RunQuery("test-query", apiURL, artifactName, targetBranche, targetDate, "mock-token").
 					Return(&[]domain.Artifact{*artifact1, *artifact2}, nil)
 				mockClient.EXPECT().
-					DownloadArtifact(apiURL, gomock.Any(), targetBranche, targetDate).
+					DownloadArtifact(apiURL, gomock.Any(), targetBranche, targetDate, "mock-token").
 					Return(bytes.NewReader([]byte(`{
 							"apiVersion": "v1", 
 							"kind": "ConfigMap", 
@@ -374,7 +374,7 @@ var _ = Describe("InfrahubSync Controller", func() {
 					Return(&[]domain.Artifact{*artifact1}, nil)
 
 				mockClient.EXPECT().
-					DownloadArtifact(apiURL, artifact1.ID, targetBranche, targetDate).
+					DownloadArtifact(apiURL, artifact1.ID, targetBranche, targetDate, "mock-token").
 					Return(bytes.NewReader([]byte(`{
 							"apiVersion": "v1", 
 							"kind": "ConfigMap", 
@@ -399,7 +399,7 @@ var _ = Describe("InfrahubSync Controller", func() {
 					RunQuery("test-query", apiURL, artifactName, targetBranche, targetDate, "mock-token").
 					Return(&[]domain.Artifact{*artifact1}, nil)
 				mockClient.EXPECT().
-					DownloadArtifact(apiURL, artifact1.ID, targetBranche, targetDate).
+					DownloadArtifact(apiURL, artifact1.ID, targetBranche, targetDate, "mock-token").
 					Return(bytes.NewReader([]byte(`{
 							"apiVersion": "v1", 
 							"kind": "ConfigMap", 
@@ -435,7 +435,7 @@ var _ = Describe("InfrahubSync Controller", func() {
 					RunQuery("test-query", apiURL, artifactName, targetBranche, targetDate, "mock-token").
 					Return(&[]domain.Artifact{artifact1Updated}, nil)
 				mockClient.EXPECT().
-					DownloadArtifact(apiURL, artifact1.ID, targetBranche, targetDate).
+					DownloadArtifact(apiURL, artifact1.ID, targetBranche, targetDate, "mock-token").
 					Return(bytes.NewReader([]byte(`{
 							"apiVersion": "v1", 
 							"kind": "ConfigMap", 
@@ -470,7 +470,7 @@ var _ = Describe("InfrahubSync Controller", func() {
 					RunQuery("test-query", apiURL, artifactName, targetBranche, targetDate, "mock-token").
 					Return(&[]domain.Artifact{*artifact1}, nil)
 				mockClient.EXPECT().
-					DownloadArtifact(apiURL, artifact1.ID, targetBranche, targetDate).
+					DownloadArtifact(apiURL, artifact1.ID, targetBranche, targetDate, "mock-token").
 					Return(bytes.NewReader([]byte(`{}`)), nil)
 
 				By("reconciling the resource with failing client (Update)")
@@ -504,10 +504,10 @@ var _ = Describe("InfrahubSync Controller", func() {
 					RunQuery("test-query", apiURL, artifactName, targetBranche, targetDate, "mock-token").
 					Return(&[]domain.Artifact{*artifact1, *artifact2}, nil)
 				mockClient.EXPECT().
-					DownloadArtifact(apiURL, artifact1.ID, targetBranche, targetDate).
+					DownloadArtifact(apiURL, artifact1.ID, targetBranche, targetDate, "mock-token").
 					Return(bytes.NewReader([]byte(`{}`)), nil)
 				mockClient.EXPECT().
-					DownloadArtifact(apiURL, artifact2.ID, targetBranche, targetDate).
+					DownloadArtifact(apiURL, artifact2.ID, targetBranche, targetDate, "mock-token").
 					Return(bytes.NewReader([]byte(`{}`)), nil)
 				By("reconciling the resource with failing client ()")
 				reconciler := &InfrahubSyncReconciler{
@@ -718,7 +718,7 @@ var _ = Describe("InfrahubSync Controller", func() {
 					RunQuery("test-query", apiURL, artifactName, targetBranche, targetDate, "mock-token").
 					Return(&[]domain.Artifact{*artifact1}, nil)
 				mockClient.EXPECT().
-					DownloadArtifact(apiURL, artifact1.ID, targetBranche, targetDate).
+					DownloadArtifact(apiURL, artifact1.ID, targetBranche, targetDate, "mock-token").
 					Return(nil, fmt.Errorf("download error"))
 
 				_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
@@ -730,7 +730,7 @@ var _ = Describe("InfrahubSync Controller", func() {
 				err = k8sClient.Get(ctx, namespacedName, instance)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(instance.Status.SyncState).To(Equal(infrahubv1alpha1.StateFailed))
-				Expect(instance.Status.LastError).To(Equal("Failed to download artifact: download error"))
+				Expect(instance.Status.LastError).To(Equal("failed to download artifact: download error"))
 			})
 
 			It("should ignore the resource if it is not found", func() {
