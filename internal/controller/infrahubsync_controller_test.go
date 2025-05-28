@@ -1,7 +1,9 @@
 package controller
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -146,7 +148,7 @@ var _ = Describe("InfrahubSync Controller", func() {
 			Expect(k8sClient.Get(ctx, namespacedName, instance)).To(Succeed())
 			Expect(k8sClient.Delete(ctx, instance)).To(Succeed())
 			By("deleting the infrahub resource for cleanup")
-			res := &infrahubv1alpha1.InfrahubResource{}
+			res := &infrahubv1alpha1.VidraResource{}
 			err := k8sClient.Get(ctx, types.NamespacedName{
 				Name:      artifact1.ID,
 				Namespace: namespace,
@@ -154,7 +156,7 @@ var _ = Describe("InfrahubSync Controller", func() {
 			if err == nil {
 				Expect(k8sClient.Delete(ctx, res)).To(Succeed())
 			}
-			res2 := &infrahubv1alpha1.InfrahubResource{}
+			res2 := &infrahubv1alpha1.VidraResource{}
 			err = k8sClient.Get(ctx, types.NamespacedName{
 				Name:      artifact2.ID,
 				Namespace: namespace,
@@ -172,15 +174,48 @@ var _ = Describe("InfrahubSync Controller", func() {
 
 				mockClient.EXPECT().
 					RunQuery("test-query", apiURL, artifactName, targetBranche, targetDate, "mock-token").
-					Return(&[]domain.Artifact{}, nil)
+					Return(&[]domain.Artifact{*artifact1}, nil)
+
+				mockClient.EXPECT().
+					DownloadArtifact(apiURL, artifact1.ID, targetBranche, targetDate).
+					Return(bytes.NewReader([]byte(`{
+							"apiVersion": "v1", 
+							"kind": "ConfigMap", 
+							"metadata": {
+								"name": "example"
+							}
+						}`)), nil)
 
 				By("reconciling the resource")
 				_, err := reconciler.Reconcile(ctx, reconcile.Request{
 					NamespacedName: namespacedName,
 				})
 				Expect(err).NotTo(HaveOccurred())
+				vidraResource := &infrahubv1alpha1.VidraResource{}
+				err = k8sClient.Get(ctx, types.NamespacedName{
+					Name:      artifact1.ID,
+					Namespace: namespace,
+				}, vidraResource)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(vidraResource.Name).To(Equal(artifact1.ID))
+				Expect(vidraResource.Spec.Destination.Server).To(Equal(destinationServer))
+				Expect(vidraResource.Spec.Destination.Namespace).To(Equal(namespace))
+				var actual, expected map[string]interface{}
+				_ = json.Unmarshal([]byte(vidraResource.Spec.Manifest), &actual)
+				_ = json.Unmarshal([]byte(`{
+    "apiVersion": "v1", 
+    "kind": "ConfigMap", 
+    "metadata": {
+        "name": "example"
+    }
+}`), &expected)
+
+				Expect(actual).To(Equal(expected))
+
+				Expect(vidraResource.Status.DeployState).To(BeEmpty())
+				Expect(vidraResource.Status.LastError).To(BeEmpty())
 			})
-			It("should creat the infrahubResource if the artifact id is present", func() {
+			It("should creat the vidraResource if the artifact id is present", func() {
 				By("setting up mock expectations")
 				mockClient.EXPECT().
 					Login(apiURL, "test-user", "test-pass").
@@ -190,29 +225,32 @@ var _ = Describe("InfrahubSync Controller", func() {
 					RunQuery("test-query", apiURL, artifactName, targetBranche, targetDate, "mock-token").
 					Return(&[]domain.Artifact{*artifact1}, nil)
 
+				mockClient.EXPECT().
+					DownloadArtifact(apiURL, artifact1.ID, targetBranche, targetDate).
+					Return(bytes.NewReader([]byte(`{
+							"apiVersion": "v1", 
+							"kind": "ConfigMap", 
+							"metadata": {
+								"name": "example"
+							}
+						}`)), nil)
+
 				By("reconciling the resource")
 				_, err := reconciler.Reconcile(ctx, reconcile.Request{
 					NamespacedName: namespacedName,
 				})
 				Expect(err).NotTo(HaveOccurred())
-				infrahubResource := &infrahubv1alpha1.InfrahubResource{}
+				vidraResource := &infrahubv1alpha1.VidraResource{}
 				err = k8sClient.Get(ctx, types.NamespacedName{
 					Name:      artifact1.ID,
 					Namespace: namespace,
-				}, infrahubResource)
+				}, vidraResource)
 				Expect(err).NotTo(HaveOccurred())
-				Expect(infrahubResource.Name).To(Equal(artifact1.ID))
-				Expect(infrahubResource.Spec.IDs.ArtifactID).To(Equal(artifact1.ID))
-				Expect(infrahubResource.Spec.IDs.StorageID).To(Equal(artifact1.StorageID))
-				Expect(infrahubResource.Spec.IDs.Checksum).To(Equal(artifact1.Checksum))
-				Expect(infrahubResource.Spec.Source.InfrahubAPIURL).To(Equal(apiURL))
-				Expect(infrahubResource.Spec.Source.TargetBranch).To(Equal(targetBranche))
-				Expect(infrahubResource.Spec.Source.TargetDate).To(Equal(targetDate))
-				Expect(infrahubResource.Spec.Source.ArtifactName).To(Equal(artifactName))
-				Expect(infrahubResource.Spec.Destination.Server).To(Equal(destinationServer))
-				Expect(infrahubResource.Spec.Destination.Namespace).To(Equal(namespace))
-				Expect(infrahubResource.Status.DeployState).To(BeEmpty())
-				Expect(infrahubResource.Status.LastError).To(BeEmpty())
+				Expect(vidraResource.Name).To(Equal(artifact1.ID))
+				Expect(vidraResource.Spec.Destination.Server).To(Equal(destinationServer))
+				Expect(vidraResource.Spec.Destination.Namespace).To(Equal(namespace))
+				Expect(vidraResource.Status.DeployState).To(BeEmpty())
+				Expect(vidraResource.Status.LastError).To(BeEmpty())
 				infrahubSync := &infrahubv1alpha1.InfrahubSync{}
 				err = k8sClient.Get(ctx, types.NamespacedName{
 					Name:      resourceName,
@@ -222,7 +260,7 @@ var _ = Describe("InfrahubSync Controller", func() {
 				Expect(infrahubSync.Status.SyncState).To(Equal(infrahubv1alpha1.StateSucceeded))
 			})
 
-			It("should delete the infrahubResource if the artifact id is not present", func() {
+			It("should delete the vidraResource if the artifact id is not present", func() {
 				By("setting up mock expectations")
 				mockClient.EXPECT().
 					Login(apiURL, "test-user", "test-pass").
@@ -230,27 +268,36 @@ var _ = Describe("InfrahubSync Controller", func() {
 				mockClient.EXPECT().
 					RunQuery("test-query", apiURL, artifactName, targetBranche, targetDate, "mock-token").
 					Return(&[]domain.Artifact{*artifact1, *artifact2}, nil)
+				mockClient.EXPECT().
+					DownloadArtifact(apiURL, gomock.Any(), targetBranche, targetDate).
+					Return(bytes.NewReader([]byte(`{
+							"apiVersion": "v1", 
+							"kind": "ConfigMap", 
+							"metadata": {
+								"name": "example"
+							}
+						}`)), nil).Times(3)
 
 				By("reconciling the resource with two artifacts")
 				_, err := reconciler.Reconcile(ctx, reconcile.Request{
 					NamespacedName: namespacedName,
 				})
 				Expect(err).NotTo(HaveOccurred())
-				infrahubResource := &infrahubv1alpha1.InfrahubResource{}
+				vidraResource := &infrahubv1alpha1.VidraResource{}
 				err = k8sClient.Get(ctx, types.NamespacedName{
 					Name:      artifact1.ID,
 					Namespace: namespace,
-				}, infrahubResource)
+				}, vidraResource)
 				Expect(err).NotTo(HaveOccurred())
-				Expect(infrahubResource.Name).To(Equal(artifact1.ID))
+				Expect(vidraResource.Name).To(Equal(artifact1.ID))
 
-				infrahubResource2 := &infrahubv1alpha1.InfrahubResource{}
+				vidraResource2 := &infrahubv1alpha1.VidraResource{}
 				err = k8sClient.Get(ctx, types.NamespacedName{
 					Name:      artifact2.ID,
 					Namespace: namespace,
-				}, infrahubResource)
+				}, vidraResource)
 				Expect(err).NotTo(HaveOccurred())
-				Expect(infrahubResource.Name).To(Equal(artifact2.ID))
+				Expect(vidraResource.Name).To(Equal(artifact2.ID))
 
 				mockClient.EXPECT().
 					Login(apiURL, "test-user", "test-pass").
@@ -270,7 +317,7 @@ var _ = Describe("InfrahubSync Controller", func() {
 					err := k8sClient.Get(ctx, types.NamespacedName{
 						Name:      artifact1.ID,
 						Namespace: namespace,
-					}, infrahubResource)
+					}, vidraResource)
 					if errors.IsNotFound(err) {
 						return nil
 					}
@@ -280,14 +327,14 @@ var _ = Describe("InfrahubSync Controller", func() {
 				err = k8sClient.Get(ctx, types.NamespacedName{
 					Name:      artifact2.ID,
 					Namespace: namespace,
-				}, infrahubResource2)
+				}, vidraResource2)
 				Expect(err).NotTo(HaveOccurred())
-				Expect(infrahubResource2.Name).To(Equal(artifact2.ID))
+				Expect(vidraResource2.Name).To(Equal(artifact2.ID))
 			})
 
 			It("shold read the newest secret with the infrahub credentials for that url", func() {
-				time.Sleep(2 * time.Second)
 				By("creating the secret with credentials")
+				time.Sleep(2 * time.Second) // Ensure the secret is created after the previous one
 				secret := &v1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "infrahub-credentials2",
@@ -326,6 +373,16 @@ var _ = Describe("InfrahubSync Controller", func() {
 					RunQuery("test-query", apiURL, artifactName, targetBranche, targetDate, "mock-token").
 					Return(&[]domain.Artifact{*artifact1}, nil)
 
+				mockClient.EXPECT().
+					DownloadArtifact(apiURL, artifact1.ID, targetBranche, targetDate).
+					Return(bytes.NewReader([]byte(`{
+							"apiVersion": "v1", 
+							"kind": "ConfigMap", 
+							"metadata": {
+								"name": "example"
+							}
+						}`)), nil)
+
 				By("reconciling the resource")
 				_, err := reconciler.Reconcile(ctx, reconcile.Request{
 					NamespacedName: namespacedName,
@@ -333,7 +390,7 @@ var _ = Describe("InfrahubSync Controller", func() {
 				Expect(err).NotTo(HaveOccurred())
 			})
 
-			It("should update the infrahubResource if the artifact checksum is changed", func() {
+			It("should update the vidraResource if the artifact checksum is changed", func() {
 				By("setting up mock expectations")
 				mockClient.EXPECT().
 					Login(apiURL, "test-user", "test-pass").
@@ -341,23 +398,31 @@ var _ = Describe("InfrahubSync Controller", func() {
 				mockClient.EXPECT().
 					RunQuery("test-query", apiURL, artifactName, targetBranche, targetDate, "mock-token").
 					Return(&[]domain.Artifact{*artifact1}, nil)
+				mockClient.EXPECT().
+					DownloadArtifact(apiURL, artifact1.ID, targetBranche, targetDate).
+					Return(bytes.NewReader([]byte(`{
+							"apiVersion": "v1", 
+							"kind": "ConfigMap", 
+							"metadata": {
+								"name": "example"
+							}
+						}`)), nil)
 
 				By("reconciling the resource")
 				_, err := reconciler.Reconcile(ctx, reconcile.Request{
 					NamespacedName: namespacedName,
 				})
 				Expect(err).NotTo(HaveOccurred())
-				By("checking if the infrahubResource is created")
-				infrahubResource := &infrahubv1alpha1.InfrahubResource{}
+				By("checking if the vidraResource is created")
+				vidraResource := &infrahubv1alpha1.VidraResource{}
 				err = k8sClient.Get(ctx, types.NamespacedName{
 					Name:      artifact1.ID,
 					Namespace: namespace,
-				}, infrahubResource)
+				}, vidraResource)
 				Expect(err).NotTo(HaveOccurred())
-				Expect(infrahubResource.Name).To(Equal(artifact1.ID))
-				Expect(infrahubResource.Spec.IDs.StorageID).To(Equal(artifact1.StorageID))
+				Expect(vidraResource.Name).To(Equal(artifact1.ID))
 
-				By("updating the infrahubResource with new checksum and storage id")
+				By("updating the vidraResource with new checksum and storage id")
 				mockClient.EXPECT().
 					Login(apiURL, "test-user", "test-pass").
 					Return("mock-token", nil)
@@ -369,21 +434,27 @@ var _ = Describe("InfrahubSync Controller", func() {
 				mockClient.EXPECT().
 					RunQuery("test-query", apiURL, artifactName, targetBranche, targetDate, "mock-token").
 					Return(&[]domain.Artifact{artifact1Updated}, nil)
-
+				mockClient.EXPECT().
+					DownloadArtifact(apiURL, artifact1.ID, targetBranche, targetDate).
+					Return(bytes.NewReader([]byte(`{
+							"apiVersion": "v1", 
+							"kind": "ConfigMap", 
+							"metadata": {
+								"name": "example"
+							}
+						}`)), nil)
 				By("reconciling the resource with updated artifact")
 				_, err = reconciler.Reconcile(ctx, reconcile.Request{
 					NamespacedName: namespacedName,
 				})
 				Expect(err).NotTo(HaveOccurred())
-				infrahubResource = &infrahubv1alpha1.InfrahubResource{}
+				vidraResource = &infrahubv1alpha1.VidraResource{}
 				err = k8sClient.Get(ctx, types.NamespacedName{
 					Name:      artifact1.ID,
 					Namespace: namespace,
-				}, infrahubResource)
+				}, vidraResource)
 				Expect(err).NotTo(HaveOccurred())
-				Expect(infrahubResource.Name).To(Equal(artifact1.ID))
-				Expect(infrahubResource.Spec.IDs.StorageID).To(Equal(artifact1Updated.StorageID))
-				Expect(infrahubResource.Spec.IDs.Checksum).To(Equal(artifact1Updated.Checksum))
+				Expect(vidraResource.Name).To(Equal(artifact1.ID))
 			})
 
 		})
@@ -398,6 +469,9 @@ var _ = Describe("InfrahubSync Controller", func() {
 				mockClient.EXPECT().
 					RunQuery("test-query", apiURL, artifactName, targetBranche, targetDate, "mock-token").
 					Return(&[]domain.Artifact{*artifact1}, nil)
+				mockClient.EXPECT().
+					DownloadArtifact(apiURL, artifact1.ID, targetBranche, targetDate).
+					Return(bytes.NewReader([]byte(`{}`)), nil)
 
 				By("reconciling the resource with failing client (Update)")
 				reconciler := &InfrahubSyncReconciler{
@@ -413,9 +487,9 @@ var _ = Describe("InfrahubSync Controller", func() {
 
 				result, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
 				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(ContainSubstring("failed to create or update InfrahubResource artifact-123: simulated failure: Update"))
+				Expect(err.Error()).To(ContainSubstring("failed to create or update VidraResource artifact-123: simulated failure: Update"))
 
-				Expect(result).To(Equal(reconcile.Result{}))
+				Expect(result).To(Equal(reconcile.Result{RequeueAfter: time.Minute}))
 				if failingClient, ok := failingK8sClient.(*mock.FailingUpdateClient); ok {
 					failingClient.FailingMethod = ""
 				}
@@ -429,7 +503,12 @@ var _ = Describe("InfrahubSync Controller", func() {
 				mockClient.EXPECT().
 					RunQuery("test-query", apiURL, artifactName, targetBranche, targetDate, "mock-token").
 					Return(&[]domain.Artifact{*artifact1, *artifact2}, nil)
-
+				mockClient.EXPECT().
+					DownloadArtifact(apiURL, artifact1.ID, targetBranche, targetDate).
+					Return(bytes.NewReader([]byte(`{}`)), nil)
+				mockClient.EXPECT().
+					DownloadArtifact(apiURL, artifact2.ID, targetBranche, targetDate).
+					Return(bytes.NewReader([]byte(`{}`)), nil)
 				By("reconciling the resource with failing client ()")
 				reconciler := &InfrahubSyncReconciler{
 					Client:         failingK8sClient,
@@ -455,9 +534,9 @@ var _ = Describe("InfrahubSync Controller", func() {
 
 				result, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
 				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(ContainSubstring("failed to delete stale InfrahubResource artifact-456: simulated failure: Delete"))
+				Expect(err.Error()).To(ContainSubstring("failed to delete stale VidraResource artifact-456: simulated failure: Delete"))
 
-				Expect(result).To(Equal(reconcile.Result{}))
+				Expect(result).To(Equal(reconcile.Result{RequeueAfter: time.Minute}))
 				if failingClient, ok := failingK8sClient.(*mock.FailingUpdateClient); ok {
 					failingClient.FailingMethod = ""
 				}
@@ -480,7 +559,7 @@ var _ = Describe("InfrahubSync Controller", func() {
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(ContainSubstring(fmt.Sprintf("no secret found with InfrahubAPIURL: %s, error: failed to list resources: simulated failure: List - [map[infrahub-api-url:", apiURL)))
 
-				Expect(result).To(Equal(reconcile.Result{}))
+				Expect(result).To(Equal(reconcile.Result{RequeueAfter: time.Minute}))
 				if failingClient, ok := failingK8sClient.(*mock.FailingUpdateClient); ok {
 					failingClient.FailingMethod = ""
 				}
@@ -630,6 +709,30 @@ var _ = Describe("InfrahubSync Controller", func() {
 				Expect(err.Error()).To(ContainSubstring("missing username, password in the secret"))
 			})
 
+			It("should return error if DownloadArtifact fails", func() {
+				By("setting up the mock client to return an error and reconcile")
+				mockClient.EXPECT().
+					Login(apiURL, "test-user", "test-pass").
+					Return("mock-token", nil)
+				mockClient.EXPECT().
+					RunQuery("test-query", apiURL, artifactName, targetBranche, targetDate, "mock-token").
+					Return(&[]domain.Artifact{*artifact1}, nil)
+				mockClient.EXPECT().
+					DownloadArtifact(apiURL, artifact1.ID, targetBranche, targetDate).
+					Return(nil, fmt.Errorf("download error"))
+
+				_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("download error"))
+
+				// Check that the VidraResource status is updated to failed
+				instance := &infrahubv1alpha1.InfrahubSync{}
+				err = k8sClient.Get(ctx, namespacedName, instance)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(instance.Status.SyncState).To(Equal(infrahubv1alpha1.StateFailed))
+				Expect(instance.Status.LastError).To(Equal("Failed to download artifact: download error"))
+			})
+
 			It("should ignore the resource if it is not found", func() {
 				_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: types.NamespacedName{Name: "nonexistent", Namespace: "default"}})
 				Expect(err).ToNot(HaveOccurred())
@@ -699,8 +802,8 @@ var _ = Describe("InfrahubSyncReconciler SetupWithManager", func() {
 				},
 			},
 			Data: map[string]string{
-				"requeueAfter": "1m",
-				"queryName":    "ArtifactIDs",
+				"requeueSyncAfter": "10m",
+				"queryName":        "ArtifactIDs",
 			},
 		}
 		err := k8sClient.Create(ctx, configMap)
@@ -721,7 +824,7 @@ var _ = Describe("InfrahubSyncReconciler SetupWithManager", func() {
 			Namespace: "default",
 		}, configMap)
 		Expect(err).NotTo(HaveOccurred())
-		Expect(reconciler.RequeueAfter).To(Equal(time.Minute))
+		Expect(reconciler.RequeueAfter).To(Equal(10 * time.Minute))
 		Expect(reconciler.QueryName).To(Equal("ArtifactIDs"))
 	})
 

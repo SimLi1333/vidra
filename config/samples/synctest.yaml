@@ -1,7 +1,7 @@
 apiVersion: infrahub.operators.com/v1alpha1
 kind: InfrahubSync
 metadata:
-  name: sync-main
+  name: sync-main-x
   labels:
     app.kubernetes.io/name: vidra
     app.kubernetes.io/managed-by: kustomize

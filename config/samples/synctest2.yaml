@@ -1,7 +1,7 @@
 apiVersion: infrahub.operators.com/v1alpha1
 kind: InfrahubSync
 metadata:
-  name: sync-test-multi
+  name: sync-test-multi-x
   labels:
     app.kubernetes.io/name: vidra
     app.kubernetes.io/managed-by: kustomize
@@ -12,5 +12,6 @@ spec:
     # targetDate: "2025-04-09T00:00:00Z"
     artefactName: "Webserver_Manifest"
   destination:
-    server: 'https://k8s-cldop-test-0.network.garden:6443'
+    # server: 'https://k8s-cldop-test-0.network.garden:6443'
     namespace: 'default'
+    reconcileOnEvents: true

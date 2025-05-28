@@ -54,7 +54,7 @@ func MarkStateFailed(
 	// Update the LastError field and SyncState to Failed
 	err := MarkState(ctx, c, res, func() {
 		switch obj := res.(type) {
-		case *infrahubv1alpha1.InfrahubResource:
+		case *infrahubv1alpha1.VidraResource:
 			obj.Status.LastSyncTime = metav1.Now()
 			obj.Status.LastError = originalErr.Error()
 			obj.Status.DeployState = infrahubv1alpha1.StateFailed
