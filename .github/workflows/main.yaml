@@ -93,13 +93,7 @@ jobs:
       - run: go version
       - run: make fmt
       - run: make vet
-      - run: make test | tee test-results.txt
-      - name: Upload test results
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results
-          path: test-results.txt
-          retention-days: 7
+      - run: make test
       - name: Save coverage
         run: echo "Saving coverage..."
       - name: Upload coverage.out
@@ -131,7 +125,6 @@ jobs:
         run: |
           go tool cover -func=cover.out
           go tool cover -html=cover.out -o coverage.html
-
       - name: Extract Coverage Percentage and Generate Badge
         run: |
           apt-get update && apt-get install -y jq
@@ -141,7 +134,6 @@ jobs:
           echo "{\"schemaVersion\": 1, \"label\": \"coverage\", \"message\": \"${TOTAL}%\", \"color\": \"green\"}" > coverage-badge.json
           mkdir -p public
           mv coverage-badge.json public/
-
       - name: Upload HTML Coverage and Raw Report
         uses: actions/upload-artifact@v4
         with:
@@ -156,7 +148,7 @@ jobs:
         with:
           personal_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./public
-
+          
   publish:
     runs-on: ubuntu-latest
     permissions:
