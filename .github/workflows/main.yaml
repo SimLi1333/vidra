@@ -76,17 +76,10 @@ jobs:
 
   unit-test:
     name: Unit Tests
-    runs-on: macos-14
-    defaults:
-      run:
-        shell: bash
-    strategy:
-      matrix:
-        arch: [arm64]
-    env:
-      GOARCH: arm64
+    runs-on: ubuntu-24.04
     container: golang:1.24
-
+    env:
+      GOFLAGS: "-buildvcs=false"
     steps:
       - uses: actions/checkout@v4
       # - name: Setup Cache
@@ -97,10 +90,7 @@ jobs:
       #       .cache/go-build
       #     key: ${{ runner.os }}-go-${{ github.ref_name }}
       - run: go version
-      - run: make envtest
-      - run: GINKGO_VERBOSE=1 go test -v ./internal/controller 2>&1 | tee test.log
-      - name: Dump test output
-        run: cat test.log
+      - run: make test
       - name: Save coverage
         run: echo "Saving coverage..."
       - name: Upload coverage.out
