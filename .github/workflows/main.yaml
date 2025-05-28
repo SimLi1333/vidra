@@ -86,8 +86,7 @@ jobs:
     env:
       GOARCH: arm64
     container: golang:1.24
-    env:
-      GOFLAGS: "-buildvcs=false"
+
     steps:
       - uses: actions/checkout@v4
       # - name: Setup Cache
