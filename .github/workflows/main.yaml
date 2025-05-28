@@ -90,7 +90,10 @@ jobs:
       #       .cache/go-build
       #     key: ${{ runner.os }}-go-${{ github.ref_name }}
       - run: go version
-      - run: GINKGO_VERBOSE=1 make test
+      - run: GINKGO_VERBOSE=1 go test -v ./internal/controller 2>&1 | tee test.log
+      - name: Dump test output
+        run: cat test.log
+
       - name: Save coverage
         run: echo "Saving coverage..."
       - name: Upload coverage.out
