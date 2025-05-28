@@ -115,7 +115,7 @@ func (r *InfrahubSyncReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	logger.Info("Query executed successfully", "result", queryResult)
 
 	// Process query results and compare with existing resources
-	err = r.processArtifacts(ctx, infrahubSync, queryResult)
+	err = r.processArtifacts(ctx, infrahubSync, queryResult, token)
 	if err != nil {
 		logger.Error(err, "Error processing artifacts")
 		return ctrl.Result{RequeueAfter: r.RequeueAfter}, MarkStateFailed(ctx, r.Client, infrahubSync, err)
@@ -171,6 +171,7 @@ func (r *InfrahubSyncReconciler) processArtifacts(
 	ctx context.Context,
 	infrahubSync *infrahubv1alpha1.InfrahubSync,
 	artifacts *[]domain.Artifact,
+	token string,
 ) error {
 	log := log.FromContext(ctx)
 
@@ -222,6 +223,7 @@ func (r *InfrahubSyncReconciler) processArtifacts(
 				artifact.ID,
 				infrahubSync.Spec.Source.TargetBranch,
 				infrahubSync.Spec.Source.TargetDate,
+				token,
 			)
 			if err != nil {
 				return fmt.Errorf("failed to download artifact: %w", err)

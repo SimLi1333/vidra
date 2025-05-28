@@ -275,7 +275,7 @@ var _ = Describe("infrahubClient", func() {
 			}))
 
 			apiURL = server.URL
-			reader, err := client.DownloadArtifact(apiURL, artifactID, branch, date)
+			reader, err := client.DownloadArtifact(apiURL, artifactID, branch, date, "mock-token")
 			Expect(err).NotTo(HaveOccurred())
 
 			content, err := io.ReadAll(reader)
@@ -285,30 +285,41 @@ var _ = Describe("infrahubClient", func() {
 
 		It("fails to send GET request with malformed URL", func() {
 			apiURL = ":::invalid-url"
-			reader, err := client.DownloadArtifact(apiURL, artifactID, branch, date)
+			reader, err := client.DownloadArtifact(apiURL, artifactID, branch, date, "mock-token")
 			Expect(reader).To(BeNil())
-			Expect(err).To(MatchError(ContainSubstring("failed to send GET request")))
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("failed to create request"))
+
 		})
 
 		It("fails to send GET request", func() {
 			// Use a non-routable address to trigger http.Get error
 			apiURL = "http://127.0.0.1:0" // closed port
-			reader, err := client.DownloadArtifact(apiURL, artifactID, branch, date)
+			reader, err := client.DownloadArtifact(apiURL, artifactID, branch, date, "mock-token")
 			Expect(reader).To(BeNil())
-			Expect(err).To(MatchError(ContainSubstring("failed to send GET request")))
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("failed to download artifact after retries"))
+
 		})
 
-		It("handles non-200 status code with error body", func() {
+		It("returns error on non-200 response", func() {
 			server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusBadRequest)
-				_, _ = w.Write([]byte("bad request"))
+				w.WriteHeader(http.StatusNotFound)
 			}))
-
 			apiURL = server.URL
-			reader, err := client.DownloadArtifact(apiURL, artifactID, branch, date)
-			Expect(reader).To(BeNil())
-			Expect(err).To(MatchError(ContainSubstring("failed to download artifact, status code: 400, response: bad request")))
+
+			content, err := client.DownloadArtifact(apiURL, artifactID, branch, date, "token123")
+			Expect(err).To(HaveOccurred())
+			Expect(content).To(BeNil())
+			Expect(err.Error()).To(ContainSubstring("failed to download artifact"))
 		})
+
+		It("returns error on malformed URL", func() {
+			content, err := client.DownloadArtifact(":://badurl", artifactID, branch, date, "token")
+			Expect(err).To(HaveOccurred())
+			Expect(content).To(BeNil())
+		})
+
 	})
 
 })

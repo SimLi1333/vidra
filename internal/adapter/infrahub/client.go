@@ -86,7 +86,7 @@ func (c *infrahubClient) RunQuery(queryName string, apiURL string, artifactName 
 		return nil, fmt.Errorf("failed to build query URL: %w", err)
 	}
 
-	payload := QueryPayload{
+	payload := queryPayload{
 		Variables: map[string]string{
 			"artifactname": artifactName,
 		},
@@ -97,17 +97,33 @@ func (c *infrahubClient) RunQuery(queryName string, apiURL string, artifactName 
 		return nil, fmt.Errorf("failed to marshal query payload: %w", err)
 	}
 
-	req, err := http.NewRequest("POST", url, bytes.NewReader(payloadBytes))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create query request: %w", err)
+	var resp *http.Response
+	var lastErr error
+	backoff := 200 * time.Millisecond
+
+	for attempts := 0; attempts < 5; attempts++ {
+		req, err := http.NewRequest("POST", url, bytes.NewReader(payloadBytes))
+		if err != nil {
+			return nil, fmt.Errorf("failed to create query request: %w", err)
+		}
+
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err = http.DefaultClient.Do(req)
+		if err == nil && resp.StatusCode == http.StatusOK {
+			break
+		}
+		if resp != nil {
+			resp.Body.Close()
+		}
+		lastErr = err
+		time.Sleep(backoff)
+		backoff *= 2
 	}
 
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("query request failed: %w", err)
+	if resp == nil {
+		return nil, fmt.Errorf("query request failed after retries: %w", lastErr)
 	}
 	defer func() {
 		if cerr := resp.Body.Close(); cerr != nil {
@@ -120,7 +136,7 @@ func (c *infrahubClient) RunQuery(queryName string, apiURL string, artifactName 
 		return nil, fmt.Errorf("query failed with status %s: %s", resp.Status, body)
 	}
 
-	var queryResult ArtifactIDQueryResult
+	var queryResult artifactIDQueryResult
 	if err := json.NewDecoder(resp.Body).Decode(&queryResult); err != nil {
 		return nil, fmt.Errorf("failed to decode query result: %w", err)
 	}
@@ -136,7 +152,6 @@ func (c *infrahubClient) RunQuery(queryName string, apiURL string, artifactName 
 // Login authenticates with the Infrahub API and returns the authentication token
 func (c *infrahubClient) Login(apiURL, username, password string) (string, error) {
 	loginURL := fmt.Sprintf("%s/api/auth/login", apiURL)
-
 	loginPayload := map[string]string{"username": username, "password": password}
 
 	payloadBytes, err := json.Marshal(loginPayload)
@@ -144,16 +159,33 @@ func (c *infrahubClient) Login(apiURL, username, password string) (string, error
 		return "", fmt.Errorf("failed to marshal login payload: %w", err)
 	}
 
-	req, err := http.NewRequest("POST", loginURL, bytes.NewReader(payloadBytes))
-	if err != nil {
-		return "", fmt.Errorf("failed to create login request: %w", err)
-	}
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("Content-Type", "application/json")
+	var resp *http.Response
+	var lastErr error
+	backoff := time.Millisecond * 200
 
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("login request failed: %w", err)
+	for attempts := 0; attempts < 5; attempts++ {
+		req, err := http.NewRequest("POST", loginURL, bytes.NewReader(payloadBytes))
+		if err != nil {
+			return "", fmt.Errorf("failed to create login request: %w", err)
+		}
+		req.Header.Set("Accept", "application/json")
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err = http.DefaultClient.Do(req)
+		if err == nil && resp.StatusCode == http.StatusOK {
+			break
+		}
+
+		if resp != nil {
+			resp.Body.Close()
+		}
+		lastErr = err
+		time.Sleep(backoff)
+		backoff *= 2
+	}
+
+	if resp == nil {
+		return "", fmt.Errorf("login request failed after retries: %w", lastErr)
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
@@ -175,7 +207,7 @@ func (c *infrahubClient) Login(apiURL, username, password string) (string, error
 }
 
 // DownloadArtifact downloads the artifact from the given URL and saves it to a temporary file
-func (c *infrahubClient) DownloadArtifact(apiURL string, artifactID string, targetBranche string, targetDate string) (io.Reader, error) {
+func (c *infrahubClient) DownloadArtifact(apiURL string, artifactID string, targetBranche string, targetDate string, token string) (io.Reader, error) {
 	url, err := BuildURL(
 		apiURL,
 		"/api/artifact/:artifactID",
@@ -191,25 +223,34 @@ func (c *infrahubClient) DownloadArtifact(apiURL string, artifactID string, targ
 		return nil, fmt.Errorf("failed to build URL for artifact: %v", err)
 	}
 
-	// Send a GET request to download the artifact
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, fmt.Errorf("failed to send GET request: %v", err)
-	}
+	var resp *http.Response
+	var lastErr error
+	backoff := 200 * time.Millisecond
 
-	// Check if the response status is OK
-	if resp.StatusCode != http.StatusOK {
-		body, err := io.ReadAll(resp.Body)
-		closeErr := resp.Body.Close()
+	for attempts := 0; attempts < 5; attempts++ {
+		req, err := http.NewRequest("GET", url, nil)
 		if err != nil {
-			return nil, fmt.Errorf("failed to read response body: %v", err)
+			return nil, fmt.Errorf("failed to create request: %w", err)
 		}
-		if closeErr != nil {
-			return nil, fmt.Errorf("failed to close response body: %v", closeErr)
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+
+		resp, err = http.DefaultClient.Do(req)
+		if err == nil && resp.StatusCode == http.StatusOK {
+			// Success
+			return resp.Body, nil
 		}
-		return nil, fmt.Errorf("failed to download artifact, status code: %d, response: %s", resp.StatusCode, body)
+		if resp != nil {
+			resp.Body.Close()
+		}
+		lastErr = err
+		time.Sleep(backoff)
+		backoff *= 2
 	}
 
-	// Return the response body as an io.Reader
-	return resp.Body, nil
+	if resp != nil {
+		body, _ := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		return nil, fmt.Errorf("failed to download artifact after retries, last status code: %d, response: %s", resp.StatusCode, body)
+	}
+	return nil, fmt.Errorf("failed to download artifact after retries: %v", lastErr)
 }

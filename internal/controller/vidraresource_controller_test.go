@@ -5,8 +5,6 @@ package controller
 import (
 	"context"
 	"fmt"
-	"io"
-	"strings"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -43,7 +41,6 @@ var _ = Describe("should reconcile correctly with different Destination.Server v
 		Context(fmt.Sprintf("Destination.Server = '%s'", destinationServer), func() {
 			var (
 				mockCtrl                       *gomock.Controller
-				mockClient                     *mock.MockInfrahubClient
 				mockRESTMapper                 *mock.MockRESTMapper
 				mockDynamicMulticlusterFactory *mock.MockDynamicMulticlusterFactory
 				mockWatcherFactory             *mock.MockDynamicWatcherFactory
@@ -61,7 +58,6 @@ var _ = Describe("should reconcile correctly with different Destination.Server v
 
 			BeforeEach(func() {
 				mockCtrl = gomock.NewController(GinkgoT())
-				mockClient = mock.NewMockInfrahubClient(mockCtrl)
 				mockDynamicMulticlusterFactory = mock.NewMockDynamicMulticlusterFactory(mockCtrl)
 				mockWatcherFactory = mock.NewMockDynamicWatcherFactory(mockCtrl)
 				mockRESTMapper = mock.NewMockRESTMapper(mockCtrl)
@@ -72,7 +68,6 @@ var _ = Describe("should reconcile correctly with different Destination.Server v
 				reconciler = &VidraResourceReconciler{
 					Client:                     k8sClient,
 					Scheme:                     k8sClient.Scheme(),
-					InfrahubClient:             mockClient,
 					RESTMapper:                 mockRESTMapper,
 					DynamicMulticlusterFactory: mockDynamicMulticlusterFactory,
 				}
@@ -457,11 +452,15 @@ data:
 
 						By("running reconciliation again with the same manifest")
 
-						// The mock client should not be called again
-						mockClient.EXPECT().
-							DownloadArtifact(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-							Return(io.NopCloser(strings.NewReader(yamlData)), nil).
-							Times(0)
+						_, err = reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
+						Expect(err).NotTo(HaveOccurred())
+						// Check if the resource still exists and has the same data
+						Eventually(func() error {
+							res := &unstructured.Unstructured{}
+							res.SetAPIVersion("v1")
+							res.SetKind("ConfigMap")
+							return deployK8sClient.Get(ctx, types.NamespacedName{Name: "resource", Namespace: namespace}, res)
+						}).Should(Succeed())
 					})
 
 					It("should overwrite the resource if it was manually changed", func() {
@@ -1278,7 +1277,6 @@ metadata:
 						reconciler := &VidraResourceReconciler{
 							Client:                     k8sClient,
 							Scheme:                     k8sClient.Scheme(),
-							InfrahubClient:             mockClient,
 							RESTMapper:                 mockRESTMapper,
 							DynamicMulticlusterFactory: mockDynamicMulticlusterFactory,
 							DynamicWatcherFactory:      mockWatcherFactory,
@@ -1482,7 +1480,6 @@ metadata:
 						reconciler := &VidraResourceReconciler{
 							Client:                     failingK8sClient,
 							Scheme:                     k8sClient.Scheme(),
-							InfrahubClient:             mockClient,
 							RESTMapper:                 mockRESTMapper,
 							DynamicMulticlusterFactory: mockDynamicMulticlusterFactory,
 						}
@@ -1572,7 +1569,6 @@ metadata:
 						reconciler := &VidraResourceReconciler{
 							Client:                     failingK8sClient,
 							Scheme:                     k8sClient.Scheme(),
-							InfrahubClient:             mockClient,
 							RESTMapper:                 mockRESTMapper,
 							DynamicMulticlusterFactory: mockDynamicMulticlusterFactory,
 						}
@@ -1603,7 +1599,6 @@ metadata:
 						reconciler := &VidraResourceReconciler{
 							Client:                     failingK8sClient,
 							Scheme:                     k8sClient.Scheme(),
-							InfrahubClient:             mockClient,
 							RESTMapper:                 mockRESTMapper,
 							DynamicMulticlusterFactory: mockDynamicMulticlusterFactory,
 						}
@@ -1638,7 +1633,6 @@ metadata:
 						reconciler := &VidraResourceReconciler{
 							Client:                     failingK8sClient,
 							Scheme:                     k8sClient.Scheme(),
-							InfrahubClient:             mockClient,
 							RESTMapper:                 mockRESTMapper,
 							DynamicMulticlusterFactory: mockDynamicMulticlusterFactory,
 						}
@@ -1703,7 +1697,6 @@ metadata:
 						reconciler := &VidraResourceReconciler{
 							Client:                     failingK8sClient,
 							Scheme:                     nil, // Not needed for this test
-							InfrahubClient:             mockClient,
 							RESTMapper:                 mockRESTMapper,
 							DynamicMulticlusterFactory: mockDynamicMulticlusterFactory,
 						}
@@ -1730,14 +1723,12 @@ var _ = Describe("VidraResourceReconciler SetupWithManager", func() {
 	var (
 		mgr        manager.Manager
 		reconciler *VidraResourceReconciler
-		mockClient *mock.MockInfrahubClient
 		mockCtrl   *gomock.Controller
 	)
 
 	BeforeEach(func() {
 		var err error
 		mockCtrl = gomock.NewController(GinkgoT())
-		mockClient = mock.NewMockInfrahubClient(mockCtrl)
 
 		mgr, err = ctrl.NewManager(cfg, ctrl.Options{
 			Scheme: k8sClient.Scheme(),
@@ -1745,9 +1736,8 @@ var _ = Describe("VidraResourceReconciler SetupWithManager", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		reconciler = &VidraResourceReconciler{
-			Client:         mgr.GetClient(),
-			Scheme:         mgr.GetScheme(),
-			InfrahubClient: mockClient,
+			Client: mgr.GetClient(),
+			Scheme: mgr.GetScheme(),
 		}
 	})
 

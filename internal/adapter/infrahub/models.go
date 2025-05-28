@@ -6,11 +6,11 @@ import (
 
 // API Request and Response Models
 
-type QueryPayload struct {
+type queryPayload struct {
 	Variables map[string]string `json:"variables"`
 }
 
-type ArtifactIDQueryResult struct {
+type artifactIDQueryResult struct {
 	Data struct {
 		CoreArtifact struct {
 			Edges []struct {
@@ -29,7 +29,7 @@ type ArtifactIDQueryResult struct {
 }
 
 // CreateArtifactsFromAPIResponse maps an API response to a slice of domain.Artifact
-func CreateArtifactsFromAPIResponse(apiResponse ArtifactIDQueryResult) ([]domain.Artifact, error) {
+func CreateArtifactsFromAPIResponse(apiResponse artifactIDQueryResult) ([]domain.Artifact, error) {
 	// If no artifacts are found in the API response
 	if len(apiResponse.Data.CoreArtifact.Edges) == 0 {
 		return nil, nil
