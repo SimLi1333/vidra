@@ -1,0 +1,21 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "vidra-operator.fullname" . }}-infrahubsync-viewer-role
+  labels:
+  {{- include "vidra-operator.labels" . | nindent 4 }}
+rules:
+- apiGroups:
+  - infrahub.operators.com
+  resources:
+  - infrahubsyncs
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - infrahub.operators.com
+  resources:
+  - infrahubsyncs/status
+  verbs:
+  - get

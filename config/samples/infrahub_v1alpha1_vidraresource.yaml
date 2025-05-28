@@ -1,0 +1,9 @@
+apiVersion: infrahub.operators.com/v1alpha1
+kind: VidraResource
+metadata:
+  labels:
+    app.kubernetes.io/name: vidra
+    app.kubernetes.io/managed-by: kustomize
+  name: vidraresource-sample
+spec:
+  # TODO(user): Add fields here

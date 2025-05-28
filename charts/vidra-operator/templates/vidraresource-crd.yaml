@@ -1,0 +1,126 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: vidraresources.infrahub.operators.com
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.16.1
+  labels:
+  {{- include "vidra-operator.labels" . | nindent 4 }}
+spec:
+  group: infrahub.operators.com
+  names:
+    kind: VidraResource
+    listKind: VidraResourceList
+    plural: vidraresources
+    singular: vidraresource
+  scope: Cluster
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: VidraResource is the Schema for the Vidraresources API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: VidraResourceSpec defines the desired state of VidraResource
+            properties:
+              destination:
+                description: Destination contains the destination information for the
+                  resource
+                properties:
+                  namespace:
+                    description: Namespace in the Kubernetes cluster where the resource
+                      should be sent
+                    type: string
+                  reconcileOnEvents:
+                    default: false
+                    description: 'If true, the operator will reconcile resources based
+                      on k8s events. (default: false)'
+                    type: boolean
+                  server:
+                    description: Server URL for the destination (usually a Kubernetes
+                      API endpoint)
+                    type: string
+                type: object
+              manifest:
+                description: Manifest contains the manifest information for the resource
+                type: string
+              reconcileOnEvents:
+                default: false
+                description: 'If true, the operator will reconcile resources based on
+                  k8s events. (default: false)'
+                type: boolean
+              reconciledAt:
+                description: The last time the resource was reconciled
+                format: date-time
+                type: string
+            type: object
+          status:
+            description: VidraResourceStatus defines the observed state of VidraResource
+            properties:
+              DeployState:
+                description: DeployState indicates the current state of the deployment
+                enum:
+                - Pending
+                - Running
+                - Succeeded
+                - Failed
+                - Stale
+                type: string
+              lastError:
+                description: LastError contains the last error message if any
+                type: string
+              lastSyncTime:
+                description: LastSyncTime indicates the last time the resource was synchronized
+                format: date-time
+                type: string
+              managedResources:
+                description: ManagedResources contains the status of managed resources
+                items:
+                  properties:
+                    apiVersion:
+                      description: APIVersion of the resource (e.g., apps/v1)
+                      type: string
+                    kind:
+                      description: Kind of the resource (e.g., Deployment, Service)
+                      type: string
+                    name:
+                      description: Name of the resource
+                      type: string
+                    namespace:
+                      description: Namespace of the resource
+                      type: string
+                  required:
+                  - apiVersion
+                  - kind
+                  - name
+                  type: object
+                type: array
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
