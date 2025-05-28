@@ -76,20 +76,19 @@ jobs:
 
   unit-test:
     name: Unit Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     container: golang:1.24
     env:
       GOFLAGS: "-buildvcs=false"
-    needs: lint
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            .cache/go
-            .cache/go-build
-          key: ${{ runner.os }}-go-${{ github.ref_name }}
+      # - name: Setup Cache
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: |
+      #       .cache/go
+      #       .cache/go-build
+      #     key: ${{ runner.os }}-go-${{ github.ref_name }}
       - run: go version
       - run: make test
       - name: Save coverage
