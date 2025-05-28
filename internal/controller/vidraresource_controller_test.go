@@ -106,9 +106,13 @@ var _ = Describe("should reconcile correctly with different Destination.Server v
 					err := k8sClient.Get(ctx, namespacedName, instance)
 					if err == nil {
 						// Wait for the finalizer to be removed before deleting the resource
-						instance.SetFinalizers(nil)
+						// instance.SetFinalizers(nil)
 						Expect(k8sClient.Update(ctx, instance)).To(Succeed())
 						Expect(k8sClient.Delete(ctx, instance)).To(Succeed())
+						_ = setupDynamicMulticlusterFactoryMock(ctx, k8sClient, mockDynamicMulticlusterFactory, namespacedName, secondK8sClient)
+
+						_, err = reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
+						Expect(err).NotTo(HaveOccurred())
 					}
 					if failingClient, ok := failingK8sClient.(*mock.FailingUpdateClient); ok {
 						failingClient.FailingMethod = ""
@@ -120,8 +124,15 @@ var _ = Describe("should reconcile correctly with different Destination.Server v
 						instance := &infrahubv1alpha1.VidraResource{}
 						err := k8sClient.Get(ctx, namespacedName, instance)
 						Expect(err).NotTo(HaveOccurred())
-						instance.Spec.Manifest = `{"apiVersion":"v1","kind":"ConfigMap","metadata":{"name":"example"},"data":{"key":"value"}}`
-
+						instance.Spec.Manifest = `
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example
+  namespace: ` + namespace + `
+data:
+  key: value
+`
 						Expect(k8sClient.Update(ctx, instance)).To(Succeed())
 
 						mockRESTMapper.EXPECT().
@@ -550,24 +561,24 @@ data:
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: test-namespace
+  name: test2-namespace
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: config1
-  namespace: test-namespace
+  namespace: test2-namespace
 ---
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: test-namespace2
+  name: test2-namespace2
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: config2
-  namespace: test-namespace2
+  namespace: test2-namespace2
 `
 
 						instance := &infrahubv1alpha1.VidraResource{}
@@ -589,19 +600,19 @@ metadata:
 
 						created1 := &v1.ConfigMap{}
 						namespace := &v1.Namespace{}
-						err = deployK8sClient.Get(ctx, types.NamespacedName{Name: "test-namespace"}, namespace)
+						err = deployK8sClient.Get(ctx, types.NamespacedName{Name: "test2-namespace"}, namespace)
 						Expect(err).NotTo(HaveOccurred())
-						Expect(namespace.Name).To(Equal("test-namespace"))
-						err = deployK8sClient.Get(ctx, types.NamespacedName{Name: "config1", Namespace: "test-namespace"}, created1)
+						Expect(namespace.Name).To(Equal("test2-namespace"))
+						err = deployK8sClient.Get(ctx, types.NamespacedName{Name: "config1", Namespace: "test2-namespace"}, created1)
 						Expect(err).NotTo(HaveOccurred())
 						Expect(created1.Name).To(Equal("config1"))
-						Expect(created1.Namespace).To(Equal("test-namespace"))
+						Expect(created1.Namespace).To(Equal("test2-namespace"))
 
 						created2 := &v1.ConfigMap{}
-						err = deployK8sClient.Get(ctx, types.NamespacedName{Name: "config2", Namespace: "test-namespace2"}, created2)
+						err = deployK8sClient.Get(ctx, types.NamespacedName{Name: "config2", Namespace: "test2-namespace2"}, created2)
 						Expect(err).NotTo(HaveOccurred())
 						Expect(created2.Name).To(Equal("config2"))
-						Expect(created2.Namespace).To(Equal("test-namespace2"))
+						Expect(created2.Namespace).To(Equal("test2-namespace2"))
 					})
 
 					It("should remove old resources and create new ones if the name changes", func() {

@@ -115,7 +115,9 @@ func (c *infrahubClient) RunQuery(queryName string, apiURL string, artifactName 
 			break
 		}
 		if resp != nil {
-			resp.Body.Close()
+			if cerr := resp.Body.Close(); cerr != nil {
+				fmt.Printf("warning: failed to close response body: %v\n", cerr)
+			}
 		}
 		lastErr = err
 		time.Sleep(backoff)
@@ -177,7 +179,9 @@ func (c *infrahubClient) Login(apiURL, username, password string) (string, error
 		}
 
 		if resp != nil {
-			resp.Body.Close()
+			if cerr := resp.Body.Close(); cerr != nil {
+				fmt.Printf("warning: failed to close response body: %v\n", cerr)
+			}
 		}
 		lastErr = err
 		time.Sleep(backoff)
@@ -240,7 +244,9 @@ func (c *infrahubClient) DownloadArtifact(apiURL string, artifactID string, targ
 			return resp.Body, nil
 		}
 		if resp != nil {
-			resp.Body.Close()
+			if cerr := resp.Body.Close(); cerr != nil {
+				fmt.Printf("warning: failed to close response body: %v\n", cerr)
+			}
 		}
 		lastErr = err
 		time.Sleep(backoff)
@@ -249,7 +255,9 @@ func (c *infrahubClient) DownloadArtifact(apiURL string, artifactID string, targ
 
 	if resp != nil {
 		body, _ := io.ReadAll(resp.Body)
-		resp.Body.Close()
+		if cerr := resp.Body.Close(); cerr != nil {
+			fmt.Printf("warning: failed to close response body: %v\n", cerr)
+		}
 		return nil, fmt.Errorf("failed to download artifact after retries, last status code: %d, response: %s", resp.StatusCode, body)
 	}
 	return nil, fmt.Errorf("failed to download artifact after retries: %v", lastErr)
