@@ -12,10 +12,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Change to the docs directory
-        run: cd docs  
       - name: Checkout code
         uses: actions/checkout@v3
+      
+      - name: Change to the docs directory
+        run: cd docs  
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
