@@ -107,6 +107,13 @@ var _ = Describe("should reconcile correctly with different Destination.Server v
 					if err == nil {
 						// Wait for the finalizer to be removed before deleting the resource
 						// instance.SetFinalizers(nil)
+						deployK8sClient := setupDynamicMulticlusterFactoryMock(ctx, k8sClient, mockDynamicMulticlusterFactory, namespacedName, secondK8sClient)
+						_ = deployK8sClient.Delete(ctx, &v1.ConfigMap{
+							ObjectMeta: metav1.ObjectMeta{
+								Name:      "example-config",
+								Namespace: "default",
+							},
+						})
 						Expect(k8sClient.Update(ctx, instance)).To(Succeed())
 						Expect(k8sClient.Delete(ctx, instance)).To(Succeed())
 						_ = setupDynamicMulticlusterFactoryMock(ctx, k8sClient, mockDynamicMulticlusterFactory, namespacedName, secondK8sClient)
