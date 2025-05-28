@@ -88,7 +88,9 @@ jobs:
       - run: go version
       - run: make fmt
       - run: make vet
-      - run: make test
+      - run: |
+          echo "::endgroup::"  # end any active group
+          make test
       - name: Save coverage
         run: echo "Saving coverage..."
       - name: Upload coverage.out
