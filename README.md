@@ -22,4 +22,3 @@ Contributions are welcome! Feel free to submit issues or feature requests on Git
 --- 
 Enjoy using Vidra! 🎉
 
-go tool cover -html=cover.out
