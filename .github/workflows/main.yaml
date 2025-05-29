@@ -192,79 +192,79 @@ jobs:
             cache-from: type=gha
             cache-to: type=gha,mode=max
 
-    bundle:
-      name: Build and Push Operator Bundle
-      needs: build-push
-      runs-on: ubuntu-latest
-      permissions:
-        contents: write
-        packages: write
-        id-token: write
-      steps:
-        - uses: actions/checkout@v3
-        - name: Install operator-sdk
-          run: |
-            curl -L https://github.com/operator-framework/operator-sdk/releases/download/${OPERATOR_SDK_VERSION}/operator-sdk_linux_amd64 -o /usr/local/bin/operator-sdk
-            chmod +x /usr/local/bin/operator-sdk
-        - name: Build and push the bundle
-          run: |
-            TAG_VERSION=${{ github.ref_name }}
-            VERSION="${TAG_VERSION#v}"
-            make bundle bundle-build bundle-push IMAGE_TAG_BASE=ghcr.io/${{ github.repository }} VERSION=$VERSION IMG=ghcr.io/${{ github.repository }}:$TAG_VERSION
+  bundle:
+    name: Build and Push Operator Bundle
+    needs: build-push
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install operator-sdk
+        run: |
+          curl -L https://github.com/operator-framework/operator-sdk/releases/download/${OPERATOR_SDK_VERSION}/operator-sdk_linux_amd64 -o /usr/local/bin/operator-sdk
+          chmod +x /usr/local/bin/operator-sdk
+      - name: Build and push the bundle
+        run: |
+          TAG_VERSION=${{ github.ref_name }}
+          VERSION="${TAG_VERSION#v}"
+          make bundle bundle-build bundle-push IMAGE_TAG_BASE=ghcr.io/${{ github.repository }} VERSION=$VERSION IMG=ghcr.io/${{ github.repository }}:$TAG_VERSION
 
-    helm-chart:
-      name: Push Helm Chart
-      needs: build-push
-      runs-on: ubuntu-latest
-      permissions:
-        contents: write
-        packages: write
-        id-token: write
-      steps:
-        - uses: actions/checkout@v3
-        - name: helmify
-          run: make helm
-        - name: Chart | Push
-          uses: appany/helm-oci-chart-releaser@v0.3.0
-          with:
-            name: vidra-operator
-            repository: ${{ github.repository }}/helm-charts
-            tag: ${{ github.ref_name }}
-            path: charts/vidra-operator
-            registry: ghcr.io
-            registry_username: ${{ github.repository_owner }}
-            registry_password: ${{ secrets.GITHUB_TOKEN }}
+  helm-chart:
+    name: Push Helm Chart
+    needs: build-push
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v3
+      - name: helmify
+        run: make helm
+      - name: Chart | Push
+        uses: appany/helm-oci-chart-releaser@v0.3.0
+        with:
+          name: vidra-operator
+          repository: ${{ github.repository }}/helm-charts
+          tag: ${{ github.ref_name }}
+          path: charts/vidra-operator
+          registry: ghcr.io
+          registry_username: ${{ github.repository_owner }}
+          registry_password: ${{ secrets.GITHUB_TOKEN }}
 
-    release:
-      name: GitHub Release
-      needs: [build-push, bundle, helm-chart]
-      runs-on: ubuntu-latest
-      permissions:
-        contents: write
-        id-token: write
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      steps:
-        - uses: actions/checkout@v3
-        - name: Create GitHub Release
-          run: gh release create ${{ github.ref_name }} --generate-notes --verify-tag
+  release:
+    name: GitHub Release
+    needs: [build-push, bundle, helm-chart]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Create GitHub Release
+        run: gh release create ${{ github.ref_name }} --generate-notes --verify-tag
 
-    sign-image:
-      name: Sign Docker Image
-      needs: build-push
-      runs-on: ubuntu-latest
-      permissions:
-        contents: read
-        packages: write
-        id-token: write
-      if: github.event_name != 'pull_request'
-      steps:
-        - name: Install cosign
-          uses: sigstore/cosign-installer@main
-          with:
-            cosign-release: main
-        - name: Sign the published Docker image
-          env:
-            COSIGN_EXPERIMENTAL: "true"
-            COSIGN_YES: "true"
-          run: echo "${{ needs.build-push.outputs.tags }}" | xargs -I {} cosign sign --yes {}@${{ needs.build-push.outputs.digest }}
+  sign-image:
+    name: Sign Docker Image
+    needs: build-push
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    if: github.event_name != 'pull_request'
+    steps:
+      - name: Install cosign
+        uses: sigstore/cosign-installer@main
+        with:
+          cosign-release: main
+      - name: Sign the published Docker image
+        env:
+          COSIGN_EXPERIMENTAL: "true"
+          COSIGN_YES: "true"
+        run: echo "${{ needs.build-push.outputs.tags }}" | xargs -I {} cosign sign --yes {}@${{ needs.build-push.outputs.digest }}
