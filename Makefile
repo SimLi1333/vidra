@@ -113,7 +113,7 @@ vet: ## Run go vet against code.
 .PHONY: test
 test: fmt vet envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" \
-go test $$(go list ./... | grep -v -E '/e2e|/internal/mocks|/test/utils|/internal/domain|/cmd|/api/v1alpha1') -coverprofile cover.out
+go test $$(go list ./... | grep -v -E '/e2e|/internal/mocks|/test/utils|/internal/domain|/cmd|/api/v1alpha1') -covermode=atomic -coverprofile=coverage.out
 
 
 # Utilize Kind or modify the e2e tests to load the image locally, enabling compatibility with other vendors.

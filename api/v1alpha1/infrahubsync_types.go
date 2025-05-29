@@ -38,22 +38,22 @@ type InfrahubSyncSpec struct {
 
 // VidraResourceSource contains the source information for the resource
 type InfrahubSyncSource struct {
-	// URL for the Infrahub API
+	// URL for the Infrahub API (e.g., https://infrahub.example.com)
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:Pattern="^(http|https)://[a-zA-Z0-9.-]+(:[0-9]+)?(?:/[a-zA-Z0-9-]+)*$"
 	InfrahubAPIURL string `json:"infrahubAPIURL" protobuf:"bytes,1,name=infrahubAPIURL"`
 
-	// The target branch to interact with
+	// The target branch in Infrahub to interact with
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinLength=1
 	TargetBranch string `json:"targetBranch" protobuf:"bytes,2,name=targetBranch"`
 
-	// The target date for the request
+	// The target date in Infrahub for all the interactions (e.g., "2025-01-01T00:00:00Z or -2d" for the artifact from two days ago)
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:validation:Format=date-time
 	TargetDate string `json:"targetDate,omitempty" protobuf:"bytes,3,name=targetDate"`
 
-	// Artifact name that is being handled
+	// Artifact name that is being handled by the operator, this is used to identify the resource in Infrahub
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinLength=1
 	ArtifactName string `json:"artefactName" protobuf:"bytes,4,name=artefactName"`
@@ -61,15 +61,15 @@ type InfrahubSyncSource struct {
 
 // VidraResourceDestination contains information about where the resource will be sent
 type InfrahubSyncDestination struct {
-	// Server URL for the destination (usually a Kubernetes API endpoint)
+	// Only needed if you need to deploy to two Kubernetis cluster (multicluster) if set to "httlps://kubernetes.default.svc" or omitted, the operator will use the current cluster
 	// +kubebuilder:validation:Optional
 	Server string `json:"server,omitempty" protobuf:"bytes,1,name=server"`
 
-	// Namespace in the Kubernetes cluster where the resource should be sent
+	// Default Namespace in the Kubernetes cluster where the resource should be sent, if they do not hava a namespace already set
 	// +kubebuilder:validation:Optional
 	Namespace string `json:"namespace,omitempty" protobuf:"bytes,2,name=namespace"`
 
-	// If true, the operator will reconcile resources based on k8s events. (default: false)
+	// If true, the operator will reconcile resources based on k8s events. (default: false) - changes to the resource will trigger a reconciliation
 	// +kubebuilder:default:=false
 	ReconcileOnEvents bool `json:"reconcileOnEvents,omitempty" protobuf:"varint,4,opt,name=reconcileOnEvents"`
 }
