@@ -51,6 +51,11 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      packages: read
+      id-token: write
     container: golang:1.24
     continue-on-error: true
     env:
@@ -74,6 +79,11 @@ jobs:
   unit-test:
     name: Unit Tests
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: read
+      packages: read
+      id-token: write
     container: golang:1.24
     env:
       GOFLAGS: "-buildvcs=false"
