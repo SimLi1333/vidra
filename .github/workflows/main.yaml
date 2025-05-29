@@ -228,6 +228,7 @@ jobs:
           registry_username: ${{ github.repository_owner }}
           registry_password: ${{ secrets.GITHUB_TOKEN }}
 
+
   release:
     name: GitHub Release
     needs: [build-push, helm-chart]
