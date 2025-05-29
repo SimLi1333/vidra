@@ -157,6 +157,7 @@ jobs:
  
   build-push:
       name: Build and Push Operator Image
+      needs: unit-test
       runs-on: ubuntu-latest
       permissions:
         contents: write
@@ -191,29 +192,19 @@ jobs:
             labels: ${{ steps.meta.outputs.labels }}
             cache-from: type=gha
             cache-to: type=gha,mode=max
+        - uses: actions/checkout@v3
+        - name: Install operator-sdk
+          run: |
+              curl -LO https://github.com/operator-framework/operator-sdk/releases/download/${OPERATOR_SDK_VERSION}/operator-sdk_${OS}_${TARGETARCH} \
+              && chmod +x operator-sdk_${OS}_${TARGETARCH} \
+              && mv operator-sdk_${OS}_${TARGETARCH} /usr/local/bin/operator-sdk \
+              && echo $(operator-sdk version)
+        - name: Create Bundle and Catalog and push to registry
+          run: |
+              make bundle
+              make bundle-build bundle-push
+              make catalog-build catalog-push
 
-  bundle:
-    name: Build and Push Operator Bundle
-    needs: build-push
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      packages: write
-      id-token: write
-    steps:
-      - uses: actions/checkout@v3
-      - name: Install operator-sdk
-        run: |
-            curl -LO https://github.com/operator-framework/operator-sdk/releases/download/${OPERATOR_SDK_VERSION}/operator-sdk_${OS}_${TARGETARCH} \
-            && chmod +x operator-sdk_${OS}_${TARGETARCH} \
-            && mv operator-sdk_${OS}_${TARGETARCH} /usr/local/bin/operator-sdk \
-            && echo $(operator-sdk version)
-      - name: Create Bundle and Catalog and push to registry
-        run: |
-            make bundle
-            make bundle-build bundle-push
-            make catalog-build catalog-push
-            
   helm-chart:
     name: Push Helm Chart
     needs: build-push
@@ -239,7 +230,7 @@ jobs:
 
   release:
     name: GitHub Release
-    needs: [build-push, bundle, helm-chart]
+    needs: [build-push, helm-chart]
     runs-on: ubuntu-latest
     permissions:
       contents: write
