@@ -124,6 +124,9 @@ jobs:
         with:
           name: cover.out
 
+      - name: Codecov
+        uses: codecov/codecov-action@v5.4.3
+        
       - name: Install goveralls
         run: go install github.com/mattn/goveralls@v0.0.11
 
