@@ -1,0 +1,78 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-push-operator:
+    name: build-push-operator
+    runs-on: ubuntu-latest
+    env:
+      OPERATOR_SDK_VERSION: v1.39.2
+    steps:
+      - uses: actions/checkout@v3
+      - uses: docker/setup-qemu-action@v2
+        with:
+          platforms: amd64
+      - uses: docker/setup-buildx-action@v2
+      - uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/metadata-action@v4
+        id: meta
+        with:
+          images: ghcr.io/${{ github.repository }}
+      - uses: docker/build-push-action@v4
+        with:
+          file: "Dockerfile"
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Install operator-sdk
+        run: |
+          curl -L https://github.com/operator-framework/operator-sdk/releases/download/${OPERATOR_SDK_VERSION}/operator-sdk_linux_amd64 -o /usr/local/bin/operator-sdk
+          chmod +x /usr/local/bin/operator-sdk
+
+      - name: Build and push the bundle
+        run: |
+          TAG_VERSION=${{ github.ref_name }}
+          # remove "v" character at the first of the version.
+          VERSION="${TAG_VERSION#v}"
+          make bundle bundle-build bundle-push IMAGE_TAG_BASE=ghcr.io/${{ github.repository }} VERSION=$VERSION IMG=ghcr.io/${{ github.repository }}:$TAG_VERSION
+
+  helm-chart:
+    name: helm-chart
+    needs: build-push-operator
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: helmify
+        run: make helm
+      - name: Chart | Push
+        uses: appany/helm-oci-chart-releaser@v0.3.0
+        with:
+          name: ceph-s3-operator
+          repository: ${{ github.repository }}/helm-charts
+          tag: ${{ github.ref_name }}
+          path: charts/ceph-s3-operator # Default charts/{name}
+          registry: ghcr.io
+          registry_username:  ${{ github.repository_owner }}
+          registry_password: ${{ secrets.GITHUB_TOKEN }}
+
+  release:
+    needs: build-push-operator
+    name: release
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: release
+        run: gh release create ${{ github.ref_name }} --generate-notes --verify-tag
