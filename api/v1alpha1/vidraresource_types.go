@@ -44,7 +44,7 @@ type VidraResourceStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// ManagedResources contains the status of managed resources
+	// ManagedResources contains a list of resources managed by this VidraResource
 	ManagedResources []ManagedResourceStatus `json:"managedResources,omitempty"`
 
 	// DeployState indicates the current state of the deployment

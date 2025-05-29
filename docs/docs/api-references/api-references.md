@@ -1,7 +1,7 @@
 # API Reference
 
 ## Packages
-- [infrahub.operators.com/v1alpha1](#vidraoperatorscomv1alpha1)
+- [infrahub.operators.com/v1alpha1](#infrahuboperatorscomv1alpha1)
 
 
 ## infrahub.operators.com/v1alpha1
@@ -47,9 +47,9 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `server` _string_ | Server URL for the destination (usually a Kubernetes API endpoint) |  | Optional: \{\} <br /> |
-| `namespace` _string_ | Namespace in the Kubernetes cluster where the resource should be sent |  | Optional: \{\} <br /> |
-| `reconcileOnEvents` _boolean_ | If true, the operator will reconcile resources based on k8s events. (default: false) | false |  |
+| `server` _string_ | Only needed if you need to deploy to two Kubernetis cluster (multicluster) if set to "httlps://kubernetes.default.svc" or omitted, the operator will use the current cluster |  | Optional: \{\} <br /> |
+| `namespace` _string_ | Default Namespace in the Kubernetes cluster where the resource should be sent, if they do not hava a namespace already set |  | Optional: \{\} <br /> |
+| `reconcileOnEvents` _boolean_ | If true, the operator will reconcile resources based on k8s events. (default: false) - changes to the resource will trigger a reconciliation | false |  |
 
 
 #### InfrahubSyncSource
@@ -65,10 +65,10 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `infrahubAPIURL` _string_ | URL for the Infrahub API |  | Pattern: `^(http\|https)://[a-zA-Z0-9.-]+(:[0-9]+)?(?:/[a-zA-Z0-9-]+)*$` <br />Required: \{\} <br /> |
-| `targetBranch` _string_ | The target branch to interact with |  | MinLength: 1 <br />Required: \{\} <br /> |
-| `targetDate` _string_ | The target date for the request |  | Format: date-time <br />Optional: \{\} <br /> |
-| `artefactName` _string_ | Artifact name that is being handled |  | MinLength: 1 <br />Required: \{\} <br /> |
+| `infrahubAPIURL` _string_ | URL for the Infrahub API (e.g., https://infrahub.example.com) |  | Pattern: `^(http\|https)://[a-zA-Z0-9.-]+(:[0-9]+)?(?:/[a-zA-Z0-9-]+)*$` <br />Required: \{\} <br /> |
+| `targetBranch` _string_ | The target branch in Infrahub to interact with |  | MinLength: 1 <br />Required: \{\} <br /> |
+| `targetDate` _string_ | The target date in Infrahub for all the interactions (e.g., "2025-01-01T00:00:00Z or -2d" for the artifact from two days ago) |  | Format: date-time <br />Optional: \{\} <br /> |
+| `artefactName` _string_ | Artifact name that is being handled by the operator, this is used to identify the resource in Infrahub |  | MinLength: 1 <br />Required: \{\} <br /> |
 
 
 #### InfrahubSyncSpec
@@ -197,7 +197,7 @@ _Appears in:_
 
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
-| `managedResources` _[ManagedResourceStatus](#managedresourcestatus) array_ | ManagedResources contains the status of managed resources |  |  |
+| `managedResources` _[ManagedResourceStatus](#managedresourcestatus) array_ | ManagedResources contains a list of resources managed by this VidraResource |  |  |
 | `DeployState` _[State](#state)_ | DeployState indicates the current state of the deployment |  | Enum: [Pending Running Succeeded Failed Stale] <br /> |
 | `lastError` _string_ | LastError contains the last error message if any |  |  |
 | `lastSyncTime` _[Time](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.31/#time-v1-meta)_ | LastSyncTime indicates the last time the resource was synchronized |  |  |
