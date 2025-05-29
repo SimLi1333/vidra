@@ -319,6 +319,25 @@ var _ = Describe("infrahubClient", func() {
 			Expect(err).To(HaveOccurred())
 			Expect(content).To(BeNil())
 		})
+		It("fails to build the artifact URL", func() {
+			apiURL = "://bad-url"
+			body, err := client.DownloadArtifact(apiURL, artifactID, branch, date, "token123")
+			Expect(err).To(HaveOccurred())
+			Expect(body).To(BeNil())
+			Expect(err.Error()).To(ContainSubstring("failed to create request"))
+		})
+
+		It("fails when the server returns non-200", func() {
+			server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				http.Error(w, "not found", http.StatusNotFound)
+			}))
+
+			apiURL = server.URL
+			body, err := client.DownloadArtifact(apiURL, artifactID, branch, date, "token123")
+			Expect(err).To(HaveOccurred())
+			Expect(body).To(BeNil())
+			Expect(err.Error()).To(ContainSubstring("last status code: 404"))
+		})
 
 	})
 
