@@ -118,6 +118,7 @@ go test $(go list ./... | grep -v -E '/e2e|/internal/mocks|/test/utils|/internal
 -race -covermode=atomic -coverprofile=coverage.out
 
 
+
 # Utilize Kind or modify the e2e tests to load the image locally, enabling compatibility with other vendors.
 .PHONY: test-e2e  # Run the e2e tests against a Kind k8s instance that is spun up.
 test-e2e:
