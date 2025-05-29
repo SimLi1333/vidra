@@ -64,6 +64,7 @@ var _ = BeforeSuite(func() {
 	// +kubebuilder:scaffold:scheme
 
 	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
+	Expect(err).NotTo(HaveOccurred())
 	failingK8sClient = &mock.FailingUpdateClient{
 		Client:       k8sClient,
 		UpdateErrMsg: "simulated failure",

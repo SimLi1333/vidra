@@ -33,10 +33,6 @@ func (w mockWriter) Write(p []byte) (n int, err error) {
 	return w.writeFunc(p)
 }
 
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(s) > len(substr) && (s[:len(substr)] == substr || contains(s[1:], substr)))
-}
-
 var _ = Describe("DynamicWatcher", func() {
 	var (
 		scheme runtime.Scheme
