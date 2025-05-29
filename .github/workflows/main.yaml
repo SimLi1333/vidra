@@ -131,6 +131,7 @@ jobs:
         run: |
           go tool cover -func=cover.out
           go tool cover -html=cover.out -o coverage.html
+
       - name: Extract Coverage Percentage and Generate Badge
         run: |
           apt-get update && apt-get install -y jq
@@ -138,8 +139,9 @@ jobs:
           echo "coverage=$TOTAL" >> $GITHUB_ENV
           echo "Extracted Coverage: $TOTAL%"
           echo "{\"schemaVersion\": 1, \"label\": \"coverage\", \"message\": \"${TOTAL}%\", \"color\": \"green\"}" > coverage-badge.json
-          mkdir -p public
-          mv coverage-badge.json public/
+          mkdir -p coverage_output
+          mv coverage-badge.json coverage_output/
+
       - name: Upload HTML Coverage and Raw Report
         uses: actions/upload-artifact@v4
         with:
@@ -147,7 +149,9 @@ jobs:
           path: |
             coverage.html
             cover.out
+            coverage_output/coverage-badge.json
           retention-days: 7
+
 
       - name: Deploy Badge to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
