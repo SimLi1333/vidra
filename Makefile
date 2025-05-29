@@ -343,6 +343,6 @@ helmify: $(HELMIFY) ## Download helmify locally if necessary.
 $(HELMIFY): $(LOCALBIN)
 	test -s $(LOCALBIN)/helmify || GOBIN=$(LOCALBIN) go install github.com/arttor/helmify/cmd/helmify@v0.4.5
 
-helm: manifests kustomize helmify
+helm: kustomize helmify
 	$(KUSTOMIZE) build config/default | $(HELMIFY) charts/vidra-operator
 	yq e -i ".version = \"$(VERSION)\" | .appVersion = \"$(VERSION)\"" charts/vidra-operator/Chart.yaml
