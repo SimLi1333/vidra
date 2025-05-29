@@ -2,8 +2,10 @@ package k8s
 
 import (
 	"log"
-	"testing"
 	"time"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 
 	"github.com/stretchr/testify/mock"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -23,154 +25,6 @@ func (m *callbackMock) Callback(obj *unstructured.Unstructured, gvr schema.Group
 	m.Called(obj, gvr)
 }
 
-func TestStartWatchingGVRs_AddEvent(t *testing.T) {
-	scheme := runtime.NewScheme()
-	gvr := schema.GroupVersionResource{Group: "test", Version: "v1", Resource: "foos"}
-
-	client := fake.NewSimpleDynamicClientWithCustomListKinds(scheme, map[schema.GroupVersionResource]string{
-		gvr: "FooList",
-	})
-
-	obj := &unstructured.Unstructured{}
-	obj.SetGroupVersionKind(gvr.GroupVersion().WithKind("Foo"))
-	obj.SetName("foo1")
-	obj.SetLabels(map[string]string{"managed-by": "vida"})
-
-	watcher := watch.NewFake()
-	client.PrependWatchReactor("foos", func(action k8stesting.Action) (bool, watch.Interface, error) {
-		return true, watcher, nil
-	})
-
-	client.PrependReactor("list", "foos", func(action k8stesting.Action) (bool, runtime.Object, error) {
-		list := &unstructured.UnstructuredList{
-			Items: []unstructured.Unstructured{},
-		}
-		list.SetGroupVersionKind(gvr.GroupVersion().WithKind("FooList"))
-		return true, list, nil
-	})
-
-	cb := new(callbackMock)
-	done := make(chan struct{})
-	cb.On("Callback", mock.AnythingOfType("*unstructured.Unstructured"), gvr).Run(func(args mock.Arguments) {
-		close(done)
-	}).Once()
-
-	factory := NewDynamicWatcherFactory()
-	go factory.StartWatchingGVRs(client, []schema.GroupVersionResource{gvr}, cb.Callback)
-
-	time.Sleep(100 * time.Millisecond)
-	watcher.Add(obj)
-
-	select {
-	case <-done:
-		cb.AssertExpectations(t)
-	case <-time.After(1 * time.Second):
-		t.Fatal("Expected callback not called")
-	}
-}
-
-func TestAddFunc_WithTombstone_Unstructured(t *testing.T) {
-	cb := new(callbackMock)
-
-	gvr := schema.GroupVersionResource{Group: "test", Version: "v1", Resource: "foos"}
-
-	obj := &unstructured.Unstructured{}
-	obj.SetGroupVersionKind(gvr.GroupVersion().WithKind("Foo"))
-	obj.SetName("tombstoned-foo")
-	obj.SetLabels(map[string]string{"managed-by": "vida"})
-
-	tombstone := cache.DeletedFinalStateUnknown{
-		Key: "test/tombstoned-foo",
-		Obj: obj,
-	}
-
-	cb.On("Callback", obj, gvr).Once()
-
-	handler := getEventHandler(gvr, cb.Callback)
-	handler.AddFunc(tombstone)
-
-	cb.AssertExpectations(t)
-}
-
-func TestUpdateFunc_GenerationChange(t *testing.T) {
-	cb := new(callbackMock)
-
-	gvr := schema.GroupVersionResource{Group: "test", Version: "v1", Resource: "foos"}
-
-	oldObj := &unstructured.Unstructured{}
-	oldObj.SetGeneration(1)
-	oldObj.SetName("gen-change-foo")
-	oldObj.SetLabels(map[string]string{"managed-by": "vida"})
-
-	newObj := &unstructured.Unstructured{}
-	newObj.SetGeneration(2)
-	newObj.SetName("gen-change-foo")
-	newObj.SetLabels(map[string]string{"managed-by": "vida"})
-
-	cb.On("Callback", newObj, gvr).Once()
-
-	handler := getEventHandler(gvr, cb.Callback)
-	handler.UpdateFunc(oldObj, newObj)
-
-	cb.AssertExpectations(t)
-}
-
-func TestUpdateFunc_NoGenerationChange(t *testing.T) {
-	cb := new(callbackMock)
-
-	gvr := schema.GroupVersionResource{Group: "test", Version: "v1", Resource: "foos"}
-
-	obj := &unstructured.Unstructured{}
-	obj.SetGeneration(1)
-	obj.SetName("same-gen-foo")
-	obj.SetLabels(map[string]string{"managed-by": "vida"})
-
-	// No expected call since generation didn't change
-	handler := getEventHandler(gvr, cb.Callback)
-	handler.UpdateFunc(obj, obj)
-
-	cb.AssertExpectations(t) // Ensures no unexpected calls were made
-}
-
-func TestDeleteFunc_WithUnstructured(t *testing.T) {
-	cb := new(callbackMock)
-
-	gvr := schema.GroupVersionResource{Group: "test", Version: "v1", Resource: "foos"}
-
-	deleted := &unstructured.Unstructured{}
-	deleted.SetName("my-resource")
-	deleted.SetLabels(map[string]string{"managed-by": "vida"}) // <-- add this label
-
-	cb.On("Callback", deleted, gvr).Once()
-
-	handler := getEventHandler(gvr, cb.Callback)
-	handler.DeleteFunc(deleted)
-
-	cb.AssertExpectations(t)
-}
-
-func TestDeleteFunc_WithTombstone(t *testing.T) {
-	cb := new(callbackMock)
-
-	gvr := schema.GroupVersionResource{Group: "test", Version: "v1", Resource: "foos"}
-
-	obj := &unstructured.Unstructured{}
-	obj.SetName("tombstoned-foo")
-	obj.SetLabels(map[string]string{"managed-by": "vida"})
-
-	tombstone := cache.DeletedFinalStateUnknown{
-		Key: "test/tombstoned-foo",
-		Obj: obj,
-	}
-
-	cb.On("Callback", obj, gvr).Once()
-
-	handler := getEventHandler(gvr, cb.Callback)
-	handler.DeleteFunc(tombstone)
-
-	cb.AssertExpectations(t)
-}
-
 type mockWriter struct {
 	writeFunc func(p []byte) (n int, err error)
 }
@@ -183,93 +37,220 @@ func contains(s, substr string) bool {
 	return len(s) >= len(substr) && (s == substr || len(s) > len(substr) && (s[:len(substr)] == substr || contains(s[1:], substr)))
 }
 
-func TestAddFunc_UnexpectedType(t *testing.T) {
-	cb := new(callbackMock)
+var _ = Describe("DynamicWatcher", func() {
+	var (
+		scheme runtime.Scheme
+		gvr    schema.GroupVersionResource
+	)
 
-	gvr := schema.GroupVersionResource{Group: "test", Version: "v1", Resource: "foos"}
+	BeforeEach(func() {
+		scheme = *runtime.NewScheme()
+		gvr = schema.GroupVersionResource{Group: "test", Version: "v1", Resource: "foos"}
+	})
 
-	handler := getEventHandler(gvr, cb.Callback)
+	Describe("StartWatchingGVRs", func() {
+		It("should call callback on added event", func() {
+			client := fake.NewSimpleDynamicClientWithCustomListKinds(&scheme, map[schema.GroupVersionResource]string{
+				gvr: "FooList",
+			})
 
-	// Capture log output
-	var logOutput string
-	log.SetFlags(0)
-	log.SetOutput(mockWriter{func(p []byte) (n int, err error) {
-		logOutput = string(p)
-		return len(p), nil
-	}})
+			obj := &unstructured.Unstructured{}
+			obj.SetGroupVersionKind(gvr.GroupVersion().WithKind("Foo"))
+			obj.SetName("foo1")
+			obj.SetLabels(map[string]string{"managed-by": "vida"})
 
-	handler.AddFunc(123) // Passing an int to trigger the unexpected type log
+			watcher := watch.NewFake()
+			client.PrependWatchReactor("foos", func(action k8stesting.Action) (bool, watch.Interface, error) {
+				return true, watcher, nil
+			})
 
-	if logOutput == "" || !contains(logOutput, "AddFunc: unexpected type int") {
-		t.Errorf("expected log to contain 'AddFunc: unexpected type int', got: %q", logOutput)
-	}
+			client.PrependReactor("list", "foos", func(action k8stesting.Action) (bool, runtime.Object, error) {
+				list := &unstructured.UnstructuredList{
+					Items: []unstructured.Unstructured{},
+				}
+				list.SetGroupVersionKind(gvr.GroupVersion().WithKind("FooList"))
+				return true, list, nil
+			})
 
-	cb.AssertExpectations(t)
-}
+			cb := new(callbackMock)
+			done := make(chan struct{})
 
-func TestAddFunc_WithTombstone_UnexpectedType(t *testing.T) {
-	cb := new(callbackMock)
+			cb.On("Callback", mock.AnythingOfType("*unstructured.Unstructured"), gvr).Run(func(args mock.Arguments) {
+				close(done)
+			}).Once()
 
-	gvr := schema.GroupVersionResource{Group: "test", Version: "v1", Resource: "foos"}
+			factory := NewDynamicWatcherFactory()
+			go factory.StartWatchingGVRs(client, []schema.GroupVersionResource{gvr}, cb.Callback)
 
-	// Tombstone object with wrong type (e.g., string instead of *unstructured.Unstructured)
-	tombstone := cache.DeletedFinalStateUnknown{
-		Key: "test/bad-type",
-		Obj: "this-is-not-an-unstructured-object",
-	}
+			time.Sleep(100 * time.Millisecond)
+			watcher.Add(obj)
 
-	handler := getEventHandler(gvr, cb.Callback)
+			Eventually(done, "1s").Should(BeClosed())
+			cb.AssertExpectations(GinkgoT())
+		})
+	})
 
-	// No callback is expected
-	handler.AddFunc(tombstone)
+	Describe("EventHandler AddFunc", func() {
+		It("should handle tombstone unstructured object", func() {
+			cb := new(callbackMock)
+			obj := &unstructured.Unstructured{}
+			obj.SetGroupVersionKind(gvr.GroupVersion().WithKind("Foo"))
+			obj.SetName("tombstoned-foo")
+			obj.SetLabels(map[string]string{"managed-by": "vida"})
 
-	cb.AssertExpectations(t)
-}
+			tombstone := cache.DeletedFinalStateUnknown{
+				Key: "test/tombstoned-foo",
+				Obj: obj,
+			}
 
-func TestUpdateFunc_UnexpectedTypes(t *testing.T) {
-	cb := new(callbackMock)
+			cb.On("Callback", obj, gvr).Once()
 
-	gvr := schema.GroupVersionResource{Group: "test", Version: "v1", Resource: "foos"}
+			handler := getEventHandler(gvr, cb.Callback)
+			handler.AddFunc(tombstone)
 
-	// Use non-*unstructured.Unstructured types to trigger the log line
-	oldObj := "this-is-not-unstructured"
-	newObj := 42 // also not unstructured
+			cb.AssertExpectations(GinkgoT())
+		})
 
-	handler := getEventHandler(gvr, cb.Callback)
+		It("should log unexpected type on AddFunc", func() {
+			cb := new(callbackMock)
 
-	// No callback is expected
-	handler.UpdateFunc(oldObj, newObj)
+			handler := getEventHandler(gvr, cb.Callback)
 
-	cb.AssertExpectations(t)
-}
+			var logOutput string
+			log.SetFlags(0)
+			log.SetOutput(mockWriter{func(p []byte) (n int, err error) {
+				logOutput = string(p)
+				return len(p), nil
+			}})
 
-func TestDeleteFunc_UnexpectedType(t *testing.T) {
-	cb := new(callbackMock)
+			handler.AddFunc(123) // pass int to trigger log
 
-	gvr := schema.GroupVersionResource{Group: "test", Version: "v1", Resource: "foos"}
+			Expect(logOutput).To(ContainSubstring("AddFunc: unexpected type int"))
+			cb.AssertExpectations(GinkgoT())
+		})
 
-	handler := getEventHandler(gvr, cb.Callback)
+		It("should handle tombstone with unexpected type silently", func() {
+			cb := new(callbackMock)
 
-	invalidObj := "not-a-tombstone"
+			tombstone := cache.DeletedFinalStateUnknown{
+				Key: "test/bad-type",
+				Obj: "this-is-not-an-unstructured-object",
+			}
 
-	handler.DeleteFunc(invalidObj)
+			handler := getEventHandler(gvr, cb.Callback)
+			handler.AddFunc(tombstone)
 
-	cb.AssertExpectations(t)
-}
+			cb.AssertExpectations(GinkgoT())
+		})
+	})
 
-func TestDeleteFunc_UnexpectedTombstoneType(t *testing.T) {
-	cb := new(callbackMock)
+	Describe("EventHandler UpdateFunc", func() {
+		It("should call callback on generation change", func() {
+			cb := new(callbackMock)
 
-	gvr := schema.GroupVersionResource{Group: "test", Version: "v1", Resource: "foos"}
+			oldObj := &unstructured.Unstructured{}
+			oldObj.SetGeneration(1)
+			oldObj.SetName("gen-change-foo")
+			oldObj.SetLabels(map[string]string{"managed-by": "vida"})
 
-	handler := getEventHandler(gvr, cb.Callback)
+			newObj := &unstructured.Unstructured{}
+			newObj.SetGeneration(2)
+			newObj.SetName("gen-change-foo")
+			newObj.SetLabels(map[string]string{"managed-by": "vida"})
 
-	tombstone := cache.DeletedFinalStateUnknown{
-		Key: "foo",
-		Obj: "not-unstructured", // invalid tombstone.Obj type
-	}
+			cb.On("Callback", newObj, gvr).Once()
 
-	handler.DeleteFunc(tombstone)
+			handler := getEventHandler(gvr, cb.Callback)
+			handler.UpdateFunc(oldObj, newObj)
 
-	cb.AssertExpectations(t)
-}
+			cb.AssertExpectations(GinkgoT())
+		})
+
+		It("should NOT call callback if generation unchanged", func() {
+			cb := new(callbackMock)
+
+			obj := &unstructured.Unstructured{}
+			obj.SetGeneration(1)
+			obj.SetName("same-gen-foo")
+			obj.SetLabels(map[string]string{"managed-by": "vida"})
+
+			handler := getEventHandler(gvr, cb.Callback)
+			handler.UpdateFunc(obj, obj)
+
+			cb.AssertExpectations(GinkgoT()) // no calls expected
+		})
+
+		It("should silently handle unexpected update types", func() {
+			cb := new(callbackMock)
+
+			oldObj := "not-unstructured"
+			newObj := 42
+
+			handler := getEventHandler(gvr, cb.Callback)
+			handler.UpdateFunc(oldObj, newObj)
+
+			cb.AssertExpectations(GinkgoT())
+		})
+	})
+
+	Describe("EventHandler DeleteFunc", func() {
+		It("should call callback on unstructured delete", func() {
+			cb := new(callbackMock)
+
+			deleted := &unstructured.Unstructured{}
+			deleted.SetName("my-resource")
+			deleted.SetLabels(map[string]string{"managed-by": "vida"})
+
+			cb.On("Callback", deleted, gvr).Once()
+
+			handler := getEventHandler(gvr, cb.Callback)
+			handler.DeleteFunc(deleted)
+
+			cb.AssertExpectations(GinkgoT())
+		})
+
+		It("should call callback on tombstone delete", func() {
+			cb := new(callbackMock)
+
+			obj := &unstructured.Unstructured{}
+			obj.SetName("tombstoned-foo")
+			obj.SetLabels(map[string]string{"managed-by": "vida"})
+
+			tombstone := cache.DeletedFinalStateUnknown{
+				Key: "test/tombstoned-foo",
+				Obj: obj,
+			}
+
+			cb.On("Callback", obj, gvr).Once()
+
+			handler := getEventHandler(gvr, cb.Callback)
+			handler.DeleteFunc(tombstone)
+
+			cb.AssertExpectations(GinkgoT())
+		})
+
+		It("should silently handle unexpected delete types", func() {
+			cb := new(callbackMock)
+			handler := getEventHandler(gvr, cb.Callback)
+
+			invalidObj := "not-a-tombstone"
+			handler.DeleteFunc(invalidObj)
+
+			cb.AssertExpectations(GinkgoT())
+		})
+
+		It("should silently handle unexpected tombstone delete types", func() {
+			cb := new(callbackMock)
+			handler := getEventHandler(gvr, cb.Callback)
+
+			tombstone := cache.DeletedFinalStateUnknown{
+				Key: "foo",
+				Obj: "not-unstructured",
+			}
+
+			handler.DeleteFunc(tombstone)
+
+			cb.AssertExpectations(GinkgoT())
+		})
+	})
+})
