@@ -150,6 +150,22 @@ var _ = Describe("infrahubClient", func() {
 			Expect(err.Error()).To(ContainSubstring("login failed with status"))
 			Expect(token).To(BeEmpty())
 		})
+		It("returns error if response body is empty", func() {
+			// Create a test server that returns 200 OK but empty body
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				// Write no body (empty)
+			}))
+			defer server.Close()
+
+			client := &infrahubClient{}
+
+			token, err := client.Login(server.URL, "user", "pass")
+
+			Expect(err).To(HaveOccurred())
+			Expect(token).To(BeEmpty())
+			Expect(err.Error()).To(ContainSubstring("EOF")) // JSON decode error usually returns EOF on empty body
+		})
 	})
 
 	var _ = Describe("infrahubClient RunQuery", func() {
@@ -238,6 +254,24 @@ var _ = Describe("infrahubClient", func() {
 			Expect(result).To(BeNil())
 			Expect(err.Error()).To(ContainSubstring("failed to decode query result"))
 		})
+		var _ = Describe("infrahubClient RunQuery", func() {
+			It("returns error when response body is empty", func() {
+				// Setup test server returning 200 OK but empty body
+				server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					// No body content
+				}))
+				defer server.Close()
+
+				client := &infrahubClient{}
+
+				_, err := client.RunQuery("test-query", server.URL, "test-artifact", "main", "2025-01-01T00:00:00Z", "token123")
+
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("EOF")) // Likely JSON decoding will fail due to empty body
+			})
+		})
+
 	})
 	var _ = Describe("infrahubClient.DownloadArtifact", func() {
 		var (
@@ -337,6 +371,20 @@ var _ = Describe("infrahubClient", func() {
 			Expect(err).To(HaveOccurred())
 			Expect(body).To(BeNil())
 			Expect(err.Error()).To(ContainSubstring("last status code: 404"))
+		})
+		It("returns an error if the date format is invalid", func() {
+
+			_, err := client.DownloadArtifact(
+				"http://example.com",
+				"artifact123",
+				"main",
+				"invalid-date-format", // intentionally wrong
+				"token123",
+			)
+
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("failed to build URL for artifact"))
+			// Optionally check for date format specific error if BuildURL returns that
 		})
 
 	})
