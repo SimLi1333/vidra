@@ -125,6 +125,9 @@ var _ = AfterSuite(func() {
 	cancel()
 	err := testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
+	err = secondTestEnv.Stop()
+	Expect(err).NotTo(HaveOccurred())
+
 })
 
 func setupDynamicMulticlusterFactoryMock(

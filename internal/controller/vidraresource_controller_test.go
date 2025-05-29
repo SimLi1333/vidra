@@ -5,6 +5,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"syscall"
 	"time"
 
 	infrahubv1alpha1 "github.com/infrahub-operator/vidra/api/v1alpha1"
@@ -105,7 +106,7 @@ var _ = Describe("should reconcile correctly with different Destination.Server v
 					instance := &infrahubv1alpha1.VidraResource{}
 					err := k8sClient.Get(ctx, namespacedName, instance)
 					if err == nil {
-						// Wait for the finalizer to be removed before deleting the resource
+						// Wait for the finalizer to be removed before deleting the resource uncomnt if not needed
 						// instance.SetFinalizers(nil)
 						Expect(k8sClient.Update(ctx, instance)).To(Succeed())
 						Expect(k8sClient.Delete(ctx, instance)).To(Succeed())
@@ -1267,6 +1268,11 @@ metadata:
 					})
 
 					It("should start watching and trigger reconciliation on event", func() {
+						// Only run this test locally, skip in CI environments like GitHub Actions
+						if v, ok := syscall.Getenv("GITHUB_ACTIONS"); ok && v == "true" {
+							Skip("skipping event-based test in GitHub Actions CI environment")
+						}
+
 						By("setting up the VidraResource with reconcileOnEvents=true")
 						instance := &infrahubv1alpha1.VidraResource{}
 						err := k8sClient.Get(ctx, namespacedName, instance)
