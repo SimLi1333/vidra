@@ -1,0 +1,68 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    alm-examples: '[]'
+    capabilities: Basic Install
+  name: vidra.v0.0.0
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions:
+    owned:
+    - description: InfrahubSync is the Schema for the infrahubsyncs API
+      displayName: Infrahub Sync
+      kind: InfrahubSync
+      name: infrahubsyncs.infrahub.operators.com
+      version: v1alpha1
+    - description: VidraResource is the Schema for the Vidraresources API
+      displayName: Vidra Resource
+      kind: VidraResource
+      name: vidraresources.infrahub.operators.com
+      version: v1alpha1
+  description: C/D operator for k8s manifests in Infrahub
+  displayName: vidra
+  icon:
+  - base64data: ""
+    mediatype: ""
+  install:
+    spec:
+      deployments: null
+    strategy: ""
+  installModes:
+  - supported: false
+    type: OwnNamespace
+  - supported: false
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
+  keywords:
+  - C/D
+  - k8s
+  - continuous-delivery
+  - kubernetes
+  - infrastructure
+  - manifests
+  - automation
+  - gitops
+  - deployment
+  - infrahub
+  - ci-cd
+  - devops
+  - operator
+  - configuration
+  - infrastructure-as-code
+  - cluster-management
+  links:
+  - name: Vidra
+    url: https://vidra.domain
+  maintainers:
+  - email: simon.linder@ost.ch
+    name: Simon Linder
+  maturity: alpha
+  provider:
+    name: infrahub-operator
+    url: https://github.com/infrahub-operator/vidra
+  version: 0.0.0

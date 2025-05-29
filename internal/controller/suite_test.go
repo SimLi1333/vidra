@@ -34,8 +34,8 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	infrahubv1alpha1 "github.com/simli1333/vidra/api/v1alpha1"
-	mock "github.com/simli1333/vidra/internal/mocks"
+	infrahubv1alpha1 "github.com/infrahub-operator/vidra/api/v1alpha1"
+	mock "github.com/infrahub-operator/vidra/internal/mocks"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -125,6 +125,9 @@ var _ = AfterSuite(func() {
 	cancel()
 	err := testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
+	err = secondTestEnv.Stop()
+	Expect(err).NotTo(HaveOccurred())
+
 })
 
 func setupDynamicMulticlusterFactoryMock(

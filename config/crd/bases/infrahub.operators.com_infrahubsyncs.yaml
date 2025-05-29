@@ -44,17 +44,20 @@ spec:
                   the resource
                 properties:
                   namespace:
-                    description: Namespace in the Kubernetes cluster where the resource
-                      should be sent
+                    description: Default Namespace in the Kubernetes cluster where
+                      the resource should be sent, if they do not hava a namespace
+                      already set
                     type: string
                   reconcileOnEvents:
                     default: false
                     description: 'If true, the operator will reconcile resources based
-                      on k8s events. (default: false)'
+                      on k8s events. (default: false) - changes to the resource will
+                      trigger a reconciliation'
                     type: boolean
                   server:
-                    description: Server URL for the destination (usually a Kubernetes
-                      API endpoint)
+                    description: Only needed if you need to deploy to two Kubernetis
+                      cluster (multicluster) if set to "httlps://kubernetes.default.svc"
+                      or omitted, the operator will use the current cluster
                     type: string
                 type: object
               source:
@@ -63,19 +66,22 @@ spec:
                   Source contains the source information for the Infrahub API interaction
                 properties:
                   artefactName:
-                    description: Artifact name that is being handled
+                    description: Artifact name that is being handled by the operator,
+                      this is used to identify the resource in Infrahub
                     minLength: 1
                     type: string
                   infrahubAPIURL:
-                    description: URL for the Infrahub API
+                    description: URL for the Infrahub API (e.g., https://infrahub.example.com)
                     pattern: ^(http|https)://[a-zA-Z0-9.-]+(:[0-9]+)?(?:/[a-zA-Z0-9-]+)*$
                     type: string
                   targetBranch:
-                    description: The target branch to interact with
+                    description: The target branch in Infrahub to interact with
                     minLength: 1
                     type: string
                   targetDate:
-                    description: The target date for the request
+                    description: The target date in Infrahub for all the interactions
+                      (e.g., "2025-01-01T00:00:00Z or -2d" for the artifact from two
+                      days ago)
                     format: date-time
                     type: string
                 required:

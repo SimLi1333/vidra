@@ -44,17 +44,20 @@ spec:
                   the resource
                 properties:
                   namespace:
-                    description: Namespace in the Kubernetes cluster where the resource
-                      should be sent
+                    description: Default Namespace in the Kubernetes cluster where
+                      the resource should be sent, if they do not hava a namespace
+                      already set
                     type: string
                   reconcileOnEvents:
                     default: false
                     description: 'If true, the operator will reconcile resources based
-                      on k8s events. (default: false)'
+                      on k8s events. (default: false) - changes to the resource will
+                      trigger a reconciliation'
                     type: boolean
                   server:
-                    description: Server URL for the destination (usually a Kubernetes
-                      API endpoint)
+                    description: Only needed if you need to deploy to two Kubernetis
+                      cluster (multicluster) if set to "httlps://kubernetes.default.svc"
+                      or omitted, the operator will use the current cluster
                     type: string
                 type: object
               manifest:
@@ -91,7 +94,8 @@ spec:
                 format: date-time
                 type: string
               managedResources:
-                description: ManagedResources contains the status of managed resources
+                description: ManagedResources contains a list of resources managed
+                  by this VidraResource
                 items:
                   properties:
                     apiVersion:

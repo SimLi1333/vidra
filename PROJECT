@@ -9,7 +9,7 @@ plugins:
   manifests.sdk.operatorframework.io/v2: {}
   scorecard.sdk.operatorframework.io/v2: {}
 projectName: vidra
-repo: github.com/simli1333/vidra
+repo: github.com/infrahub-operator/vidra
 resources:
 - api:
     crdVersion: v1
@@ -18,7 +18,7 @@ resources:
   domain: operators.com
   group: infrahub
   kind: VidraResource
-  path: github.com/simli1333/vidra/api/v1alpha1
+  path: github.com/infrahub-operator/vidra/api/v1alpha1
   version: v1alpha1
 - api:
     crdVersion: v1
@@ -27,6 +27,6 @@ resources:
   domain: operators.com
   group: infrahub
   kind: InfrahubSync
-  path: github.com/simli1333/vidra/api/v1alpha1
+  path: github.com/infrahub-operator/vidra/api/v1alpha1
   version: v1alpha1
 version: "3"

@@ -1,0 +1,127 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: infrahubsyncs.infrahub.operators.com
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.16.1
+  labels:
+  {{- include "vidra-operator.labels" . | nindent 4 }}
+spec:
+  group: infrahub.operators.com
+  names:
+    kind: InfrahubSync
+    listKind: InfrahubSyncList
+    plural: infrahubsyncs
+    singular: infrahubsync
+  scope: Cluster
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: InfrahubSync is the Schema for the infrahubsyncs API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: Spec defines the desired state of InfrahubSync
+            properties:
+              destination:
+                description: Destination contains the destination information for the
+                  resource
+                properties:
+                  namespace:
+                    description: Namespace in the Kubernetes cluster where the resource
+                      should be sent
+                    type: string
+                  reconcileOnEvents:
+                    default: false
+                    description: 'If true, the operator will reconcile resources based
+                      on k8s events. (default: false)'
+                    type: boolean
+                  server:
+                    description: Server URL for the destination (usually a Kubernetes
+                      API endpoint)
+                    type: string
+                type: object
+              source:
+                description: |-
+                  Foo is an example field of InfrahubSync. Edit infrahubsync_types.go to remove/update
+                  Source contains the source information for the Infrahub API interaction
+                properties:
+                  artefactName:
+                    description: Artifact name that is being handled
+                    minLength: 1
+                    type: string
+                  infrahubAPIURL:
+                    description: URL for the Infrahub API
+                    pattern: ^(http|https)://[a-zA-Z0-9.-]+(:[0-9]+)?(?:/[a-zA-Z0-9-]+)*$
+                    type: string
+                  targetBranch:
+                    description: The target branch to interact with
+                    minLength: 1
+                    type: string
+                  targetDate:
+                    description: The target date for the request
+                    format: date-time
+                    type: string
+                required:
+                - artefactName
+                - infrahubAPIURL
+                - targetBranch
+                type: object
+            required:
+            - source
+            type: object
+          status:
+            description: Status defines the observed state of InfrahubSync
+            properties:
+              checksums:
+                description: Checksums contains a list of checksums for synced resources
+                enum:
+                - Pending
+                - Running
+                - Succeeded
+                - Failed
+                - Stale
+                items:
+                  type: string
+                type: array
+              lastError:
+                description: LastError provides details about the last error encountered
+                  during the sync operation
+                type: string
+              lastSyncTime:
+                description: LastSyncTime indicates the last time the sync operation
+                  was performed
+                format: date-time
+                type: string
+              syncState:
+                description: SyncState indicates the current state of the sync operation
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

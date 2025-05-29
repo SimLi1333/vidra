@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	infrahubv1alpha1 "github.com/simli1333/vidra/api/v1alpha1"
-	"github.com/simli1333/vidra/internal/domain"
-	mock "github.com/simli1333/vidra/internal/mocks"
+	infrahubv1alpha1 "github.com/infrahub-operator/vidra/api/v1alpha1"
+	"github.com/infrahub-operator/vidra/internal/domain"
+	mock "github.com/infrahub-operator/vidra/internal/mocks"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

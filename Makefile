@@ -3,7 +3,7 @@
 # To re-generate a bundle for another specific version without changing the standard setup, you can:
 # - use the VERSION as arg of the bundle target (e.g make bundle VERSION=0.0.2)
 # - use environment variables to overwrite this value (e.g export VERSION=0.0.2)
-VERSION ?= 0.0.1
+VERSION ?= 0.0.3
 
 # CHANNELS define the bundle channels used in the bundle.
 # Add a new line here if you would like to change its default config. (E.g CHANNELS = "candidate,fast,stable")
@@ -113,7 +113,7 @@ vet: ## Run go vet against code.
 .PHONY: test
 test: fmt vet envtest ## Run tests.
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" \
-go test $$(go list ./... | grep -v -E '/e2e|/internal/mocks|/test/utils|/internal/domain|/cmd|/api/v1alpha1') -coverprofile cover.out
+go test $$(go list ./... | grep -v -E '/e2e|/internal/mocks|/test/utils|/internal/domain|/cmd|/api/v1alpha1') -covermode=atomic -coverprofile=coverage.out
 
 
 # Utilize Kind or modify the e2e tests to load the image locally, enabling compatibility with other vendors.
@@ -174,14 +174,19 @@ build-installer: manifests generate kustomize ## Generate a consolidated YAML wi
 	$(KUSTOMIZE) build config/default > dist/install.yaml
 
 
-.PHONY:  generate-crd-docs
-generate-crd-docs: ## Generate CRD API docs
-	crd-ref-docs \
+.PHONY: generate-crd-docs
+
+.PHONY: generate-crd-docs
+generate-crd-docs: $(LOCALBIN)
+	@if [ ! -f $(LOCALBIN)/crd-ref-docs ]; then \
+		echo "Installing crd-ref-docs..."; \
+		GOBIN=$(LOCALBIN) go install github.com/elastic/crd-ref-docs@latest; \
+	fi
+	$(LOCALBIN)/crd-ref-docs \
 		--source-path api \
 		--config docs/api-doc-generator/config.yaml \
 		--renderer markdown \
 		--output-path docs/docs/api-references/api-references.md
-
 
 ##@ Deployment
 
@@ -280,7 +285,7 @@ endif
 endif
 
 .PHONY: bundle
-bundle: manifests kustomize operator-sdk ## Generate bundle manifests and metadata, then validate generated files.
+bundle: kustomize operator-sdk ## Generate bundle manifests and metadata, then validate generated files.
 	$(OPERATOR_SDK) generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
 	$(KUSTOMIZE) build config/manifests | $(OPERATOR_SDK) generate bundle $(BUNDLE_GEN_FLAGS)
@@ -343,5 +348,6 @@ helmify: $(HELMIFY) ## Download helmify locally if necessary.
 $(HELMIFY): $(LOCALBIN)
 	test -s $(LOCALBIN)/helmify || GOBIN=$(LOCALBIN) go install github.com/arttor/helmify/cmd/helmify@v0.4.5
 
-helm: manifests kustomize helmify
-	$(KUSTOMIZE) build config/default | $(HELMIFY) charts/ceph-s3-operator
+helm: kustomize helmify
+	$(KUSTOMIZE) build config/default | $(HELMIFY) charts/vidra-operator
+	yq e -i ".version = \"$(VERSION)\" | .appVersion = \"$(VERSION)\"" charts/vidra-operator/Chart.yaml

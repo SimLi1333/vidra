@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	infrahubv1alpha1 "github.com/simli1333/vidra/api/v1alpha1"
+	infrahubv1alpha1 "github.com/infrahub-operator/vidra/api/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"

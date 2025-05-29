@@ -1,4 +1,4 @@
-package k8s_test
+package k8s
 
 import (
 	"context"
@@ -7,8 +7,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	infrahubv1alpha1 "github.com/simli1333/vidra/api/v1alpha1"
-	"github.com/simli1333/vidra/internal/adapter/k8s"
+	infrahubv1alpha1 "github.com/infrahub-operator/vidra/api/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -20,7 +19,7 @@ import (
 
 var _ = Describe("DynamicMulticlusterFactory", func() {
 	var (
-		factory   *k8s.DynamicMulticlusterFactory
+		factory   *DynamicMulticlusterFactory
 		ctx       context.Context
 		serverURL string
 		k8sClient client.Client
@@ -28,7 +27,7 @@ var _ = Describe("DynamicMulticlusterFactory", func() {
 	var namespace = "default"
 
 	BeforeEach(func() {
-		factory = k8s.NewDynamicMulticlusterFactory()
+		factory = NewDynamicMulticlusterFactory()
 		ctx = context.Background()
 		serverURL = "https://my-cluster.example.com"
 

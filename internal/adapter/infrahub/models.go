@@ -1,7 +1,7 @@
 package infrahub
 
 import (
-	"github.com/simli1333/vidra/internal/domain"
+	"github.com/infrahub-operator/vidra/internal/domain"
 )
 
 // API Request and Response Models
@@ -29,10 +29,10 @@ type artifactIDQueryResult struct {
 }
 
 // CreateArtifactsFromAPIResponse maps an API response to a slice of domain.Artifact
-func CreateArtifactsFromAPIResponse(apiResponse artifactIDQueryResult) ([]domain.Artifact, error) {
+func CreateArtifactsFromAPIResponse(apiResponse artifactIDQueryResult) []domain.Artifact {
 	// If no artifacts are found in the API response
 	if len(apiResponse.Data.CoreArtifact.Edges) == 0 {
-		return nil, nil
+		return nil
 	}
 
 	var artifacts = make([]domain.Artifact, 0, len(apiResponse.Data.CoreArtifact.Edges))
@@ -51,7 +51,7 @@ func CreateArtifactsFromAPIResponse(apiResponse artifactIDQueryResult) ([]domain
 		artifacts = append(artifacts, artifact)
 	}
 
-	return artifacts, nil
+	return artifacts
 }
 
 type LoginResponse struct {

@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/simli1333/vidra/internal/domain"
+	"github.com/infrahub-operator/vidra/internal/domain"
 )
 
 type infrahubClient struct{}
@@ -143,10 +143,7 @@ func (c *infrahubClient) RunQuery(queryName string, apiURL string, artifactName 
 		return nil, fmt.Errorf("failed to decode query result: %w", err)
 	}
 
-	artifacts, err := CreateArtifactsFromAPIResponse(queryResult)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create artifacts from API response: %w", err)
-	}
+	artifacts := CreateArtifactsFromAPIResponse(queryResult)
 
 	return &artifacts, nil
 }
