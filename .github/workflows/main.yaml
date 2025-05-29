@@ -100,6 +100,10 @@ jobs:
       - run: make test 
       - name: Save coverage
         run: echo "Saving coverage..."
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
       - name: Upload coverage.out
         uses: actions/upload-artifact@v4
         with:
@@ -123,9 +127,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: cover.out
-
-      - name: Codecov
-        uses: codecov/codecov-action@v5.4.3
 
       - name: Install goveralls
         run: go install github.com/mattn/goveralls@v0.0.11
