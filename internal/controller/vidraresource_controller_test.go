@@ -78,13 +78,6 @@ var _ = Describe("should reconcile correctly with different Destination.Server v
 
 			Context("When reconciling a local resource", func() {
 				BeforeEach(func() {
-					deployK8sClient := setupDynamicMulticlusterFactoryMock(ctx, k8sClient, mockDynamicMulticlusterFactory, namespacedName, secondK8sClient)
-					_ = deployK8sClient.Delete(ctx, &v1.ConfigMap{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:      "example-config",
-							Namespace: "default",
-						},
-					})
 					By("creating the custom resource for the Kind VidraResource if not exists")
 					instance := &infrahubv1alpha1.VidraResource{}
 					err := k8sClient.Get(ctx, namespacedName, instance)
@@ -110,15 +103,8 @@ var _ = Describe("should reconcile correctly with different Destination.Server v
 					instance := &infrahubv1alpha1.VidraResource{}
 					err := k8sClient.Get(ctx, namespacedName, instance)
 					if err == nil {
-						// Wait for the finalizer to be removed before deleting the resource
+						// Wait for the finalizer to be removed before deleting the resource uncomnt if not needed
 						// instance.SetFinalizers(nil)
-						deployK8sClient := setupDynamicMulticlusterFactoryMock(ctx, k8sClient, mockDynamicMulticlusterFactory, namespacedName, secondK8sClient)
-						_ = deployK8sClient.Delete(ctx, &v1.ConfigMap{
-							ObjectMeta: metav1.ObjectMeta{
-								Name:      "example-config",
-								Namespace: "default",
-							},
-						})
 						Expect(k8sClient.Update(ctx, instance)).To(Succeed())
 						Expect(k8sClient.Delete(ctx, instance)).To(Succeed())
 						_ = setupDynamicMulticlusterFactoryMock(ctx, k8sClient, mockDynamicMulticlusterFactory, namespacedName, secondK8sClient)

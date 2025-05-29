@@ -35,9 +35,6 @@ on:
           - 'Makefile'
           - '.github/workflows/main.yaml'
 
-permissions:
-  contents: write
-
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
@@ -76,23 +73,31 @@ jobs:
 
   unit-test:
     name: Unit Tests
-    runs-on: ubuntu-24.04
-    container: golang:1.24
+    runs-on: macos-14 # You can also use macos-latest or macos-13
     env:
       GOFLAGS: "-buildvcs=false"
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24' # Match the Go version previously used in the container
+
       - name: Setup Cache
         uses: actions/cache@v4
         with:
           path: |
-            .cache/go
-            .cache/go-build
+            ~/Library/Caches/go-build
+            ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ github.ref_name }}
+
       - run: go version
-      - run: make test 
+      - run: make test
+
       - name: Save coverage
         run: echo "Saving coverage..."
+
       - name: Upload coverage.out
         uses: actions/upload-artifact@v4
         with:
@@ -103,6 +108,8 @@ jobs:
   coverage-report:
     name: Coverage Report
     runs-on: ubuntu-latest
+    permissions:
+      contents: write 
     container: golang:1.24
     needs: unit-test
     if: github.event_name == 'pull_request' || github.ref_name == 'main'
