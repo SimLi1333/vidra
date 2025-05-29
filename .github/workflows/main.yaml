@@ -124,6 +124,9 @@ jobs:
         with:
           name: cover.out
 
+      - name: Codecov
+        uses: codecov/codecov-action@v5.4.3
+
       - name: Install goveralls
         run: go install github.com/mattn/goveralls@v0.0.11
 
@@ -161,6 +164,7 @@ jobs:
  
   build-push:
       name: Build and Push Operator Image
+      if: startsWith(github.ref, 'refs/tags/v')
       needs: unit-test
       runs-on: ubuntu-latest
       permissions:
@@ -211,6 +215,7 @@ jobs:
 
   helm-chart:
     name: Push Helm Chart
+    if: startsWith(github.ref, 'refs/tags/v')
     needs: build-push
     runs-on: ubuntu-latest
     permissions:
@@ -240,6 +245,7 @@ jobs:
 
   release:
     name: GitHub Release
+    if: startsWith(github.ref, 'refs/tags/v')
     needs: [build-push, helm-chart]
     runs-on: ubuntu-latest
     permissions:
