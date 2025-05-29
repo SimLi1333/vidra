@@ -3,7 +3,7 @@
 # To re-generate a bundle for another specific version without changing the standard setup, you can:
 # - use the VERSION as arg of the bundle target (e.g make bundle VERSION=0.0.2)
 # - use environment variables to overwrite this value (e.g export VERSION=0.0.2)
-VERSION ?= 0.0.2
+VERSION ?= 0.0.3
 
 # CHANNELS define the bundle channels used in the bundle.
 # Add a new line here if you would like to change its default config. (E.g CHANNELS = "candidate,fast,stable")
@@ -174,14 +174,19 @@ build-installer: manifests generate kustomize ## Generate a consolidated YAML wi
 	$(KUSTOMIZE) build config/default > dist/install.yaml
 
 
-.PHONY:  generate-crd-docs
-generate-crd-docs: ## Generate CRD API docs
-	crd-ref-docs \
+.PHONY: generate-crd-docs
+
+.PHONY: generate-crd-docs
+generate-crd-docs: $(LOCALBIN)
+	@if [ ! -f $(LOCALBIN)/crd-ref-docs ]; then \
+		echo "Installing crd-ref-docs..."; \
+		GOBIN=$(LOCALBIN) go install github.com/elastic/crd-ref-docs@latest; \
+	fi
+	$(LOCALBIN)/crd-ref-docs \
 		--source-path api \
 		--config docs/api-doc-generator/config.yaml \
 		--renderer markdown \
 		--output-path docs/docs/api-references/api-references.md
-
 
 ##@ Deployment
 

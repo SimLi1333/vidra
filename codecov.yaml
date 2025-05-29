@@ -8,6 +8,6 @@ coverage:
       default:
         target: 80%
         threshold: 5%
-# Codecov: skip file as the test does not run in gh actions
+# Codecov: skip file as the event test does not run in gh actions
 ignore:
   - "**/controller/watch_trigger.go"
