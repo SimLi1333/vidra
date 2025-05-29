@@ -69,9 +69,21 @@ func (f *DynamicWatcherFactory) watchGVR(
 		0, // no resync
 	)
 
+	handler := getEventHandler(gvr, onEvent)
+	_, err := informer.AddEventHandler(handler)
+	if err != nil {
+		log.Printf("Error adding event handler for %s: %v", gvr.String(), err)
+		return
+	}
+
+	log.Printf("[WATCH] Started watching: %s", gvr.String())
+	informer.Run(f.stopChan)
+}
+
+func getEventHandler(gvr schema.GroupVersionResource, callback func(obj *unstructured.Unstructured, gvr schema.GroupVersionResource)) cache.ResourceEventHandlerFuncs {
 	genChanged := predicate.GenerationChangedPredicate{}
 
-	_, err := informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			unstrObj, ok := obj.(*unstructured.Unstructured)
 			if !ok {
@@ -86,8 +98,11 @@ func (f *DynamicWatcherFactory) watchGVR(
 					return
 				}
 			}
-			onEvent(unstrObj, gvr)
+			if unstrObj.GetLabels()["managed-by"] == "vida" {
+				callback(unstrObj, gvr)
+			}
 		},
+
 		UpdateFunc: func(oldObj, newObj interface{}) {
 			newUnstr, ok1 := newObj.(*unstructured.Unstructured)
 			oldUnstr, ok2 := oldObj.(*unstructured.Unstructured)
@@ -95,13 +110,15 @@ func (f *DynamicWatcherFactory) watchGVR(
 				log.Printf("UpdateFunc: unexpected types old=%T new=%T", oldObj, newObj)
 				return
 			}
-			if genChanged.Update(event.UpdateEvent{
-				ObjectOld: oldUnstr,
-				ObjectNew: newUnstr,
-			}) {
-				onEvent(newUnstr, gvr)
+			if newUnstr.GetLabels()["managed-by"] == "vida" &&
+				genChanged.Update(event.UpdateEvent{
+					ObjectOld: oldUnstr,
+					ObjectNew: newUnstr,
+				}) {
+				callback(newUnstr, gvr)
 			}
 		},
+
 		DeleteFunc: func(obj interface{}) {
 			unstrObj, ok := obj.(*unstructured.Unstructured)
 			if !ok {
@@ -116,14 +133,9 @@ func (f *DynamicWatcherFactory) watchGVR(
 					return
 				}
 			}
-			onEvent(unstrObj, gvr)
+			if unstrObj.GetLabels()["managed-by"] == "vida" {
+				callback(unstrObj, gvr)
+			}
 		},
-	})
-	if err != nil {
-		log.Printf("Error adding event handler for %s: %v", gvr.String(), err)
-		return
 	}
-
-	log.Printf("[WATCH] Started watching: %s", gvr.String())
-	informer.Run(f.stopChan)
 }
