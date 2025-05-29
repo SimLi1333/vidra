@@ -1,0 +1,220 @@
+name: Operator CI
+on:
+  push:
+      branches: [ "main" ]
+      # Publish semver tags as releases
+      tags: [ 'v*.*.*' ]
+      paths:
+          - 'cmd/**'
+          - 'go.*'
+          - 'api/**'
+          - 'controllers/**'
+          - 'config/**'
+          - 'hack/**'
+          - 'test/**'
+          - 'Dockerfile'
+          - 'chart/**'
+          - 'bundle.Dockerfile'
+          - '.dockerignore'
+          - 'Makefile'
+          - '.github/workflows/main.yaml'
+  pull_request:
+      branches: [ "main" ]
+      paths:
+          - 'cmd/**'
+          - 'go.*'
+          - 'api/**'
+          - 'controllers/**'
+          - 'config/**'
+          - 'hack/**'
+          - 'test/**'
+          - 'Dockerfile'
+          - 'chart/**'
+          - 'bundle.Dockerfile'
+          - '.dockerignore'
+          - 'Makefile'
+          - '.github/workflows/main.yaml'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  OPERATOR_SDK_VERSION: v1.39.2
+  OS: linux
+  TARGETARCH: amd64
+  GO111MODULE: "on"
+  GOCACHE: ${{ github.workspace }}/.cache/go-build
+  GOPATH: ${{ github.workspace }}/.cache/go
+  CGO_ENABLED: "0"
+  ENVTEST_K8S_VERSION: "1.31.0"
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      packages: read
+      id-token: write
+    container: golang:1.24
+    continue-on-error: true
+    env:
+      GOFLAGS: "-buildvcs=false"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup Cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            .cache/go
+            .cache/go-build
+          key: ${{ runner.os }}-go-${{ github.ref_name }}
+      - run: go version
+      - run: make fmt
+      - run: make vet
+      - run: make lint
+
+  unit-test:
+    name: Unit Tests
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: read
+      packages: read
+      id-token: write
+    container: golang:1.24
+    env:
+      GOFLAGS: "-buildvcs=false"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            .cache/go
+            .cache/go-build
+          key: ${{ runner.os }}-go-${{ github.ref_name }}
+      - run: go version
+      - run: make test 
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+ 
+  build-push:
+      name: Build and Push Operator Image
+      if: startsWith(github.ref, 'refs/tags/v')
+      needs: unit-test
+      runs-on: ubuntu-latest
+      permissions:
+        contents: write
+        packages: write
+        id-token: write
+      steps:
+        - uses: actions/checkout@v3
+        - uses: docker/setup-qemu-action@v2
+          with:
+            platforms: amd64
+        - uses: docker/setup-buildx-action@v2
+        - name: Log into registry ${{ env.REGISTRY }}
+          uses: docker/login-action@v2
+          with:
+            registry: ${{ env.REGISTRY }}
+            username: ${{ github.actor }}
+            password: ${{ secrets.GITHUB_TOKEN }}
+        - name: Extract Docker metadata
+          id: meta
+          uses: docker/metadata-action@v4
+          with:
+            images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        - name: Build and push Docker image
+          id: build-and-push
+          uses: docker/build-push-action@v4
+          with:
+            file: "Dockerfile"
+            context: .
+            platforms: linux/amd64
+            push: true
+            tags: ${{ steps.meta.outputs.tags }}
+            labels: ${{ steps.meta.outputs.labels }}
+            cache-from: type=gha
+            cache-to: type=gha,mode=max
+        - uses: actions/checkout@v3
+        - name: Install operator-sdk
+          run: |
+              curl -LO https://github.com/operator-framework/operator-sdk/releases/download/${OPERATOR_SDK_VERSION}/operator-sdk_${OS}_${TARGETARCH} \
+              && chmod +x operator-sdk_${OS}_${TARGETARCH} \
+              && mv operator-sdk_${OS}_${TARGETARCH} /usr/local/bin/operator-sdk \
+              && echo $(operator-sdk version)
+        - name: Create Bundle and Catalog and push to registry
+          run: |
+              make bundle
+              make bundle-build bundle-push
+              make catalog-build catalog-push
+
+  helm-chart:
+    name: Push Helm Chart
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build-push
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Extract tag version (e.g. v0.0.2 -> 0.0.2)
+        shell: bash
+        run: echo "TAG_VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+
+      - name: helmify
+        run: make helm
+
+      - name: Chart | Push
+        uses: appany/helm-oci-chart-releaser@v0.3.0
+        with:
+          name: vidra-operator
+          repository: ${{ github.repository }}/helm-charts
+          tag: ${{ env.TAG_VERSION }}
+          path: charts/vidra-operator
+          registry: ghcr.io
+          registry_username: ${{ github.repository_owner }}
+          registry_password: ${{ secrets.GITHUB_TOKEN }}
+
+  release:
+    name: GitHub Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [build-push, helm-chart]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Create GitHub Release
+        run: gh release create ${{ github.ref_name }} --generate-notes --verify-tag
+
+  sign-image:
+    name: Sign Docker Image
+    needs: build-push
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    if: github.event_name != 'pull_request'
+    steps:
+      - name: Install cosign
+        uses: sigstore/cosign-installer@main
+        with:
+          cosign-release: main
+      - name: Sign the published Docker image
+        env:
+          COSIGN_EXPERIMENTAL: "true"
+          COSIGN_YES: "true"
+        run: echo "${{ needs.build-push.outputs.tags }}" | xargs -I {} cosign sign --yes {}@${{ needs.build-push.outputs.digest }}
