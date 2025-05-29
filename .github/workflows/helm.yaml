@@ -8,6 +8,9 @@ jobs:
   build-push-operator:
     name: build-push-operator
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
     env:
       OPERATOR_SDK_VERSION: v1.39.2
     steps:
@@ -50,6 +53,10 @@ jobs:
     name: helm-chart
     needs: build-push-operator
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
     steps:
       - uses: actions/checkout@v3
       - name: helmify
@@ -68,6 +75,9 @@ jobs:
   release:
     needs: build-push-operator
     name: release
+    permissions:
+      contents: write
+      id-token: write
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
