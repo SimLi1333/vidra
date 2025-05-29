@@ -90,7 +90,6 @@ func (r *VidraResourceReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	if err := MarkState(ctx, r.Client, res, func() {
 		res.Status.DeployState = infrahubv1alpha1.StateRunning
 	}); err != nil {
-		logger.Error(err, "Failed to update SyncState to Running")
 		return ctrl.Result{}, err
 	}
 
@@ -145,7 +144,6 @@ func (r *VidraResourceReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		res.Status.LastSyncTime = metav1.Now()
 		res.Status.DeployState = infrahubv1alpha1.StateSucceeded
 	}); err != nil {
-		logger.Error(err, "Failed to update SyncState to Running")
 		return ctrl.Result{}, err
 	}
 
