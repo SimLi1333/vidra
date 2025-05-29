@@ -1,6 +1,7 @@
 package k8s
 
 import (
+	"log"
 	"testing"
 	"time"
 
@@ -165,6 +166,109 @@ func TestDeleteFunc_WithTombstone(t *testing.T) {
 	cb.On("Callback", obj, gvr).Once()
 
 	handler := getEventHandler(gvr, cb.Callback)
+	handler.DeleteFunc(tombstone)
+
+	cb.AssertExpectations(t)
+}
+
+type mockWriter struct {
+	writeFunc func(p []byte) (n int, err error)
+}
+
+func (w mockWriter) Write(p []byte) (n int, err error) {
+	return w.writeFunc(p)
+}
+
+func contains(s, substr string) bool {
+	return len(s) >= len(substr) && (s == substr || len(s) > len(substr) && (s[:len(substr)] == substr || contains(s[1:], substr)))
+}
+
+func TestAddFunc_UnexpectedType(t *testing.T) {
+	cb := new(callbackMock)
+
+	gvr := schema.GroupVersionResource{Group: "test", Version: "v1", Resource: "foos"}
+
+	handler := getEventHandler(gvr, cb.Callback)
+
+	// Capture log output
+	var logOutput string
+	log.SetFlags(0)
+	log.SetOutput(mockWriter{func(p []byte) (n int, err error) {
+		logOutput = string(p)
+		return len(p), nil
+	}})
+
+	handler.AddFunc(123) // Passing an int to trigger the unexpected type log
+
+	if logOutput == "" || !contains(logOutput, "AddFunc: unexpected type int") {
+		t.Errorf("expected log to contain 'AddFunc: unexpected type int', got: %q", logOutput)
+	}
+
+	cb.AssertExpectations(t)
+}
+
+func TestAddFunc_WithTombstone_UnexpectedType(t *testing.T) {
+	cb := new(callbackMock)
+
+	gvr := schema.GroupVersionResource{Group: "test", Version: "v1", Resource: "foos"}
+
+	// Tombstone object with wrong type (e.g., string instead of *unstructured.Unstructured)
+	tombstone := cache.DeletedFinalStateUnknown{
+		Key: "test/bad-type",
+		Obj: "this-is-not-an-unstructured-object",
+	}
+
+	handler := getEventHandler(gvr, cb.Callback)
+
+	// No callback is expected
+	handler.AddFunc(tombstone)
+
+	cb.AssertExpectations(t)
+}
+
+func TestUpdateFunc_UnexpectedTypes(t *testing.T) {
+	cb := new(callbackMock)
+
+	gvr := schema.GroupVersionResource{Group: "test", Version: "v1", Resource: "foos"}
+
+	// Use non-*unstructured.Unstructured types to trigger the log line
+	oldObj := "this-is-not-unstructured"
+	newObj := 42 // also not unstructured
+
+	handler := getEventHandler(gvr, cb.Callback)
+
+	// No callback is expected
+	handler.UpdateFunc(oldObj, newObj)
+
+	cb.AssertExpectations(t)
+}
+
+func TestDeleteFunc_UnexpectedType(t *testing.T) {
+	cb := new(callbackMock)
+
+	gvr := schema.GroupVersionResource{Group: "test", Version: "v1", Resource: "foos"}
+
+	handler := getEventHandler(gvr, cb.Callback)
+
+	invalidObj := "not-a-tombstone"
+
+	handler.DeleteFunc(invalidObj)
+
+	cb.AssertExpectations(t)
+}
+
+func TestDeleteFunc_UnexpectedTombstoneType(t *testing.T) {
+	cb := new(callbackMock)
+
+	gvr := schema.GroupVersionResource{Group: "test", Version: "v1", Resource: "foos"}
+
+	handler := getEventHandler(gvr, cb.Callback)
+
+	tombstone := cache.DeletedFinalStateUnknown{
+		Key: "foo",
+		Obj: "not-unstructured", // invalid tombstone.Obj type
+	}
+
 	handler.DeleteFunc(tombstone)
 
 	cb.AssertExpectations(t)

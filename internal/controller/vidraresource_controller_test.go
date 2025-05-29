@@ -1730,6 +1730,71 @@ metadata:
 							failingClient.FailingMethod = ""
 						}
 					})
+
+					It("should return an error and mark state failed if getting the destination client fails", func() {
+						By("setting up a VidraResource with a non-local destination server")
+						instance := &infrahubv1alpha1.VidraResource{}
+						err := k8sClient.Get(ctx, namespacedName, instance)
+						Expect(err).NotTo(HaveOccurred())
+						instance.Spec.Destination.Server = "https://some-remote-server"
+						instance.Spec.Manifest = `
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: example
+  namespace: ` + namespace + `
+data:
+  key: value
+`
+						Expect(k8sClient.Update(ctx, instance)).To(Succeed())
+
+						By("mocking DynamicMulticlusterFactory to return an error")
+						mockDynamicMulticlusterFactory.EXPECT().
+							GetCachedClientFor(gomock.Any(), "https://some-remote-server", k8sClient).
+							Return(nil, fmt.Errorf("mocked client error"))
+
+						mockRESTMapper.EXPECT().
+							RESTMapping(gomock.Any(), gomock.Any()).
+							AnyTimes()
+
+						// Run reconciliation
+						_, err = reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
+						Expect(err).To(HaveOccurred())
+						Expect(err.Error()).To(ContainSubstring("failed to get client for destination: mocked client error"))
+
+						// The resource status should be marked as failed
+						updated := &infrahubv1alpha1.VidraResource{}
+						Expect(k8sClient.Get(ctx, namespacedName, updated)).To(Succeed())
+						Expect(updated.Status.DeployState).To(Equal(infrahubv1alpha1.StateFailed))
+					})
+
+					It("should return an error if manifest is empty", func() {
+						By("setting up a VidraResource with an empty manifest")
+						instance := &infrahubv1alpha1.VidraResource{}
+						err := k8sClient.Get(ctx, namespacedName, instance)
+						Expect(err).NotTo(HaveOccurred())
+						instance.Spec.Manifest = ""
+						Expect(k8sClient.Update(ctx, instance)).To(Succeed())
+
+						mockDynamicMulticlusterFactory.EXPECT().
+							GetCachedClientFor(gomock.Any(), destinationServer, k8sClient).
+							Return(secondK8sClient, nil).
+							AnyTimes()
+
+						mockRESTMapper.EXPECT().
+							RESTMapping(gomock.Any(), gomock.Any()).
+							AnyTimes()
+
+						// Run reconciliation
+						_, err = reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: namespacedName})
+						Expect(err).To(HaveOccurred())
+						Expect(err.Error()).To(ContainSubstring("no manifests available in spec to reconcile"))
+
+						// The resource status should be marked as failed
+						updated := &infrahubv1alpha1.VidraResource{}
+						Expect(k8sClient.Get(ctx, namespacedName, updated)).To(Succeed())
+						Expect(updated.Status.DeployState).To(Equal(infrahubv1alpha1.StateFailed))
+					})
 				})
 			})
 		})
