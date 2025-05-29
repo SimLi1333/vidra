@@ -176,12 +176,13 @@ build-installer: manifests generate kustomize ## Generate a consolidated YAML wi
 
 .PHONY: generate-crd-docs
 
-generate-crd-docs: ## Generate CRD API docs
-	@command -v crd-ref-docs >/dev/null 2>&1 || { \
-		echo >&2 "Installing crd-ref-docs..."; \
-		go install github.com/elastic/crd-ref-docs@latest; \
-	}
-	crd-ref-docs \
+.PHONY: generate-crd-docs
+generate-crd-docs: $(LOCALBIN)
+	@if [ ! -f $(LOCALBIN)/crd-ref-docs ]; then \
+		echo "Installing crd-ref-docs..."; \
+		GOBIN=$(LOCALBIN) go install github.com/elastic/crd-ref-docs@latest; \
+	fi
+	$(LOCALBIN)/crd-ref-docs \
 		--source-path api \
 		--config docs/api-doc-generator/config.yaml \
 		--renderer markdown \
