@@ -2,13 +2,12 @@ name: Operator CI
 on:
   push:
       branches: [ "main" ]
-      # Publish semver tags as releases
       tags: [ 'v*.*.*' ]
       paths:
           - 'cmd/**'
           - 'go.*'
           - 'api/**'
-          - 'controllers/**'
+          - 'internal/**'
           - 'config/**'
           - 'hack/**'
           - 'test/**'
@@ -24,7 +23,7 @@ on:
           - 'cmd/**'
           - 'go.*'
           - 'api/**'
-          - 'controllers/**'
+          - 'internal/**'
           - 'config/**'
           - 'hack/**'
           - 'test/**'
