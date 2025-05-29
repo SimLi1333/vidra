@@ -4,7 +4,8 @@
 ![GitHub Release](https://img.shields.io/github/v/release/infrahub-operator/vidra?include_prereleases&sort=semver)
 ![Test Status](https://img.shields.io/github/actions/workflow/status/infrahub-operator/vidra/main.yaml?label=Tests)
 ![Coverage](https://img.shields.io/endpoint?url=https://infrahub-operator.github.io/vidra/coverage-badge.json)
-[![codecov](https://codecov.io/gh/Lab-Topology-Builder/LTB-K8s-Backend/branch/main/graph/badge.svg?token=7WFVHK77UP)]
+[![codecov](https://codecov.io/gh/infrahub-operator/vidra/branch/main/graph/badge.svg)](https://codecov.io/gh/infrahub-operator/vidra)
+
 ![GitHub](https://img.shields.io/github/license/infrahub-operator/vidra)
 <img src=".github/logo.png" alt="Nornir Conditional Runner Logo" height="200" align="right">
 
