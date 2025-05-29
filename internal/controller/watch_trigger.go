@@ -1,6 +1,3 @@
-//go:build codecovskip
-// +build codecovskip
-
 package controller
 
 import (
@@ -16,7 +13,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-// Codecov: skip file as the test does not run in gh actions
 // Callback function to warch_resources_factory
 
 func (r *VidraResourceReconciler) handleLabeledResource(obj *unstructured.Unstructured, gvr schema.GroupVersionResource) {
