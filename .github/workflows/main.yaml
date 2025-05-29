@@ -98,70 +98,10 @@ jobs:
           key: ${{ runner.os }}-go-${{ github.ref_name }}
       - run: go version
       - run: make test 
-      - name: Save coverage
-        run: echo "Saving coverage..."
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-      - name: Upload coverage.out
-        uses: actions/upload-artifact@v4
-        with:
-          name: cover.out
-          path: cover.out
-          retention-days: 7
-
-  coverage-report:
-    name: Coverage Report
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write 
-    container: golang:1.24
-    needs: unit-test
-    if: github.event_name == 'pull_request' || github.ref_name == 'main'
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Download cover.out
-        uses: actions/download-artifact@v4
-        with:
-          name: cover.out
-
-      - name: Install goveralls
-        run: go install github.com/mattn/goveralls@v0.0.11
-
-      - name: Generate Coverage Report
-        run: |
-          go tool cover -func=cover.out
-          go tool cover -html=cover.out -o coverage.html
-
-      - name: Extract Coverage Percentage and Generate Badge
-        run: |
-          apt-get update && apt-get install -y jq
-          TOTAL=$(go tool cover -func=cover.out | grep total | awk '{print $3}' | sed 's/%//')
-          echo "coverage=$TOTAL" >> $GITHUB_ENV
-          echo "Extracted Coverage: $TOTAL%"
-          echo "{\"schemaVersion\": 1, \"label\": \"coverage\", \"message\": \"${TOTAL}%\", \"color\": \"green\"}" > coverage-badge.json
-          mkdir -p coverage_output
-          mv coverage-badge.json coverage_output/
-
-      - name: Upload HTML Coverage and Raw Report
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: |
-            coverage.html
-            cover.out
-            coverage_output/coverage-badge.json
-          retention-days: 7
-
-
-      - name: Deploy Badge to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          personal_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public
  
   build-push:
       name: Build and Push Operator Image
