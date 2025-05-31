@@ -200,6 +200,7 @@ jobs:
 
   sign-image:
     name: Sign Docker Image
+    if: startsWith(github.ref, 'refs/tags/v')
     needs: build-push
     runs-on: ubuntu-latest
     permissions:
@@ -221,6 +222,7 @@ jobs:
   update-version--in-install-yamls:
     name: Update Version in Install YAMLs
     if: startsWith(github.ref, 'refs/tags/v')
+    needs: build-push
     runs-on: ubuntu-latest
     permissions:
       contents: write
