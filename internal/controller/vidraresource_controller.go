@@ -143,6 +143,9 @@ func (r *VidraResourceReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	if err := MarkState(ctx, r.Client, res, func() {
 		res.Status.LastSyncTime = metav1.Now()
 		res.Status.DeployState = infrahubv1alpha1.StateSucceeded
+		if !strings.Contains(res.Status.LastError, "Warning:") {
+			res.Status.LastError = ""
+		}
 	}); err != nil {
 		return ctrl.Result{}, err
 	}

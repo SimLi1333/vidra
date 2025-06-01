@@ -125,6 +125,7 @@ func (r *InfrahubSyncReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	if err := MarkState(ctx, r.Client, infrahubSync, func() {
 		infrahubSync.Status.SyncState = infrahubv1alpha1.StateSucceeded
 		infrahubSync.Status.LastSyncTime = metav1.Now()
+		infrahubSync.Status.LastError = ""
 	}); err != nil {
 		logger.Error(err, "Failed to update SyncState to Success")
 		return ctrl.Result{RequeueAfter: r.RequeueAfter}, err
