@@ -9,7 +9,7 @@ This guide covers advanced usage scenarios for the Vidra Operator, including mul
 
 If you want to synchronize resources to a different Kubernetes cluster, you can specify the `server` field in the `destination` section of the `InfrahubSync` resource. This allows Vidra to connect to the specified cluster and apply the resources there.
 
-For this to work, you need to create a Kubernetes Secret containing the kubeconfig for the target cluster. The Secret should have the label `vidra-kubeconf` with the URL of the target cluster. Below is an example of how to create this Secret:
+For this to work, you need to create a Kubernetes Secret containing the kubeconfig for the target cluster. The Secret should have the label `cluster-kubeconfig` with the URL of the target cluster. Below is an example of how to create this Secret:
 
 ```yaml
 apiVersion: v1
@@ -17,7 +17,7 @@ kind: Secret
 metadata:
   name: cluster-kubeconfig
   labels:
-    vidra-kubeconf: <cluster-url-without-http>
+    cluster-kubeconfig: <cluster-url-without-http>
 type: Opaque
 data:
   kubeconfig: <base64-encoded-kubeconfig>
