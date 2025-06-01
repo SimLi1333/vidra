@@ -46,9 +46,10 @@ type InfrahubSyncSource struct {
 	// The target branch in Infrahub to interact with
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:default:="main"
 	TargetBranch string `json:"targetBranch" protobuf:"bytes,2,name=targetBranch"`
 
-	// The target date in Infrahub for all the interactions (e.g., "2025-01-01T00:00:00Z or -2d" for the artifact from two days ago)
+	// The target date in Infrahub for all the interactions (e.g., "2025-01-01T00:00:00Z or -2d" for the artifact from two days ago). If not set, the operator will use the current date.
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:validation:Format=date-time
 	TargetDate string `json:"targetDate,omitempty" protobuf:"bytes,3,name=targetDate"`

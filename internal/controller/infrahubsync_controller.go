@@ -297,6 +297,7 @@ func (r *InfrahubSyncReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
+// InitConfigWithClient initializes the InfrahubSyncReconciler configuration
 func (r *InfrahubSyncReconciler) InitConfigWithClient(ctx context.Context, k8sClient client.Client, labelKey, labelValue string) error {
 	const defaultRequeue = time.Minute
 	const defaultQueryName = "ArtifactIDs"
@@ -329,6 +330,9 @@ func (r *InfrahubSyncReconciler) InitConfigWithClient(ctx context.Context, k8sCl
 	if ok {
 		duration, err := time.ParseDuration(requeueAfter)
 		if err == nil {
+			if duration < 0 {
+				return fmt.Errorf("invalid requeue duration: %s", requeueAfter)
+			}
 			r.RequeueAfter = duration
 		}
 	}

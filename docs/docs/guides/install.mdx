@@ -47,7 +47,7 @@ curl -sL https://github.com/operator-framework/operator-lifecycle-manager/releas
 ```
 </Admonition>
 
-## Operator Lifecycle Manager (OLM) Installation
+### Operator Lifecycle Manager (OLM) Installation
 
 Install the vidra Operator by creating a catalog source and subscription:
 
@@ -58,5 +58,46 @@ kubectl apply -f https://raw.githubusercontent.com/Infrahub-Operator/Vidra/main/
 Wait for the Vidra Operator to be installed (this might take a few seconds):
 
 ```sh
-kubectl get csv -n vidra-system -w
+kubectl get csv -n operators -w
+```
+
+---
+
+
+## Uninstall Vidra Operator
+
+To completely remove the Vidra Operator and its resources, follow these steps:
+
+### 1. Helm Uninstall
+```sh
+helm uninstall vidra --namespace vidra-system
+kubectl delete namespace vidra-system
+```
+
+Or:
+
+### 1. Delete the Subscription and ClusterServiceVersion (CSV)
+
+```sh
+kubectl delete subscriptions.operators.coreos.com -n operators vidra-subscription
+kubectl delete csv -n operators $(kubectl get csv -n operators -o jsonpath="{.items[?(@.metadata.labels['operators.coreos.com/vidra.operators')].metadata.name}")
+```
+
+
+### 2. Delete the CRDs
+
+```sh
+kubectl delete crd infrahubsyncs.infrahub.operators.com vidraresources.infrahub.operators.com.
+```
+
+### 3. Delete the Operator
+
+```sh
+kubectl delete operator vidra-operator.operators
+```
+
+### 4. Delete the CatalogSource
+
+```sh
+kubectl delete catalogsource -n operators vidra-catalog
 ```

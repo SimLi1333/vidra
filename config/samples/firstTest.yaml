@@ -1,10 +1,5 @@
-<<<<<<< HEAD
-apiVersion: infrahub.operators.com/v1alpha1
-kind: InfrahubResource
-=======
 apiVersion: infrahub.operators.com/v1alpha1
 kind: VidraResource
->>>>>>> origin/gitOps-4th-principle
 metadata:
   name: 1834265b-8d16-4e4a-3bd9-c518b7dc1939
 spec:
