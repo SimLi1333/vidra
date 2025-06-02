@@ -79,13 +79,11 @@ type InfrahubSyncStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// SyncState indicates the current state of the synchronization process
-	// +kubebuilder:validation:Enum=Pending;Running;Succeeded;Failed;Stale
-
 	// Checksums contains a list of checksums for synced resources
 	Checksums []string `json:"checksums,omitempty"`
 
 	// SyncState indicates the current state of the sync operation
+	// +kubebuilder:validation:Enum=Pending;Running;Succeeded;Failed;Stale
 	SyncState State `json:"syncState,omitempty"`
 
 	// LastError provides details about the last error encountered during the sync operation

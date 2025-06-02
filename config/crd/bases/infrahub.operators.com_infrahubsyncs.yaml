@@ -97,12 +97,6 @@ spec:
             properties:
               checksums:
                 description: Checksums contains a list of checksums for synced resources
-                enum:
-                - Pending
-                - Running
-                - Succeeded
-                - Failed
-                - Stale
                 items:
                   type: string
                 type: array
@@ -117,6 +111,12 @@ spec:
                 type: string
               syncState:
                 description: SyncState indicates the current state of the sync operation
+                enum:
+                - Pending
+                - Running
+                - Succeeded
+                - Failed
+                - Stale
                 type: string
             type: object
         type: object
