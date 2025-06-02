@@ -175,13 +175,14 @@ jobs:
         run: |
           mkdir -p .deploy
           helm package charts/vidra-operator --destination .deploy
-      - run: ls .deploy
 
-      # - name: Upload to GitHub Release
-      #   if: startsWith(github.ref, 'refs/tags/')
-      #   uses: softprops/action-gh-release@v1
-      #   with:
-      #     files: .deploy/vidra-operator-${{ env.TAG_VERSION }}.tgz
+      - name: Upload to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            .deploy/vidra-operator-${{ env.TAG_VERSION }}.tgz
+            .deploy/index.yaml
 
       - name: Create Helm repo index
         run: |
@@ -195,12 +196,6 @@ jobs:
           publish_branch: gh-pages
           keep_files: true  # Keeps existing files like older chart versions
       
-      - name: Upload Helm chart artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: helm-chart
-          path: .deploy/vidra-operator-${{ env.TAG_VERSION }}.tgz
-
       - name: Chart | Push
         uses: appany/helm-oci-chart-releaser@v0.3.0
         with:
