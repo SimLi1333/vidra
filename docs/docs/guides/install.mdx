@@ -26,11 +26,12 @@ Helm is not required to run the Vidra Operator, but it simplifies the installati
 To install the Vidra Operator using Helm, first add the Infrahub Operator Helm repository and then install the Vidra chart:
 
 ```sh
-helm install vidra-operator oci://ghcr.io/infrahub-operator/vidra/helm-charts/vidra-operator --version 0.0.4 --namespace vidra-system --create-namespace
+helm install vidra-operator oci://ghcr.io/infrahub-operator/vidra/helm-charts/vidra-operator --namespace vidra-system --create-namespace
 ```
+Or, if you prefer to use the Helm repository:
 
 ```sh
-helm repo add infrahub-operator https://infrahub-operator.github.io/vidra
+helm repo add infrahub-operator https://raw.githubusercontent.com/infrahub-operator/vidra/refs/heads/main
 helm repo update
 helm install vidra infrahub-operator/vidra --namespace vidra-system --create-namespace
 ```
