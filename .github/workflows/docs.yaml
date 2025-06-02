@@ -41,10 +41,13 @@ jobs:
 
       - name: Build website
         run: npm run build
-        working-directory: docs
+          working-directory: docs
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./docs/build
+          exclude_assets: |
+            index.yaml
+            infrahub-operator-*.tgz
