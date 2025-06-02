@@ -175,13 +175,14 @@ jobs:
         run: |
           mkdir -p .deploy
           helm package charts/vidra-operator --destination .deploy
-      - run: ls .deploy
 
       - name: Upload to GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v1
         with:
-          files: .deploy/vidra-operator-${{ env.TAG_VERSION }}.tgz
+          files: |
+            .deploy/vidra-operator-${{ env.TAG_VERSION }}.tgz
+            .deploy/index.yaml
 
       - name: Create Helm repo index
         run: |
