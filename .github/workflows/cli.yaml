@@ -5,12 +5,12 @@ on:
     branches: [ "main" ]
     tags: [ 'v*.*.*' ]
     paths:
-      - 'cli/**'
+      - 'vidra-cli/**'
       - '.github/workflows/cli.yaml'
   pull_request:
     branches: [ "main" ]
     paths:
-      - 'cli/**'
+      - 'vidra-cli/**'
       - '.github/workflows/cli.yaml'
 
 jobs:
@@ -32,7 +32,7 @@ jobs:
           go-version: '1.24'
 
       - name: Build CLI tool
-        working-directory: ./cli
+        working-directory: ./vidra-cli
         run: |
           go build -o vidra
 
@@ -45,9 +45,9 @@ jobs:
         run: |
           cosign sign-blob \
             --yes \
-            --output-signature cli/vidra.sig \
-            --output-certificate cli/vidra.cert \
-            ./cli/vidra
+            --output-signature vidra-cli/vidra.sig \
+            --output-certificate vidra-cli/vidra.cert \
+            ./vidra-cli/vidra
 
 
       - name: Upload to GitHub Release
@@ -55,6 +55,6 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            cli/vidra
-            cli/vidra.sig
-            cli/vidra.cert
+            vidra-cli/vidra
+            vidra-cli/vidra.sig
+            vidra-cli/vidra.cert
