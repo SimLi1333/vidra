@@ -170,7 +170,7 @@ jobs:
         run: echo "TAG_VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
 
       - name: helmify
-        run: make helmify
+        run: make helm
 
       - name: Package Helm chart
         run: |
@@ -180,13 +180,7 @@ jobs:
         run: |
           helm repo index .deploy --url https://infrahub-operator.github.io/vidra
 
-      - name: Upload to gh-pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: .deploy
-          publish_branch: gh-pages
-          keep_files: true  # Keeps existing files like older chart versions
+
 
       - name: Chart | Push
         uses: appany/helm-oci-chart-releaser@v0.3.0
@@ -257,3 +251,13 @@ jobs:
           git add install/catalogsource.yaml install/subscription.yaml
           git commit -m "chore: update version to $VERSION in catalogsource and subscription" || echo "No changes to commit"
           git push || echo "No changes to push"
+      - name: Create Pull Request for Version Update
+        uses: peter-evans/create-pull-request@v4
+        with:
+          title: "chore: update version in install YAMLs to ${{ github.ref_name }}"
+          body: "This PR updates the version in install/catalogsource.yaml and install/subscription.yaml to ${{ github.ref_name }}."
+          branch: update-version-${{ github.ref_name }}
+          commit-message: "chore: update version in install YAMLs to ${{ github.ref_name }}"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base: main
+          labels: "chore"
