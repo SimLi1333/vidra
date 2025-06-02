@@ -176,6 +176,10 @@ jobs:
           mkdir -p .deploy
           helm package charts/vidra-operator --destination .deploy
 
+      - name: Create Helm repo index
+        run: |
+          helm repo index .deploy --url https://github.com/infrahub-operator/vidra/releases/download/${{ env.TAG_VERSION }}
+
       - name: Upload to GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v1
