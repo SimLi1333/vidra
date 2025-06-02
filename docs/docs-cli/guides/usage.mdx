@@ -1,0 +1,79 @@
+# Usage
+
+`vidra [command]`
+
+Vidra is a command-line tool for managing Vidra Operator and related resources.
+
+## Available Commands
+
+- **cluster**: Manage clusters for multicluster Vidra Operator.
+- **completion**: Generate the autocompletion script for the specified shell.
+- **config**: Configure the Vidra Operator.
+- **credentials**: Manage Infrahub credential Secrets.
+- **help**: Display help information about any command.
+- **infrahubsync**: Manage InfrahubSync resources.
+
+## Flags
+
+- `-h`, `--help`: Show help for the `vidra` command.
+
+## Operations
+Each command has the same set of operations:
+
+### Example credentials command
+
+- **apply**: Generate and apply an Infrahub credentials secret to Kubernetes.
+- **delete**: Remove an Infrahub credential secret by URL.
+- **get**: Retrieve an Infrahub credentials secret by URL.
+- **list**: List all Infrahub credentials secrets.
+
+
+## Examples
+```sh
+# Apply a kubeconfig secret for a cluster
+vidra cluster apply admin@ba-iac -n secrets
+
+# Delete a kubeconfig secret for a cluster
+vidra cluster delete admin@ba-iac -n secrets
+
+# Get a kubeconfig secret for a cluster
+vidra cluster get --name my-cluster
+
+# List all cluster kubeconfig secrets
+vidra cluster list
+```
+ <Admonition type="note" title="Note">
+ Runing vidra cluster apply will prompt you with the available cluster contexts in your kubeconfig file. You can select one of them to create a kubeconfig secret for that cluster.
+ </Admonition>
+
+```sh
+# Apply an Infrahub credentials secret
+vidra credentials apply --url https://infrahub.example.com --username admin --password secret
+# Delete an Infrahub credentials secret by URL
+vidra credentials delete --url https://infrahub.example.com
+# Get an Infrahub credentials secret by URL
+vidra credentials get --url https://infrahub.example.com
+# List all Infrahub credentials secrets
+vidra credentials list
+```
+```sh
+# Apply an Vidra configuration
+vidra config apply --query-name ArtifactIDs -r 5m -s 1m
+
+# Delete a Vidra configuration
+vidra config delete
+
+# Get a Vidra configuration from the default namespace
+vidra config get -n default
+
+# List all Vidra configurations 
+vidra config list 
+```
+
+```sh
+# Apply an InfrahubSync resource
+ vidra infrahubsync apply "http://198.19.248.5:8000" -a Webserver_Manifest -b main2 -d 2025-04-09T00:00:00Z -s https://kubernetes.default.svc -N default -e
+ ```
+ <Admonition type="note" title="Note">
+ Pleas use the -h flag to get more information about each command and its options.
+ </Admonition>

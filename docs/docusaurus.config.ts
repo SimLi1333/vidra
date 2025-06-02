@@ -75,7 +75,7 @@ const config: Config = {
         id: 'cli',
         path: 'docs-cli',
         routeBasePath: 'cli',
-        sidebarPath: require.resolve('./sidebarsCli.ts'),
+        sidebarPath: require.resolve('./sidebars.ts'),
       },
     ],
   ],
