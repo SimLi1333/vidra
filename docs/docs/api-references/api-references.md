@@ -67,7 +67,7 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `infrahubAPIURL` _string_ | URL for the Infrahub API (e.g., https://infrahub.example.com) |  | Pattern: `^(http\|https)://[a-zA-Z0-9.-]+(:[0-9]+)?(?:/[a-zA-Z0-9-]+)*$` <br />Required: \{\} <br /> |
 | `targetBranch` _string_ | The target branch in Infrahub to interact with | main | MinLength: 1 <br />Required: \{\} <br /> |
-| `targetDate` _string_ | The target date in Infrahub for all the interactions (e.g., "2025-01-01T00:00:00Z or -2d" for the artifact from two days ago). If not set, the operator will use the current date. |  | Format: date-time <br />Optional: \{\} <br /> |
+| `targetDate` _string_ | The target date in Infrahub for all the interactions (e.g., "2025-01-01T00:00:00Z or -2d" for the artifact from two days ago). If not set, the operator will use the current date. |  | Optional: \{\} <br /> |
 | `artefactName` _string_ | Artifact name that is being handled by the operator, this is used to identify the resource in Infrahub |  | MinLength: 1 <br />Required: \{\} <br /> |
 
 
