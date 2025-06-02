@@ -7,8 +7,9 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-	"vidra-cli/internal/adapter/kubecli"
-	"vidra-cli/internal/service"
+
+	"github.com/infrahub-operator/vidra/vidra-cli/internal/adapter/kubecli"
+	"github.com/infrahub-operator/vidra/vidra-cli/internal/service"
 
 	"github.com/spf13/cobra"
 )

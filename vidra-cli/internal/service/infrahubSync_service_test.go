@@ -3,7 +3,8 @@ package service_test
 import (
 	"errors"
 	"testing"
-	"vidra-cli/internal/service"
+
+	"github.com/infrahub-operator/vidra/vidra-cli/internal/service"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

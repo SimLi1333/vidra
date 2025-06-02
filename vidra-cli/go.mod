@@ -1,4 +1,4 @@
-module vidra-cli
+module github.com/infrahub-operator/vidra/vidra-cli
 
 go 1.24.0
 
