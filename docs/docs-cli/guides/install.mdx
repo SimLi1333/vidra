@@ -47,6 +47,20 @@ vidra --help
 
 You should see the help output for the Vidra CLI.
 
+# Generate ZSH completion script for Vidra CLI
+```bash
+vidra completion zsh > _vidra
+
+mkdir -p ~/.zsh/completions
+mv _vidra ~/.zsh/completions/
+
+fpath+=~/.zsh/completions
+autoload -Uz compinit
+compinit
+
+source ~/.zshrc
+```
+
 ## Upgrading
 
 To upgrade, run the `go install` command again with the latest version, or download the latest release.
