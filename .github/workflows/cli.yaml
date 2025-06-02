@@ -49,15 +49,6 @@ jobs:
             --output-certificate cli/vidra.cert \
             ./cli/vidra
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: cli-tool-signed
-          path: |
-            cli/vidra
-            cli/vidra.sig
-            cli/vidra.cert
-
 
       - name: Upload to GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
