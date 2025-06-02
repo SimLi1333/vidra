@@ -200,14 +200,13 @@ jobs:
 
   sign-image:
     name: Sign Docker Image
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') && github.event_name != 'pull_request'
     needs: build-push
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
       id-token: write
-    if: github.event_name != 'pull_request'
     steps:
       - name: Install cosign
         uses: sigstore/cosign-installer@main
