@@ -170,7 +170,7 @@ jobs:
         run: echo "TAG_VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
 
       - name: helmify
-        run: make helmify
+        run: make helm
 
       - name: Package Helm chart
         run: |
