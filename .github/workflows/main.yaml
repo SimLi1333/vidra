@@ -170,7 +170,23 @@ jobs:
         run: echo "TAG_VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
 
       - name: helmify
-        run: make helm
+        run: make helmify
+
+      - name: Package Helm chart
+        run: |
+          helm package charts/vidra-operator --destination .deploy
+
+      - name: Create Helm repo index
+        run: |
+          helm repo index .deploy --url https://<your-username>.github.io/<your-repo-name>
+
+      - name: Upload to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .deploy
+          publish_branch: gh-pages
+          keep_files: true  # Keeps existing files like older chart versions
 
       - name: Chart | Push
         uses: appany/helm-oci-chart-releaser@v0.3.0
