@@ -84,7 +84,7 @@ Or:
 ### 1. Delete the Subscription and ClusterServiceVersion (CSV)
 
 ```sh
-kubectl delete subscriptions.operators.coreos.com -n operators vidra-subscription
+kubectl delete subscriptions.operators.coreos.com -n operators vidra-operator-subscription 
 kubectl delete csv -n operators $(kubectl get csv -n operators -o jsonpath="{.items[?(@.metadata.labels['operators.coreos.com/vidra.operators')].metadata.name}")
 ```
 
