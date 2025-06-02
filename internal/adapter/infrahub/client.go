@@ -21,17 +21,17 @@ func NewClient() domain.InfrahubClient {
 	return &infrahubClient{}
 }
 
-var relativeFormatRegex = regexp.MustCompile(`^now[-+]\d+[smhdw]$`)
+var relativeFormatRegex = regexp.MustCompile(`^[a-zA-Z]+[-+]\d+[smh]$`)
 
 // IsValidTargetDateFormat checks if the input string is a valid RFC3339 or relative time format.
-func IsValidTargetDateFormat(input string) error {
+func IsValidTargetDateFormat(input string) bool {
 	if _, err := time.Parse(time.RFC3339, input); err == nil {
-		return nil
+		return true
 	}
 	if relativeFormatRegex.MatchString(input) {
-		return nil
+		return true
 	}
-	return fmt.Errorf("targetDate must be RFC3339 or relative like 'now-2h', got: %s", input)
+	return false
 }
 
 // BuildURL builds a URL using base API URL, path with placeholders, path parameters, and query parameters.
@@ -52,8 +52,8 @@ func BuildURL(baseAPIURL, pathTemplate string, pathParams map[string]string, que
 
 		// Special validation for 'at' (targetDate)
 		if k == "at" {
-			if err := IsValidTargetDateFormat(v); err != nil {
-				return "", fmt.Errorf("invalid 'at' query param format: %w", err)
+			if !IsValidTargetDateFormat(v) {
+				return "", fmt.Errorf("invalid 'at' query param format: targetDate must be RFC3339 or relative like 'now-2h', got: %s", v)
 			}
 		}
 

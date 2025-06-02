@@ -42,6 +42,18 @@ func (k *kubectlCLI) GetByLabel(ctx context.Context, resource, namespace, labelK
 	return cmd.Output()
 }
 
+func (k *kubectlCLI) GetByName(ctx context.Context, resource, namespace, name string) ([]byte, error) {
+	ctx, cancel := setTimeoutIfNoDeadline(ctx, time.Minute)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx,
+		"kubectl", "get", resource,
+		"-n", namespace,
+		name,
+		"-o", "yaml")
+	return cmd.Output()
+}
+
 func (k *kubectlCLI) ListByLabel(ctx context.Context, resource, label string, outputFormat string) ([]byte, error) {
 	ctx, cancel := setTimeoutIfNoDeadline(ctx, time.Minute)
 	defer cancel()

@@ -6,6 +6,7 @@ import (
 	"vidra-cli/cmd/cluster" // Import cmd package
 	"vidra-cli/cmd/config"  // Import cmd package
 	"vidra-cli/cmd/credentials"
+	"vidra-cli/cmd/infrahubsync"
 
 	"github.com/spf13/cobra"
 )
@@ -27,4 +28,5 @@ func init() {
 	rootCmd.AddCommand(credentials.CredentialsCmd)
 	rootCmd.AddCommand(cluster.ClusterCmd)
 	rootCmd.AddCommand(config.ConfigCmd)
+	rootCmd.AddCommand(infrahubsync.InfrahubSyncCmd)
 }

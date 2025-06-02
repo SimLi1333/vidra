@@ -3,10 +3,6 @@ kind: VidraResource
 metadata:
   name: 1834265b-8d16-4e4a-3bd9-c518b7dc1939
 spec:
-  source:
-    infrahubAPIURL: "https://infrahub-server.infrahub.orb.local"
-    targetBranch: "main"
-    artefactName: "Netconf-XML_Artifact"
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: 'default'

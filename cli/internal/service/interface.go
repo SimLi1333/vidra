@@ -20,3 +20,10 @@ type ClusterService interface {
 	ListClusterKubeConfigSecrets() error
 	RemoveClusterKubeConfigSecret(clusterName, namespace string) error
 }
+
+type InfrahubSyncService interface {
+	ApplyInfrahubSync(url, artifact, branch, date, server, destNamespace string, reconcileOnEvent bool, namespace, name string) error
+	RemoveInfrahubSync(urlStr, namespace, name string) error
+	PrintInfrahubSync(url, namespace, name string) error
+	ListInfrahubSync() error
+}

@@ -44,3 +44,7 @@ func (m *mockKubeCLI) Delete(ctx context.Context, kind, name, namespace string) 
 	args := m.Called(ctx, kind, name, namespace)
 	return args.Error(0)
 }
+func (m *mockKubeCLI) GetByName(ctx context.Context, kind, namespace, name string) ([]byte, error) {
+	args := m.Called(ctx, kind, namespace, name)
+	return args.Get(0).([]byte), args.Error(1)
+}

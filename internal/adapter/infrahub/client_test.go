@@ -12,18 +12,18 @@ import (
 
 var _ = Describe("IsValidTargetDateFormat", func() {
 	It("accepts RFC3339 format", func() {
-		err := IsValidTargetDateFormat("2024-01-01T15:04:05Z")
-		Expect(err).ToNot(HaveOccurred())
+		isValid := IsValidTargetDateFormat("2024-01-01T15:04:05Z")
+		Expect(isValid).To(BeTrue())
 	})
 
 	It("accepts relative format", func() {
-		err := IsValidTargetDateFormat("now-2h")
-		Expect(err).ToNot(HaveOccurred())
+		isValid := IsValidTargetDateFormat("now-2h")
+		Expect(isValid).To(BeTrue())
 	})
 
 	It("rejects invalid format", func() {
-		err := IsValidTargetDateFormat("yesterday")
-		Expect(err).To(MatchError(ContainSubstring("targetDate must be RFC3339 or relative")))
+		isValid := IsValidTargetDateFormat("yesterday")
+		Expect(isValid).To(BeFalse())
 	})
 })
 
