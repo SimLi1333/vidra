@@ -140,7 +140,6 @@ jobs:
             labels: ${{ steps.meta.outputs.labels }}
             cache-from: type=gha
             cache-to: type=gha,mode=max
-        - uses: actions/checkout@v3
         - name: Install operator-sdk
           run: |
               curl -LO https://github.com/operator-framework/operator-sdk/releases/download/${OPERATOR_SDK_VERSION}/operator-sdk_${OS}_${TARGETARCH} \
@@ -176,6 +175,7 @@ jobs:
         run: |
           mkdir -p .deploy
           helm package charts/vidra-operator --destination .deploy
+      - run: ls .deploy
 
       - name: Upload to GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
