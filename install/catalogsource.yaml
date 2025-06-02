@@ -2,10 +2,10 @@ apiVersion: operators.coreos.com/v1alpha1
 kind: CatalogSource
 metadata:
   name: vidra-catalog
-  namespace: vidra-system
+  namespace: operators
 spec:
-  displayName: LTB Operator
-  image: ghcr.io/infrahub-operator/vidra-catalog:v0.0.3
+  displayName: Vidra Operator
+  image: ghcr.io/infrahub-operator/vidra-catalog:v0.0.6
   sourceType: grpc
   updateStrategy:
     registryPoll:

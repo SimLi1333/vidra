@@ -2,10 +2,10 @@ apiVersion: operators.coreos.com/v1alpha1
 kind: Subscription
 metadata:
   name: vidra-operator-subscription
-  namespace: vidra-system
+  namespace: operators
 spec:
   channel: "alpha"
   name: vidra-operator
   source: vidra-catalog
   sourceNamespace: operators
-  startingCSV: vidra-operator.v0.0.3
+  startingCSV: vidra-operator.v0.0.6

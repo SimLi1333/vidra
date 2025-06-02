@@ -31,9 +31,9 @@ helm install vidra-operator oci://ghcr.io/infrahub-operator/vidra/helm-charts/vi
 Or, if you prefer to use the Helm repository:
 
 ```sh
-helm repo add infrahub-operator https://raw.githubusercontent.com/infrahub-operator/vidra/refs/heads/main
+helm repo add infrahub-operator https://infrahub-operator.github.io/vidra
 helm repo update
-helm install vidra infrahub-operator/vidra --namespace vidra-system --create-namespace
+helm install vidra infrahub-operator/vidra-operator --namespace vidra-system --create-namespace
 ```
 
 ---
