@@ -50,6 +50,14 @@ Vidra’s reconciliation process runs when:
 
 During reconciliation, Vidra authenticates with Infrahub, fetches the specified artifact, parses it, and ensures Kubernetes resources match the current state of the Infrahub Artifact.
 
+## Managed Resources
+Managed resources are the Kubernetes resources created or updated by Vidra based on the `VidraResource` manifests, downloaded from infrahub. These resources can include any Kubernetes object type, such as:
+- Deployments
+- Services
+- Namespaces
+- ConfigMaps
+- Custom Resources like `VirtualMachine` etc.
+
 ## Code Structure
 
 Vidra separates concerns through a **clean architecture** structure, where domain logic is kept independent of Kubernetes and Infrahub-specific implementation details. 
