@@ -3,7 +3,7 @@ package kubecli_test
 import (
 	"testing"
 
-	"vidra-cli/internal/adapter/kubecli"
+	"github.com/infrahub-operator/vidra/vidra-cli/internal/adapter/kubecli"
 )
 
 func TestEncodeBase64(t *testing.T) {

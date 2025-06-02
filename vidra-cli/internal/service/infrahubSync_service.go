@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"vidra-cli/internal/adapter/kubecli"
+
+	"github.com/infrahub-operator/vidra/vidra-cli/internal/adapter/kubecli"
 )
 
 type infrahubSyncService struct {

@@ -3,7 +3,8 @@ package service
 import (
 	"context"
 	"fmt"
-	"vidra-cli/internal/adapter/kubecli"
+
+	"github.com/infrahub-operator/vidra/vidra-cli/internal/adapter/kubecli"
 )
 
 type configService struct {

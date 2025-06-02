@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"vidra-cli/internal/adapter/kubecli"
+	"github.com/infrahub-operator/vidra/vidra-cli/internal/adapter/kubecli"
 
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"

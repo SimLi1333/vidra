@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"vidra-cli/internal/service"
+	"github.com/infrahub-operator/vidra/vidra-cli/internal/service"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

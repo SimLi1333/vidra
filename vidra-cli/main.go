@@ -3,10 +3,11 @@ package main
 import (
 	"fmt"
 	"os"
-	"vidra-cli/cmd/cluster" // Import cmd package
-	"vidra-cli/cmd/config"  // Import cmd package
-	"vidra-cli/cmd/credentials"
-	"vidra-cli/cmd/infrahubsync"
+
+	"github.com/infrahub-operator/vidra/vidra-cli/cmd/cluster" // Import cmd package
+	"github.com/infrahub-operator/vidra/vidra-cli/cmd/config"  // Import cmd package
+	"github.com/infrahub-operator/vidra/vidra-cli/cmd/credentials"
+	"github.com/infrahub-operator/vidra/vidra-cli/cmd/infrahubsync"
 
 	"github.com/spf13/cobra"
 )
