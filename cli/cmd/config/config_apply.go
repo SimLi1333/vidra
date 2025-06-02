@@ -12,6 +12,7 @@ var (
 	requeueSyncAfter     string
 	requeueResourceAfter string
 	queryName            string
+	eventBasedReconcile  bool
 )
 
 var applyCmd = &cobra.Command{
@@ -27,7 +28,7 @@ var applyCmd = &cobra.Command{
 			errorHandler(fmt.Errorf("invalid requeue-resource-after format: %s", requeueResourceAfter))
 			os.Exit(1)
 		}
-		err := configService.ApplyConfigMap(requeueSyncAfter, requeueResourceAfter, queryName, namespace)
+		err := configService.ApplyConfigMap(requeueSyncAfter, requeueResourceAfter, queryName, eventBasedReconcile, namespace)
 		if err != nil {
 			errorHandler(err)
 			os.Exit(1)
@@ -40,6 +41,7 @@ func init() {
 	applyCmd.Flags().StringVarP(&requeueResourceAfter, "requeue-resource-after", "r", "1m", "Requeue duration of k8 reconciliation (e.g. 30s, 5m, 2h)")
 	applyCmd.Flags().StringVarP(&queryName, "query-name", "q", "ArtifactIDs", "Name of the Infrahub query")
 	applyCmd.Flags().StringVarP(&namespace, "namespace", "n", "vidra-system", "Kubernetes namespace for the configMap (default: \"default\")")
+	applyCmd.Flags().BoolVarP(&eventBasedReconcile, "eventBasedReconcile", "e", false, "Enable global event-based reconciliation for vidra (default: false)")
 }
 
 func IsValidDurationFormat(input string) bool {

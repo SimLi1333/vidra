@@ -8,7 +8,7 @@ type CredentialsService interface {
 }
 
 type ConfigService interface {
-	ApplyConfigMap(requeueSyncAfter, requeueResourceAfter, queryName, namespace string) error
+	ApplyConfigMap(requeueSyncAfter, requeueResourceAfter, queryName string, eventBasedReconcile bool, namespace string) error
 	PrintConfigMap(namespace string) error
 	ListConfigMaps() error
 	RemoveConfigMap(namespace string) error

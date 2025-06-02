@@ -50,11 +50,12 @@ data:
   requeueSyncAfter: "15m"
   requeueResourceAfter: "20m"
   queryName: "sync-artifacts"
+  eventBasedReconcile: "false"
 `
 	mockCLI.On("ApplyYAML", mock.Anything, expectedYAML).Return(nil)
 
 	svc := service.NewConfigService(mockCLI)
-	err := svc.ApplyConfigMap("15m", "20m", "sync-artifacts", "default")
+	err := svc.ApplyConfigMap("15m", "20m", "sync-artifacts", false, "default")
 
 	assert.NoError(t, err)
 	mockCLI.AssertExpectations(t)

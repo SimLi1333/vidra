@@ -23,8 +23,8 @@ func (s *configService) PrintConfigMap(namespace string) error {
 	return nil
 }
 
-func (s *configService) ApplyConfigMap(requeueSyncAfter, requeueResourceAfter, queryName, namespace string) error {
-	yaml := generateConfigMap(namespace, requeueSyncAfter, requeueResourceAfter, queryName)
+func (s *configService) ApplyConfigMap(requeueSyncAfter, requeueResourceAfter, queryName string, eventBasedReconcile bool, namespace string) error {
+	yaml := generateConfigMap(namespace, requeueSyncAfter, requeueResourceAfter, queryName, eventBasedReconcile)
 	fmt.Println(yaml + "\n\n---\n")
 	return s.kubecli.ApplyYAML(context.Background(), yaml)
 }
@@ -47,7 +47,7 @@ func (s *configService) RemoveConfigMap(namespace string) error {
 	return s.kubecli.Delete(context.Background(), "configmap", "vidra-config", namespace)
 }
 
-func generateConfigMap(ns, syncDuration, resourceDuration, query string) string {
+func generateConfigMap(ns, syncDuration, resourceDuration, query string, eventBasedReconcile bool) string {
 	return fmt.Sprintf(`apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -59,5 +59,6 @@ data:
   requeueSyncAfter: "%s"
   requeueResourceAfter: "%s"
   queryName: "%s"
-`, ns, syncDuration, resourceDuration, query)
+  eventBasedReconcile: "%t"
+`, ns, syncDuration, resourceDuration, query, eventBasedReconcile)
 }
