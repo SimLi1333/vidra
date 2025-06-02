@@ -1,11 +1,3 @@
-# Test Vidra CLI
-
-```bash
-go test -coverprofile=coverage.out ./internal/...
-
-go tool cover -html=coverage.out
-```
-
 # install from local source code
 ```bash
 go build -o vidra .
@@ -27,4 +19,12 @@ autoload -Uz compinit
 compinit
 
 source ~/.zshrc
+```
+
+# Test Vidra CLI
+
+```bash
+go test -coverprofile=coverage.out ./internal/...
+
+go tool cover -html=coverage.out
 ```
