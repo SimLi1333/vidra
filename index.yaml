@@ -9,6 +9,6 @@ entries:
     name: vidra-operator
     type: application
     urls:
-    - https://infrahub-operator.github.io/vidra/vidra-operator-0.0.5.tgz
+    - https://ghcr.io/infrahub-operator/vidra/helm-charts/vidra-operator
     version: 0.0.5
 generated: "2025-06-02T18:01:01.034821+02:00"
