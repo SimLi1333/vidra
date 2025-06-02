@@ -174,13 +174,32 @@ jobs:
 
       - name: Package Helm chart
         run: |
+          mkdir -p .deploy
           helm package charts/vidra-operator --destination .deploy
+
+      - name: Upload to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: .deploy/vidra-operator-${{ env.TAG_VERSION }}.tgz
 
       - name: Create Helm repo index
         run: |
           helm repo index .deploy --url https://infrahub-operator.github.io/vidra
 
-
+      - name: Upload to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .deploy
+          publish_branch: gh-pages
+          keep_files: true  # Keeps existing files like older chart versions
+      
+      - name: Upload Helm chart artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: helm-chart
+          path: .deploy/vidra-operator-${{ env.TAG_VERSION }}.tgz
 
       - name: Chart | Push
         uses: appany/helm-oci-chart-releaser@v0.3.0
@@ -192,22 +211,7 @@ jobs:
           registry: ghcr.io
           registry_username: ${{ github.repository_owner }}
           registry_password: ${{ secrets.GITHUB_TOKEN }}
-
-  release:
-    name: GitHub Release
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: [build-push, helm-chart]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      id-token: write
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    steps:
-      - uses: actions/checkout@v3
-      - name: Create GitHub Release
-        run: gh release create ${{ github.ref_name }} --generate-notes --verify-tag
-
+          
   sign-image:
     name: Sign Docker Image
     if: startsWith(github.ref, 'refs/tags/v') && github.event_name != 'pull_request'
