@@ -7,11 +7,13 @@ on:
     paths:
       - 'vidra-cli/**'
       - '.github/workflows/cli.yaml'
+      - 'Makefile'
   pull_request:
     branches: [ "main" ]
     paths:
       - 'vidra-cli/**'
       - '.github/workflows/cli.yaml'
+      - 'Makefile'
 
 jobs:
   build-and-sign:
