@@ -6,15 +6,15 @@ import Admonition from '@theme/Admonition';
 
 # Usage
 
-`vidra [command]`
+`vidra-cli [command]`
 
-Vidra is a command-line tool for managing Vidra Operator and related resources.
+vidra-cli is a command-line tool for managing vidra-cli Operator and related resources.
 
 ## Available Commands
 
-- **cluster**: Manage clusters for multicluster Vidra Operator.
+- **cluster**: Manage clusters for multicluster vidra-cli Operator.
 - **completion**: Generate the autocompletion script for the specified shell.
-- **config**: Configure the Vidra Operator.
+- **config**: Configure the vidra-cli Operator.
 - **credentials**: Manage Infrahub credential Secrets.
 - **help**: Display help information about any command.
 - **infrahubsync**: Manage InfrahubSync resources.
@@ -37,48 +37,48 @@ Each command has the same set of operations:
 ## Examples
 ```sh
 # Apply a kubeconfig secret for a cluster
-vidra cluster apply admin@ba-iac -n secrets
+vidra-cli cluster apply admin@ba-iac -n secrets
 
 # Delete a kubeconfig secret for a cluster
-vidra cluster delete admin@ba-iac -n secrets
+vidra-cli cluster delete admin@ba-iac -n secrets
 
 # Get a kubeconfig secret for a cluster
-vidra cluster get --name my-cluster
+vidra-cli cluster get --name my-cluster
 
 # List all cluster kubeconfig secrets
-vidra cluster list
+vidra-cli cluster list
 ```
  <Admonition type="note" title="Note">
- Runing vidra cluster apply will prompt you with the available cluster contexts in your kubeconfig file. You can select one of them to create a kubeconfig secret for that cluster.
+ Runing vidra-cli cluster apply will prompt you with the available cluster contexts in your kubeconfig file. You can select one of them to create a kubeconfig secret for that cluster.
  </Admonition>
 
 ```sh
 # Apply an Infrahub credentials secret
-vidra credentials apply --url https://infrahub.example.com --username admin --password secret
+vidra-cli credentials apply --url https://infrahub.example.com --username admin --password secret
 # Delete an Infrahub credentials secret by URL
-vidra credentials delete --url https://infrahub.example.com
+vidra-cli credentials delete --url https://infrahub.example.com
 # Get an Infrahub credentials secret by URL
-vidra credentials get --url https://infrahub.example.com
+vidra-cli credentials get --url https://infrahub.example.com
 # List all Infrahub credentials secrets
-vidra credentials list
+vidra-cli credentials list
 ```
 ```sh
-# Apply an Vidra configuration
-vidra config apply --query-name ArtifactIDs -r 5m -s 1m
+# Apply an vidra-cli configuration
+vidra-cli config apply --query-name ArtifactIDs -r 5m -s 1m
 
-# Delete a Vidra configuration
-vidra config delete
+# Delete a vidra-cli configuration
+vidra-cli config delete
 
-# Get a Vidra configuration from the default namespace
-vidra config get -n default
+# Get a vidra-cli configuration from the default namespace
+vidra-cli config get -n default
 
-# List all Vidra configurations 
-vidra config list 
+# List all vidra-cli configurations 
+vidra-cli config list 
 ```
 
 ```sh
 # Apply an InfrahubSync resource
- vidra infrahubsync apply "http://198.19.248.5:8000" -a Webserver_Manifest -b main2 -d 2025-04-09T00:00:00Z -s https://kubernetes.default.svc -N default -e
+ vidra-cli infrahubsync apply "http://198.19.248.5:8000" -a Webserver_Manifest -b main2 -d 2025-04-09T00:00:00Z -s https://kubernetes.default.svc -N default -e
  ```
  <Admonition type="note" title="Note">
  Pleas use the -h flag to get more information about each command and its options.

@@ -30,7 +30,7 @@ Check the [Vidra releases page](https://github.com/your-org/vidra/releases) for 
 
 ```sh
 # Example for Linux/macOS
-curl -LO https://github.com/infrahub-operator/vidra/releases/download/vX.Y.Z/vidra
+curl -LO https://github.com/infrahub-operator/vidra/releases/download/vX.Y.Z/vidra-cli
 chmod +x vidra
 sudo mv vidra /usr/local/bin/
 ```
@@ -42,14 +42,14 @@ Replace `vX.Y.Z` with the latest release version.
 Check that Vidra is installed correctly:
 
 ```sh
-vidra --help
+vidra-cli --help
 ```
 
 You should see the help output for the Vidra CLI.
 
 # Generate ZSH completion script for Vidra CLI
 ```bash
-vidra completion zsh > _vidra
+vidra-cli completion zsh > _vidra
 
 mkdir -p ~/.zsh/completions
 mv _vidra ~/.zsh/completions/
