@@ -175,8 +175,6 @@ build-installer: manifests generate kustomize ## Generate a consolidated YAML wi
 
 
 .PHONY: generate-crd-docs
-
-.PHONY: generate-crd-docs
 generate-crd-docs: $(LOCALBIN)
 	@if [ ! -f $(LOCALBIN)/crd-ref-docs ]; then \
 		echo "Installing crd-ref-docs..."; \

@@ -68,6 +68,18 @@ const config: Config = {
     ],
   ],
 
+  plugins: [
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'cli',
+        path: 'docs-cli',
+        routeBasePath: 'cli',
+        sidebarPath: require.resolve('./sidebars.ts'),
+      },
+    ],
+  ],
+
   themeConfig: {
     // Replace with your project's social card
     image: 'img/docusaurus-social-card.jpg',
@@ -83,6 +95,13 @@ const config: Config = {
           sidebarId: 'docsSidebar',
           position: 'left',
           label: 'Documentation',
+        },
+        {
+          type: 'docSidebar',
+          sidebarId: 'cliSidebar', // new sidebar id for CLI docs
+          position: 'left',
+          label: 'CLI',
+          docsPluginId: 'cli', // important: tell it which plugin this belongs to
         },
         {
           type: "search",

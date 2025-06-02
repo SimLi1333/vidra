@@ -3,10 +3,10 @@ kind: ConfigMap
 metadata:
   name: vidra-config
   labels:
-    app: vidra # This label is used to identify the operator's resources.
+    app: vidra # Important: This label is used to identify the operator's resources.
   # namespace: your-namespace
 data:
-  requeueSyncAfter: "1m" # ParseDuration parses a duration string. A duration string is a possibly signed sequence of decimal numbers, each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
-  requeueRecourcesAfter: "1m" # ParseDuration once the resources are recreated
-  queryName: "ArtifactIDs" # The name of the Infrahub query to be used for downloading id's.
-  # eventBasedReconcile: "true" # If true, the operator will reconcile resources based on k8s events. (default: false - can lead to )
+  requeueSyncAfter: "1m" # How often Vidra syncs with Infrahub. (if you do not want to use the default value of 1 minute)
+  requeueRecourcesAfter: "1m" # How often managed resources are being reconciled. (if you do not want to use the default value of 10 minutes)
+  queryName: "ArtifactIDs" # Infrahub graphQL query name for geting Artifact IDs. (if you do not want to use the default value of "ArtifactIDs")
+  eventBasedReconcile: "true" # Enable event-based reconciliation. (default is false)

@@ -75,13 +75,14 @@ spec:
                     pattern: ^(http|https)://[a-zA-Z0-9.-]+(:[0-9]+)?(?:/[a-zA-Z0-9-]+)*$
                     type: string
                   targetBranch:
+                    default: main
                     description: The target branch in Infrahub to interact with
                     minLength: 1
                     type: string
                   targetDate:
                     description: The target date in Infrahub for all the interactions
                       (e.g., "2025-01-01T00:00:00Z or -2d" for the artifact from two
-                      days ago)
+                      days ago). If not set, the operator will use the current date.
                     format: date-time
                     type: string
                 required:

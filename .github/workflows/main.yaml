@@ -200,6 +200,7 @@ jobs:
 
   sign-image:
     name: Sign Docker Image
+    if: startsWith(github.ref, 'refs/tags/v')
     needs: build-push
     runs-on: ubuntu-latest
     permissions:
@@ -217,3 +218,27 @@ jobs:
           COSIGN_EXPERIMENTAL: "true"
           COSIGN_YES: "true"
         run: echo "${{ needs.build-push.outputs.tags }}" | xargs -I {} cosign sign --yes {}@${{ needs.build-push.outputs.digest }}
+
+  update-version--in-install-yamls:
+    name: Update Version in Install YAMLs
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build-push
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update version in install/catalogsource.yaml and install/subscription.yaml
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          sed -i "s|^\(\s*image:\s*ghcr.io/infrahub-operator/vidra-catalog:\).*|\1v$VERSION|" install/catalogsource.yaml
+          sed -i "s|^\(\s*startingCSV:\s*\).*|\1vidra-operator.v$VERSION|" install/subscription.yaml
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git add install/catalogsource.yaml install/subscription.yaml
+          git commit -m "chore: update version to $VERSION in catalogsource and subscription" || echo "No changes to commit"
+          git push || echo "No changes to push"

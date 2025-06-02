@@ -2,3 +2,102 @@
 title: Installing Vidra
 sidebar_position: 1
 ---
+import Admonition from '@theme/Admonition';
+
+# User Guide
+## Prerequisites
+Before installing the Vidra Operator, ensure you have the following tools installed and configured:
+| Tool                        | Version   | Installation | Description                                                                                                   |
+|-----------------------------|-----------|--------------|---------------------------------------------------------------------------------------------------------------|
+| Kubernetes                  | ^1.26.0   | [Installation](https://kubernetes.io/docs/setup/) | Kubernetes is an open-source system for automating deployment, scaling, and management of containerized applications. |
+
+<Admonition type="note" title="Note">
+For a development cluster, we recommend using [minikube](https://minikube.sigs.k8s.io/docs/start/) or [kind](https://kind.sigs.k8s.io/docs/user/quick-start/). Refer to the [Cluster Setup](../topics/deploy.mdx) guide for more details.
+</Admonition>
+
+## Install the Vidra Operator using Helm:
+Helm is a package manager for Kubernetes that helps you manage Kubernetes applications. It uses a packaging format called charts.
+
+<Admonition type="warning" title="Warning">
+Helm is not required to run the Vidra Operator, but it simplifies the installation process. Helm version 3.0.0 or higher is recommend. [Installation](https://helm.sh/docs/intro/install/)
+</Admonition>
+
+### Helm Installation
+To install the Vidra Operator using Helm, first add the Infrahub Operator Helm repository and then install the Vidra chart:
+
+```sh
+helm repo add infrahub-operator https://infrahub-operator.github.io/vidra
+helm repo update
+helm install vidra infrahub-operator/vidra --namespace vidra-system --create-namespace
+```
+
+---
+
+## Install the Vidra Operator using OLM:
+OLM (Operator Lifecycle Manager) is a Kubernetes project that helps you manage the lifecycle of operators running on your cluster. It provides a way to install, update, and manage operators in a Kubernetes-native way.
+
+
+<Admonition type="warning" title="Warning">
+OLM is not required to run the Vidra Operator, but it simplifies the installation process. OLM version 0.32.0 or higher is recommended. [Installation](https://operator-framework.github.io/operator-lifecycle-manager/docs/installation/)
+
+**Alternative OLM installation:**
+
+```sh
+curl -sL https://github.com/operator-framework/operator-lifecycle-manager/releases/download/v0.32.0/install.sh | bash -s v0.32.0
+```
+</Admonition>
+
+### Operator Lifecycle Manager (OLM) Installation
+
+Install the vidra Operator by creating a catalog source and subscription:
+
+```sh
+kubectl apply -f https://raw.githubusercontent.com/Infrahub-Operator/Vidra/main/install/catalogsource.yaml -f https://raw.githubusercontent.com/Infrahub-Operator/Vidra/main/install/subscription.yaml
+```
+
+Wait for the Vidra Operator to be installed (this might take a few seconds):
+
+```sh
+kubectl get csv -n operators -w
+```
+
+---
+
+
+## Uninstall Vidra Operator
+
+To completely remove the Vidra Operator and its resources, follow these steps:
+
+### 1. Helm Uninstall
+```sh
+helm uninstall vidra --namespace vidra-system
+kubectl delete namespace vidra-system
+```
+
+Or:
+
+### 1. Delete the Subscription and ClusterServiceVersion (CSV)
+
+```sh
+kubectl delete subscriptions.operators.coreos.com -n operators vidra-subscription
+kubectl delete csv -n operators $(kubectl get csv -n operators -o jsonpath="{.items[?(@.metadata.labels['operators.coreos.com/vidra.operators')].metadata.name}")
+```
+
+
+### 2. Delete the CRDs
+
+```sh
+kubectl delete crd infrahubsyncs.infrahub.operators.com vidraresources.infrahub.operators.com.
+```
+
+### 3. Delete the Operator
+
+```sh
+kubectl delete operator vidra-operator.operators
+```
+
+### 4. Delete the CatalogSource
+
+```sh
+kubectl delete catalogsource -n operators vidra-catalog
+```

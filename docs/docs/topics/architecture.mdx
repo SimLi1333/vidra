@@ -93,7 +93,7 @@ This layered approach enforces separation of concerns, simplifies testing, and e
 4. **Event Trigger:** The Kubernetes API server notifies the vidraResource controller of the resource creation or update.
 
 5. **VidraResource Reconciliation Loop:**  
-   - Monitors `VidraResource` resources created by the InfrahubSync controller.
+   - Monitors `VidraResource` CR's created by the InfrahubSync controller.
    - Applies the manifests to the destination Kubernetes cluster (can be a different cluster), ensuring the desired state matches the actual state.
    - Creates lists and finalizers of the managed resources, allowing for easy tracking, management and deletion of resources or VidraResources.
    - Applies event based reconciliation, where changes to the managed resources triggers reconciliation or adds a timebased reconcile interval.

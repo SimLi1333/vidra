@@ -31,10 +31,6 @@ type VidraResourceSpec struct {
 	// Manifest contains the manifest information for the resource
 	Manifest string `json:"manifest,omitempty" protobuf:"bytes,2,name=manifest"`
 
-	// If true, the operator will reconcile resources based on k8s events. (default: false)
-	// +kubebuilder:default:=false
-	ReconcileOnEvents bool `json:"reconcileOnEvents,omitempty" protobuf:"varint,4,opt,name=reconcileOnEvents"`
-
 	// The last time the resource was reconciled
 	ReconciledAt metav1.Time `json:"reconciledAt,omitempty" protobuf:"bytes,5,name=reconciledAt"`
 }
@@ -70,10 +66,14 @@ type ManagedResourceStatus struct {
 type State string
 
 const (
-	StateRunning   State = "Running"
+	// Indicates the resource is currently reconciling
+	StateRunning State = "Running"
+	// Indicates the resource reconciliation was successful
 	StateSucceeded State = "Succeeded"
-	StateFailed    State = "Failed"
-	StateStale     State = "Stale"
+	// Indicates the resource reconciliation failed
+	StateFailed State = "Failed"
+	// Indicates the resource has achieved the desired state but still has old resources which are not yet cleaned up
+	StateStale State = "Stale"
 )
 
 // +kubebuilder:object:root=true

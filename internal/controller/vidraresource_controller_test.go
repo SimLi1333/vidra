@@ -125,15 +125,8 @@ var _ = Describe("should reconcile correctly with different Destination.Server v
 						instance := &infrahubv1alpha1.VidraResource{}
 						err := k8sClient.Get(ctx, namespacedName, instance)
 						Expect(err).NotTo(HaveOccurred())
-						instance.Spec.Manifest = `
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: example
-  namespace: ` + namespace + `
-data:
-  key: value
-`
+						instance.Spec.Manifest = `{"apiVersion": "v1", "kind": "ConfigMap", "metadata": {"name": "example", "namespace": "default"}, "data": {"key": "value"}}`
+
 						Expect(k8sClient.Update(ctx, instance)).To(Succeed())
 
 						mockRESTMapper.EXPECT().

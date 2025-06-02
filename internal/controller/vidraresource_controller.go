@@ -143,6 +143,9 @@ func (r *VidraResourceReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	if err := MarkState(ctx, r.Client, res, func() {
 		res.Status.LastSyncTime = metav1.Now()
 		res.Status.DeployState = infrahubv1alpha1.StateSucceeded
+		if !strings.Contains(res.Status.LastError, "Warning:") {
+			res.Status.LastError = ""
+		}
 	}); err != nil {
 		return ctrl.Result{}, err
 	}
@@ -491,6 +494,7 @@ func (r *VidraResourceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
+// InitConfigWithClient initializes the VidraResourceReconciler configuration.
 func (r *VidraResourceReconciler) InitConfigWithClient(ctx context.Context, k8sClient client.Client, labelKey, labelValue string) error {
 	const defaultRequeue = 10 * time.Minute
 
@@ -521,6 +525,9 @@ func (r *VidraResourceReconciler) InitConfigWithClient(ctx context.Context, k8sC
 	if ok {
 		duration, err := time.ParseDuration(requeueAfter)
 		if err == nil {
+			if duration < 0 {
+				return fmt.Errorf("invalid requeue duration: %s", requeueAfter)
+			}
 			r.RequeueAfter = duration
 		}
 	}

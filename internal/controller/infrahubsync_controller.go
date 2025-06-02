@@ -125,6 +125,7 @@ func (r *InfrahubSyncReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	if err := MarkState(ctx, r.Client, infrahubSync, func() {
 		infrahubSync.Status.SyncState = infrahubv1alpha1.StateSucceeded
 		infrahubSync.Status.LastSyncTime = metav1.Now()
+		infrahubSync.Status.LastError = ""
 	}); err != nil {
 		logger.Error(err, "Failed to update SyncState to Success")
 		return ctrl.Result{RequeueAfter: r.RequeueAfter}, err
@@ -297,6 +298,7 @@ func (r *InfrahubSyncReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
+// InitConfigWithClient initializes the InfrahubSyncReconciler configuration
 func (r *InfrahubSyncReconciler) InitConfigWithClient(ctx context.Context, k8sClient client.Client, labelKey, labelValue string) error {
 	const defaultRequeue = time.Minute
 	const defaultQueryName = "ArtifactIDs"
@@ -329,6 +331,9 @@ func (r *InfrahubSyncReconciler) InitConfigWithClient(ctx context.Context, k8sCl
 	if ok {
 		duration, err := time.ParseDuration(requeueAfter)
 		if err == nil {
+			if duration < 0 {
+				return fmt.Errorf("invalid requeue duration: %s", requeueAfter)
+			}
 			r.RequeueAfter = duration
 		}
 	}

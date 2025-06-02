@@ -63,11 +63,6 @@ spec:
               manifest:
                 description: Manifest contains the manifest information for the resource
                 type: string
-              reconcileOnEvents:
-                default: false
-                description: 'If true, the operator will reconcile resources based
-                  on k8s events. (default: false)'
-                type: boolean
               reconciledAt:
                 description: The last time the resource was reconciled
                 format: date-time
