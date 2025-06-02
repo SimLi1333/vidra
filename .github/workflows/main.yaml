@@ -178,7 +178,7 @@ jobs:
 
       - name: Create Helm repo index
         run: |
-          helm repo index .deploy --url https://<your-username>.github.io/<your-repo-name>
+          helm repo index .deploy --url https://infrahub-operator.github.io/vidra
 
       - name: Upload to gh-pages
         uses: peaceiris/actions-gh-pages@v4
