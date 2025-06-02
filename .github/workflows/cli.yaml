@@ -54,9 +54,9 @@ jobs:
         with:
           name: cli-tool-signed
           path: |
-            cli/cli-tool
-            cli/cli-tool.sig
-            cli/cli-tool.cert
+            cli/vidra
+            cli/vidra.sig
+            cli/vidra.cert
 
 
       - name: Upload to GitHub Release
