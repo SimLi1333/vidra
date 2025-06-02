@@ -67,15 +67,17 @@ kubectl get csv -n operators -w
 ```
 
 ---
-
+---
 
 ## Uninstall Vidra Operator
-
+<Admonition type="warning" title="Warning">
+Before uninstalling the Vidra Operator, ensure that you have removed all `VidraResource` resources otherwise finalizer could block the uninstall.
+</Admonition>
 To completely remove the Vidra Operator and its resources, follow these steps:
 
 ### 1. Helm Uninstall
 ```sh
-helm uninstall vidra --namespace vidra-system
+helm uninstall vidra-operator --namespace vidra-system
 kubectl delete namespace vidra-system
 ```
 
