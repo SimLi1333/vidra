@@ -8,13 +8,21 @@ import Admonition from '@theme/Admonition';
 
 We use **GitHub Actions** as our CI/CD tool to automate testing, building, and documentation deployment for the **Vidra Operator**. Currently, we maintain three workflows:
 
-- **Deploy Docs**
-- **Operator CI**
-- **Operator CLI**
+<div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+  <div>
+    <ul>
+      <li><strong>Deploy Docs</strong></li>
+      <li><strong>Operator CI</strong></li>
+      <li><strong>Operator CLI</strong></li>
+      <li><strong>Code Quality and Security Checks</strong></li>
+    </ul>
+  </div>
+  <img src={require('../../static/img/workflow.png').default} alt="Workflows" style={{ height: 250, marginRight: 150 }} />
+</div>
 
 ## Deploy Docs
 
-This workflow is responsible for deploying the docusaurus documentation to GitHub Pages whenever documentation files are updated. It also generates API documentation for our Custom Resource Definitions (CRDs) using `crd-ref-docs` (implemented as `Make` endpoint).
+The **Deploy Docs** workflow automates the deployment of our Docusaurus documentation site to GitHub Pages whenever documentation files are updated. In addition to publishing the static site, it generates up-to-date API documentation for our Custom Resource Definitions (CRDs) using `crd-ref-docs` (invoked via a `Make` target). The workflow builds the static site—including the auto-generated docs and site—and pushes the result to the `gh-pages` branch, ensuring that users always have access to the latest documentation. 
 
 ### Trigger
 
@@ -38,6 +46,8 @@ This workflow handles linting, testing, building, publishing and releasing the V
 
 You can find the workflow definition in [`main.yaml`](../../../.github/workflows/main.yaml).
 
+![CI Pipeline Overview](../../static/img/ci.png)
+
 ### Lint and Test
 
 - Uses **golangci-lint** to perform static code analysis and linting on the Vidra Operator codebase.
@@ -55,9 +65,17 @@ You can find the workflow definition in [`main.yaml`](../../../.github/workflows
 - Uses the official **Docker GitHub Actions** to build the Vidra Operator image.
 - Pushes the image to the **GitHub Container Registry (GHCR)**.
 - The image is tagged with the current version (e.g., `v0.0.3`).
-- helmify is used to generate a Helm chart from the operator manifests, which is also published to the GitHub Container Registry.
 - The operator bundle is generated using `Make bundle-build` and published to the GitHub Container Registry.
 - The images are signed using **cosign**, allowing users to verify its authenticity and integrity.
+
+### Helm Chart
+- Helmify is used to generate a Helm chart from the operator manifests, which is also published to the GitHub Container Registry.
+- The Helm chart is versioned and tagged with the same version as the operator image.
+- The Helm chart is automatically published to the GitHub Registry, making it easy for users to install the Vidra Operator using Helm. (OCI install)
+- The packaged Helm Release and its index.yaml are also published to the `gh-pages` branch of the repository and added to the release, allowing users to install the operator using the Helm repository.
+
+### Add Yaml files to the release
+- The yaml files used for the install using OLM (Operator Lifecycle Manager) are added to the release with the correct version as well. This allows users to install the operator using OLM by applying the `catalogsource.yaml` and `subscription.yaml` files. 
 
 ---
 ## Operator CLI

@@ -12,7 +12,7 @@ Before installing the Vidra Operator, ensure you have the following tools instal
 | Kubernetes                  | ^1.26.0   | [Installation](https://kubernetes.io/docs/setup/) | Kubernetes is an open-source system for automating deployment, scaling, and management of containerized applications. |
 
 <Admonition type="note" title="Note">
-For a development cluster, we recommend using [minikube](https://minikube.sigs.k8s.io/docs/start/) or [kind](https://kind.sigs.k8s.io/docs/user/quick-start/). Refer to the [Cluster Setup](../topics/deploy.mdx) guide for more details.
+For a development cluster, we recommend using [minikube](https://minikube.sigs.k8s.io/docs/start/) or [kind](https://kind.sigs.k8s.io/docs/user/quick-start/). Refer to the [Cluster Setup](../topics/deploy.md) guide for more details.
 </Admonition>
 
 ## Install the Vidra Operator using Helm:
@@ -39,6 +39,12 @@ helm install vidra infrahub-operator/vidra-operator --namespace vidra-system --c
 It is also released under https://github.com/infrahub-operator/vidra/releases/download/vX.Y.Z if you want to install an older version.
 </Admonition>
 
+Wait for the Vidra Operator to be installed (this might take a few seconds):
+
+```sh
+kubectl get pods -n vidra-system -w
+```
+
 ---
 
 ## Install the Vidra Operator using OLM:
@@ -62,6 +68,9 @@ Install the vidra Operator by creating a catalog source and subscription:
 ```sh
 kubectl apply -f https://raw.githubusercontent.com/Infrahub-Operator/Vidra/main/install/catalogsource.yaml -f https://raw.githubusercontent.com/Infrahub-Operator/Vidra/main/install/subscription.yaml
 ```
+<Admonition type="note" title="Note">
+It is also released under https://github.com/infrahub-operator/vidra/releases/download/vX.Y.Z if you want to install an older version.
+</Admonition>
 
 Wait for the Vidra Operator to be installed (this might take a few seconds):
 

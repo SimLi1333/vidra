@@ -9,7 +9,7 @@ import Admonition from '@theme/Admonition';
 Vidra is a Kubernetes operator designed to manage and synchronize resources based on data from Infrahub queries. This guide will walk you through the basic configuration and usage of Vidra.
 
 <Admonition type="warning" title="Warning">
-A running Kubernetes cluster with the Vidra operator installed is required. If you haven't installed the Vidra operator yet, please refer to the [installation guide](/guides/install.mdx).
+A running Kubernetes cluster with the Vidra operator installed is required. If you haven't installed the Vidra operator yet, please refer to the [installation guide](/guides/install.md).
 </Admonition>
 <Admonition type="note" title="Note">
 All these configurations can also be done using the CLI tool for Vidra. The CLI tool provides a convenient way to manage Vidra resources and configurations. You can find more information about the CLI tool in the [CLI documentation](/cli).

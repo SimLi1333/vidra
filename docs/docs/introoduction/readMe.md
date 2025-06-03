@@ -10,7 +10,7 @@ position: 1
 
 **Vidra** is a Kubernetes operator that automates syncing infrastructure artifacts from [Infrahub](https://www.opsmill.com) into Kubernetes CRDs. And reconciles them with the state of the cluster, enabling continuous delivery workflows.
 
-To get started, please refer to the [installation guide](../guides/install.mdx) and explore the [CRD reference](../api-references/api-references.md) for detailed information on how to use Vidra effectively.
+To get started, please refer to the [installation guide](../guides/install.md) and explore the [CRD reference](../api-references/api-references.md) for detailed information on how to use Vidra effectively.
 
 ## Main Features
 
@@ -24,5 +24,5 @@ To get started, please refer to the [installation guide](../guides/install.mdx) 
 
 ## Documentation
 
-- [Installation Guide](../guides/install.mdx)
+- [Installation Guide](../guides/install.md)
 - [CRD Reference](../api-references/api-references.md)

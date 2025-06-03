@@ -14,4 +14,8 @@ The **Vidra CLI** is a command-line utility designed to simplify the management 
 - Manage cluster secrets securely
 - Generate and apply `InfrahubSync` CRs
 
-This tool streamlines setup and ongoing operations, making it easier to integrate Vidra into your Kubernetes workflows. For detailed usage instructions, refer to the CLI documentation.
+This tool streamlines setup and ongoing operations, making it easier to integrate Vidra into your Kubernetes workflows. For detailed usage instructions, refer to the [CLI documentation](../guides/usage.mdx).
+
+<div align="center" style={{ marginTop: '3em' }}>
+    <img src="../img/cli-help.png" alt="Vidra CLI" width="600"/>
+</div>
