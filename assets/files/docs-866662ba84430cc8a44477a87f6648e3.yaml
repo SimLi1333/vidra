@@ -48,6 +48,6 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./docs/build
-          exclude_assets: |
+          keep_files: |
             index.yaml
             infrahub-operator-*.tgz
