@@ -4,12 +4,16 @@ sidebar_position: 2
 ---
 import Admonition from '@theme/Admonition';
 
+<Admonition type="note" title="Note">
+This guide assumes you have a running Infrahub instance and the Vidra Operator installed in your Kubernetes cluster. If you haven't set up Infrahub yet, please refer to the [Infrahub installation guide](https://docs.infrahub.app/guides/installation).
+</Admonition>
+
 To use Infrahub, you need to define a schema resembling your resources (we created `Webserver` containing `Deployment`, `Service` and `Ingres` and `VirtualMachine`). See the [Infrahub schema documentation](https://docs.infrahub.app/topics/schema) for more information.
 
 This guide will show you how to prepare Infrahub for use with the Vidra Operator on the example of a `Webserver` resource. 
 
 <Admonition type="note" title="Note">
-Ther will be a Demo Repo wit all the necessary resources to get started with Infrahub and Vidra Operator.
+There will be a Demo Repo with all the necessary resources to get started with Infrahub and Vidra Operator. You will be able to fork the repo and use it as a starting point for your own Infrahub instance.
 </Admonition>
 
 ## GraphQL Queries
