@@ -1,10 +1,17 @@
 ---
-slug: welcome
-title: Welcome
-authors: [slorber, yangshun]
-tags: [facebook, hello, docusaurus]
+slug: demo
+title: Demo System for Vidra Operator
+authors: [slinder, rstutz]
+tags: [Vidra, Infrahub, Demo]
 ---
 
+TBD: This is a demo system for the Vidra Operator, which is a Kubernetes operator that automates syncing infrastructure artifacts from Infrahub into Kubernetes CRDs.
+
+:::tip
+
+Use the power of React to create interactive blog posts.
+
+:::
 [Docusaurus blogging features](https://docusaurus.io/docs/blog) are powered by the [blog plugin](https://docusaurus.io/docs/api/plugins/@docusaurus/plugin-content-blog).
 
 Here are a few tips you might find useful.

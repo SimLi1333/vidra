@@ -24,9 +24,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout main branch
         uses: actions/checkout@v3
-      
+        with:
+          path: main
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
@@ -34,20 +36,32 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-        working-directory: docs
+        working-directory: main/docs
 
       - name: Generate CRD docs
         run: make generate-crd-docs
+        working-directory: main
 
       - name: Build website
         run: npm run build
-        working-directory: docs
+        working-directory: main/docs
+
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      - name: Copy preserved files
+        run: |
+          cp gh-pages/index.yaml main/docs/build/ || true
+          cp gh-pages/infrahub-operator-*.tgz main/docs/build/ || true
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs/build
+          publish_dir: ./main/docs/build
           keep_files: |
             index.yaml
             infrahub-operator-*.tgz

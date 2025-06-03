@@ -1,19 +1,14 @@
-facebook:
-  label: Facebook
-  permalink: /facebook
-  description: Facebook tag description
+Vidra:
+  label: Vidra
+  permalink: /vidra
+  description: Vidra Operator the Kubernetes Operator for Vidra
 
-hello:
-  label: Hello
-  permalink: /hello
-  description: Hello tag description
+Infrahub:
+  label: Infrahub
+  permalink: /infrahub
+  description: Infrahub tag description
 
-docusaurus:
-  label: Docusaurus
-  permalink: /docusaurus
-  description: Docusaurus tag description
-
-hola:
-  label: Hola
-  permalink: /hola
-  description: Hola tag description
+Demo:
+  label: Demo
+  permalink: /demo
+  description: Demo tag description
