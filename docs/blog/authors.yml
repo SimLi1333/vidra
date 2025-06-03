@@ -1,13 +1,12 @@
-yangshun:
+rstutz:
   name: Ramon Stutz
   title: Vidra maintainer
   image_url: https://github.com/yangshun.png
   page: true
   socials:
     linkedin: ramon-stutz-963571208
-    github: 
 
-slorber:
+slinder:
   name: Simon Linder
   title: Vidra maintainer
   image_url: https://github.com/SimLi1333.png
