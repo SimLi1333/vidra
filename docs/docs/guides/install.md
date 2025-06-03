@@ -18,7 +18,7 @@ For a development cluster, we recommend using [minikube](https://minikube.sigs.k
 ## Install the Vidra Operator using Helm:
 Helm is a package manager for Kubernetes that helps you manage Kubernetes applications. It uses a packaging format called charts.
 
-<Admonition type="warning" title="Warning">
+<Admonition type="note" title="Note">
 Helm is not required to run the Vidra Operator, but it simplifies the installation process. Helm version 3.0.0 or higher is recommend. [Installation](https://helm.sh/docs/intro/install/)
 </Admonition>
 
