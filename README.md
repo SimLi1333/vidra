@@ -9,14 +9,20 @@
 
 A continuous delivery Kubernetes operator for Infrahub
 
-`Vidra` is a Kubernetes operator that automates the deployment and management of applications defined in Infrahub on Kubernetes clusters. It provides a set of tools and features to simplify the process of continuous delivery, making it easier to manage complex application deployments.
+`Vidra` is a Kubernetes operator designed to automate the deployment and lifecycle management of application and resources defined in Infrahub on Kubernetes clusters. It streamlines continuous delivery workflows, reduces operational overhead, and simplifies the management of complex application or virtual machine deployments.
+
+It aims to automate syncing infrastructure artifacts from Infrahub into Kubernetes CRDs. And reconciles them with the state of the cluster, enabling continuous delivery workflows.
+
+To get started, please refer to the [installation guide](https://infrahub-operator.github.io/vidra/guides/install) and explore the [usage guide](https://infrahub-operator.github.io/vidra/guides/usage) and [API references](https://infrahub-operator.github.io/vidra/api-references/) for detailed information on how to use Vidra effectively.
+
 ## Documentation
-- [Documentation](https://infrahub-operator.github.io/vidra/)
+
+- [Official Documentation](https://infrahub-operator.github.io/vidra/)
 
 ## Contributing
 
-Contributions are welcome! Feel free to submit issues or feature requests on GitHub.
+We welcome contributions! If you have ideas, issues, or feature requests, please open an issue or submit a pull request on GitHub.
 
---- 
-Enjoy using Vidra! 🎉
+---
 
+Thank you for using Vidra! 🎉
