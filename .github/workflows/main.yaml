@@ -221,14 +221,7 @@ jobs:
           registry: ghcr.io
           registry_username: ${{ github.repository_owner }}
           registry_password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Sign the Helm chart OCI artifact
-        env:
-          COSIGN_EXPERIMENTAL: "true"
-        run: |
-          echo "ghcr.io/${{ github.repository }}/helm-charts/vidra-operator:${{ env.TAG_VERSION }}" \
-          | xargs -I {} cosign sign {} --yes
-
+          
 
   add-install-yamls-to-release:
     name: Add Install YAMLs to Release
