@@ -3,11 +3,8 @@ kind: VidraResource
 metadata:
   name: 1834265b-8d16-4e4a-3bd9-c518b7dc1939
 spec:
+  manifest: '{"apiVersion": "v1", "kind": "ConfigMap", "metadata": {"name": "example", "namespace": "default"}, "data": {"key": "value"}}'
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: 'default'
-  ids:
-    artefactID: "1834265b-8d16-4e4a-3bd9-c518b7dc1939"
-    checksum: "5cc3415cccd45631e012f4226f0e13b0"
-    storageID: "1834265b-8db7-2d74-3bd3-c5161509e453"
 
