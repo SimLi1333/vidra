@@ -6,4 +6,7 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: vidraresource-sample
 spec:
-  # TODO(user): Add fields here
+  manifest: '{"apiVersion": "v1", "kind": "ConfigMap", "metadata": {"name": "example", "namespace": "default"}, "data": {"key": "value"}}'
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: 'default'

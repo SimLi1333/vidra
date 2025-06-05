@@ -146,5 +146,8 @@ kubectl get infrahubsync sync-test-multi-x -o yaml
 If you use the `destination.server` field to specify a different Kubernetes cluster, make sure to create a Kubernetes Secret with the kubeconfig for that cluster, as described in the [Multi-Cluster Mode](advanced-usage#multi-cluster-mode) section.
 </Admonition>
 
+<Admonition type="note" title="Note">
+Some sample resources of Vidra which we used can be found in the [config samples directory](https://github.com/infrahub-operator/vidra/tree/main/config/samples).
+</Admonition>
 
 ---

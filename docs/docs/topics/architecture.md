@@ -2,6 +2,7 @@
 title: Architecture
 sidebar_position: 1
 ---
+import Admonition from '@theme/Admonition';
 
 ## Introduction
 
@@ -42,20 +43,24 @@ The following diagrams illustrate the C4 model for Vidra, providing a high-level
 
 ## High-Level Code Structure (C4)
 
-Vidra is structured into three primary layers, each implemented as a distinct Go package to promote a clean, maintainable architecture:
-### 2.1 Domain Layer
+Vidra is structured into four primary layers, each implemented as a distinct Go package to promote a clean, maintainable architecture:
+
+### 2.1 API Layer
+
+The **[API Layer](../api-references/api-references.md)** exposes Vidra’s functionality to users through well-defined custom resource definitions (CRDs) and their schemas.
+
+- **InfrahubSync CRD:** The primary entry point for configuring Vidra, allowing users to specify synchronization parameters.
+- **VidraResource CRD:** Defines the structure for Kubernetes resources managed by Vidra, enabling declarative management of cluster artifacts.
+
+The API Layer can be found ![here](https://github.com/infrahub-operator/vidra/tree/main/api/v1alpha1)
+
+### 2.2 Domain Layer
 
 The **Domain Layer** defines Vidra’s core business entities and domain interfaces. This layer is intentionally minimal, focusing primarily on the `InfrahubSync` and `VidraResource` custom resources, which represent the essential concepts and behaviors within Vidra.
 
 - **InfrahubSync:** Captures synchronization intent, including parameters such as target branches, artifacts, and scheduling.
 - **VidraResource:** Represents Kubernetes resources (e.g., ConfigMaps, Secrets, Deployments) managed by Vidra, typically created based on retrieved Infrahub artifacts.
 
-### 2.2 API Layer
-
-The **[API Layer](../api-references/api-references.md)** exposes Vidra’s functionality to users through well-defined custom resource definitions (CRDs) and their schemas.
-
-- **InfrahubSync CRD:** The primary entry point for configuring Vidra, allowing users to specify synchronization parameters.
-- **VidraResource CRD:** Defines the structure for Kubernetes resources managed by Vidra, enabling declarative management of cluster artifacts.
 
 ### 2.3 Controller Layer
 
@@ -73,6 +78,9 @@ The **Adapter Layer** manages integrations with external systems, such as Infrah
 
 This layered approach enforces separation of concerns, simplifies testing, and enables future extensibility. Dependencies between layers are managed through interfaces, allowing for easy mocking and unit testing. Importantly, dependencies only go inward—outer layers depend on inner layers, but not vice versa—ensuring a clean, maintainable architecture.
 
+<Admonition type="note" title="Note">
+You can explore the implementation of these three layers (Domain, Controller, Adapter) in the [internal directory](https://github.com/infrahub-operator/vidra/tree/main/internal) of the Vidra repository.
+</Admonition>
 ---
 
 ## 3. Data Flow and Interaction

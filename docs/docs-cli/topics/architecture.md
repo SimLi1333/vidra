@@ -1,3 +1,5 @@
+import Admonition from '@theme/Admonition';
+
 # Vidra CLI Architecture
 
 The Vidra CLI is structured following clean architecture principles, using [Go Cobra](https://github.com/spf13/cobra) for command-line parsing and execution.
@@ -20,3 +22,7 @@ The Vidra CLI is structured following clean architecture principles, using [Go C
 - **Adapters** encapsulate external dependencies, promoting testability and maintainability.
 
 This separation ensures a modular, testable, and maintainable CLI codebase.
+
+<Admonition type="note" title="Note">
+You can explore the implementation of these layers in the [vidra-cli directory](https://github.com/infrahub-operator/vidra/tree/main/vidra-cli).
+</Admonition>

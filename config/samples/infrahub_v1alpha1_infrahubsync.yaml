@@ -6,4 +6,12 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: infrahubsync-sample
 spec:
-  # TODO(user): Add fields here
+  source:
+    infrahubAPIURL: "https://infrahub-server.infrahub.orb.local"
+    targetBranch: "main"
+    targetDate: "2025-04-09T00:00:00Z"
+    artefactName: "Webserver_Manifest"
+  destination:
+    server: <your-kubernetes-api-server If not local>
+    namespace: 'default'
+    reconcileOnEvents: true
