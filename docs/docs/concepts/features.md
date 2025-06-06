@@ -70,7 +70,7 @@ Vidra’s architecture supports advanced scenarios that are available but not ye
 
 ### Advanced CRDs
 Potential for managing complex CRDs such as:
-- Network configurations (e.g., Kubenet)
+- Network configurations (e.g., Kubenet, SDC)
 - Cloud-native infrastructure (e.g., Crossplane)
 
 These capabilities are technically feasible but require further testing and validation before being considered production-ready.
