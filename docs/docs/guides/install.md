@@ -6,29 +6,26 @@ import Admonition from '@theme/Admonition';
 
 # User Guide
 ## Prerequisites
-Before installing the Vidra Operator, ensure you have the following tools installed and configured:
-| Tool                        | Version   | Installation | Description                                                                                                   |
-|-----------------------------|-----------|--------------|---------------------------------------------------------------------------------------------------------------|
-| Kubernetes                  | ^1.26.0   | [Installation](https://kubernetes.io/docs/setup/) | Kubernetes is an open-source system for automating deployment, scaling, and management of containerized applications. |
+Before installing the Vidra Operator, make sure you have access to a Kubernetes cluster (version 1.26.0 or higher) and that your `kubectl` tool is configured to communicate with it. For setup instructions, see the [Kubernetes installation guide](https://kubernetes.io/docs/setup/).
 
 <Admonition type="note" title="Note">
 For a development cluster, we recommend using [minikube](https://minikube.sigs.k8s.io/docs/start/) or [kind](https://kind.sigs.k8s.io/docs/user/quick-start/). Refer to the [Cluster Setup](../topics/deploy.md) guide for more details.
 </Admonition>
 
 ## Install the Vidra Operator using Helm:
-Helm is a package manager for Kubernetes that helps you manage Kubernetes applications. It uses a packaging format called charts.
+Helm is a Kubernetes package manager that simplifies installing and managing applications like Vidra using charts.
 
 <Admonition type="note" title="Note">
-Helm is not required to run the Vidra Operator, but it simplifies the installation process. Helm version 3.0.0 or higher is recommend. [Installation](https://helm.sh/docs/intro/install/)
+Helm is not required to run the Vidra Operator, but it simplifies the installation process. Helm version 3.0.0 or higher is recommended.  [Helm installation guide](https://helm.sh/docs/intro/install/)
 </Admonition>
 
 ### Helm Installation
-To install the Vidra Operator using Helm, first add the Infrahub Operator Helm repository and then install the Vidra chart:
+To install the Vidra Operator using Helm OCI, you can use the following command:
 
 ```sh
 helm install vidra-operator oci://ghcr.io/infrahub-operator/vidra/helm-charts/vidra-operator --namespace vidra-system --create-namespace
 ```
-Or, if you prefer to use the Helm repository:
+Or, if you prefer to use a Helm repository:
 
 ```sh
 helm repo add infrahub-operator https://infrahub-operator.github.io/vidra
@@ -36,7 +33,7 @@ helm repo update
 helm install vidra infrahub-operator/vidra-operator --namespace vidra-system --create-namespace
 ```
 <Admonition type="note" title="Note">
-It is also released under https://github.com/infrahub-operator/vidra/releases/download/vX.Y.Z if you want to install an older version.
+The Helm repository is also released under https://github.com/infrahub-operator/vidra/releases/download/vX.Y.Z if you want to install an older version.
 </Admonition>
 
 Wait for the Vidra Operator to be installed (this might take a few seconds):
@@ -63,7 +60,7 @@ curl -sL https://github.com/operator-framework/operator-lifecycle-manager/releas
 
 ### Operator Lifecycle Manager (OLM) Installation
 
-Install the vidra Operator by creating a catalog source and subscription:
+Install the Vidra Operator by creating a catalog source and subscription:
 
 ```sh
 kubectl apply -f https://raw.githubusercontent.com/Infrahub-Operator/Vidra/main/install/catalogsource.yaml -f https://raw.githubusercontent.com/Infrahub-Operator/Vidra/main/install/subscription.yaml
@@ -87,13 +84,15 @@ Before uninstalling the Vidra Operator, ensure that you have removed all `VidraR
 </Admonition>
 To completely remove the Vidra Operator and its resources, follow these steps:
 
-### 1. Helm Uninstall
+### Helm Uninstall
 ```sh
 helm uninstall vidra-operator --namespace vidra-system
 kubectl delete namespace vidra-system
 ```
 
 Or:
+
+### OLM Uninstall
 
 ### 1. Delete the Subscription and ClusterServiceVersion (CSV)
 

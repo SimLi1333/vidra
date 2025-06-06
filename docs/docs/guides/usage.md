@@ -6,7 +6,7 @@ import Admonition from '@theme/Admonition';
 
 ## Introduction
 
-Vidra is a Kubernetes operator designed to manage and synchronize resources based on data from Infrahub queries. This guide will walk you through the basic configuration and usage of Vidra.
+This guide will walk you through the basic configuration and usage of Vidra.
 
 <Admonition type="warning" title="Warning">
 A running Kubernetes cluster with the Vidra operator installed is required. If you haven't installed the Vidra operator yet, please refer to the [installation guide](/guides/install.md).
@@ -45,7 +45,7 @@ All the fields in the ConfigMap are optional and can be customized according to 
 If you want to use a different namespace than `vidra-system`, make sure to adjust the `namespace` field in the metadata section accordingly. Vidra will find the ConfigMap based on the label `app: vidra`.  
 </Admonition>
 
-## Applying the ConfigMap
+### Applying the ConfigMap
 
 To apply the configuration, save the above YAML to a file (e.g., `vidra-config.yaml`) and run:
 
@@ -88,13 +88,20 @@ The label `infrahub-api-url` is used to identify the Infrahub instance that the 
 **Example:** The URL must look like `infrahub-server.infrahub.orb.local` if your Infrahub is accessible at `https://infrahub-server.infrahub.orb.local`, since Kubernetes does not allow `/` in labels.
 
 <Admonition type="note" title="Note">
-If you need to connect to a different Infrahub instance, you can create multiple Secrets with different `infrahub-api-url` labels. The Vidra operator will use the Secret that matches the label of the `InfrahubSync` resource.
+If you need to connect to different Infrahub instances, you can create multiple Secrets with different `infrahub-api-url` labels. The Vidra operator will use the Secret that matches the label of the `InfrahubSync` resource.
 </Admonition>
 
 <Admonition type="note" title="Note">
 If you want to use a different namespace than `vidra-system`, make sure to adjust the `namespace` field in the metadata section accordingly. Vidra will find the Secret based on the label `infrahub-api-url`.
 </Admonition>
 
+### Applying the Secret
+
+To apply the configuration, save the above YAML to a file (e.g., `infrahub-secret.yaml`) and run:
+
+```sh
+kubectl apply -f infrahub-secret.yaml
+```
 ---
 
 ## Creating an `InfrahubSync` Resource
@@ -104,14 +111,14 @@ To synchronize resources from Infrahub, you need to create an `InfrahubSync` res
 apiVersion: infrahub.operators.com/v1alpha1
 kind: InfrahubSync
 metadata:
-  name: sync-test-multi-x
+  name: sync-test-webserver
   labels:
     app.kubernetes.io/name: vidra
     app.kubernetes.io/managed-by: kustomize
 spec:
   source:
     infrahubAPIURL: "https://infrahub-server.infrahub.orb.local" # The URL of your Infrahub instance.
-    targetBranch: "test-multi" # Optional: The branch in Infrahub to query for Artifacts.
+    targetBranch: "main" # Optional: The branch in Infrahub to query for Artifacts.
     targetDate: "2025-04-09T00:00:00Z" # Optional: The date to query for Artifacts. If not set, the latest branch is used.
     artefactName: "Webserver_Manifest" # Name of the Artifact Definition in Infrahub to query for Artifacts containing k8s manifests.
   destination:
@@ -120,7 +127,7 @@ spec:
     reconcileOnEvents: true # Optional: If set to true, all managed resources in this sync will be reconciled on events (e.g., creation, update, deletion) instead of a time-based requeue. Default is false.
 ```
 <Admonition type="note" title="Note">
-`InfrahubSync` is creating a `VidraResource` for each Artifact in the specified branch under the `artefactName`. If you want to synchronize multiple Artefact Definitions (like Webserver and VirtualMachines), you can create multiple `InfrahubSync` resources with different `artefactName` values.
+If you want to synchronize multiple Artefact Definitions (like Webserver and VirtualMachines), you can create multiple `InfrahubSync` resources with different `artefactName` values.
 </Admonition>
 
 <Admonition type="note" title="Note">
@@ -128,7 +135,7 @@ If you want to use a different namespace, make sure to add the `namespace` field
 </Admonition>
 
 
-**Applying the InfrahubSync Resource**
+### Applying the InfrahubSync Resource
 To apply the `InfrahubSync` resource, save the above YAML to a file (e.g., `infrahub-sync.yaml`) and run:
 
 ```sh
@@ -139,7 +146,7 @@ kubectl apply -f infrahub-sync.yaml
 The `InfrahubSync` resource will trigger the Vidra operator to start synchronizing resources from Infrahub based on the specified query and parameters. You can monitor the status of the synchronization by checking the status of the `InfrahubSync` resource:
 
 ```sh
-kubectl get infrahubsync sync-test-multi-x -o yaml
+kubectl get infrahubsync sync-test-webserver -o jsonpath='{.status}'
 ```
 
 <Admonition type="note" title="Note">
