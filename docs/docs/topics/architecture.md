@@ -14,7 +14,7 @@ The architecture is modular, extensible, and resilient, following Kubernetes ope
 
 ## 1. Overview of Vidra Architecture
 
-Vidra is implemented as a **Kubernetes operator**, extending the Kubernetes control plane to manage custom resources representing Infrahub synchronization configurations. The operator continuously reconciles desired states defined in these custom resources with actual cluster state, ensuring automated, declarative management of infrastructure artifacts.
+Vidra is implemented as a **Kubernetes operator**, extending the Kubernetes control plane to manage custom resources representing Infrahub synchronization configurations. The operator continuously reconciles desired states defined in infrahub into custom resources which are used to reconcile with the actual cluster state, ensuring automated, declarative management of kubernetes resources.
 
 ### Key Architectural Goals:
 
