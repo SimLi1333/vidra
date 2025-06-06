@@ -8,7 +8,7 @@ import Admonition from '@theme/Admonition';
 This guide assumes you have a running Infrahub instance and the Vidra Operator installed in your Kubernetes cluster. If you haven't set up Infrahub yet, please refer to the [Infrahub installation guide](https://docs.infrahub.app/guides/installation).
 </Admonition>
 
-To use Infrahub, you need to define a schema resembling your resources (we created `Webserver` containing `Deployment`, `Service` and `Ingres` and `VirtualMachine`). See the [Infrahub schema documentation](https://docs.infrahub.app/topics/schema) for more information.
+To use Infrahub, you need to define a schema resembling your resources (we created `Webserver` containing `Deployment`, `Service` and `Ingres` and another one `VirtualMachine`). See the [Infrahub schema documentation](https://docs.infrahub.app/topics/schema) for more information. A example schema for a `Webserver` resource is provided undder https://infrahub-operator.github.io/vidra/guides/infrahub#example-schema-for-webserver.
 
 This guide will show you how to prepare Infrahub for use with the Vidra Operator on the example of a `Webserver` resource. 
 
@@ -20,7 +20,7 @@ There will be a Demo Repo with all the necessary resources to get started with I
 Vidra Operator uses one GraphQL query to fetch the necessary ID's of the relevant Artifacts. Below is the query which needs to be added to Infrahub. 
 
 <Admonition type="note" title="Note">
-GraphQL queries can be added to Infrahub directly via the Infrahub UI or using the Infrahub CLI or added via [git integration](https://docs.infrahub.app/overview/versioning#integration-with-git). The Example is set up to work with git integration.
+You can add GraphQL queries to Infrahub using the Infrahub UI, the Infrahub CLI, or through [git integration](https://docs.infrahub.app/overview/versioning#integration-with-git). For reproducibility, we recommend using git integration, as demonstrated in this guide.
 </Admonition>
 
 ### Query ArtifactIDs
@@ -45,7 +45,7 @@ query ArtifactIDs($artifactname: [String]) {
     }
 }
 ```
-The following query is used to get `Webserver`resources and is needed in the transormator later on.
+The following query is used to get `Webserver` resources and is needed in the transormator later on.
 
 ### Example Query Webserver Details
 
@@ -82,7 +82,7 @@ query GetWebserver($webserver: String!) {
 ```
 
 ## Example Transformator
-The transformator is a Python script that transforms the data fetched from Infrahub into Kubernetes manifests. It uses the GraphQL queries defined above to fetch the necessary data and then generates the manifests.
+The transformator is a Python script that transforms the data fetched from Infrahub into Kubernetes manifests. It uses the GraphQL queries defined above to fetch the necessary data and then generates the manifests based on a YAML Template stored in the same Git repository.
 
 ```python
 from typing import Dict, Any
@@ -252,10 +252,25 @@ spec:
                   number: port
 ```
 
-## Example Artifact Definition
+## Example ìnfrahub.yaml`
 This is an example of how to the final artifact definition for the `Webserver` resource looks like. It defines the artifact name, parameters, content type, targets, and transformation function.
 
 ```yaml
+
+queries:
+  - name: GetWebserver
+    file_path: "GraphQL/GetWebserver.gql"
+  - name: ArtifactIDs
+    file_path: "GraphQL/ArtifactIDs.gql"
+
+schemas:
+  - "Schema/service-schema.yaml"
+
+python_transforms:
+  - name: TransformWebserver
+    class_name: TransformWebserver
+    file_path: "python_transform/transform_webserver.py"
+
 artifact_definitions:
   - name: "Webserver_Artifact_Definition"
     artifact_name: "Webserver_Manifest"
@@ -266,4 +281,90 @@ artifact_definitions:
     transformation: "TransformWebserver"
 ```
 
-Once the Artifact Definition is created, you can create the `Webserver` resource in Infrahub and add it to the target group `g_webserver`. The Vidra Operator will then use the transformator to generate the Kubernetes manifests based on the data fetched from Infrahub.
+Once the Artifact Definition is created by integrating the git repo with all resources, you can create the `Webserver` resource in Infrahub and add it to the target group `g_webserver`. The Vidra Operator will then use the transformator to generate the Kubernetes manifests based on the data fetched from Infrahub.
+
+## Example Schema for Webserver:
+
+```yaml
+version: "1.0"
+generics:
+  - name: Ressource
+    namespace: Kubernetes
+    description: Generic Device Data
+    branch: aware
+    include_in_menu: false
+    display_labels:
+      - name__value
+    order_by:
+      - name__value
+    uniqueness_constraints:
+      - ["name__value", "namespace__value"]
+    attributes:
+      - name: name
+        kind: Text
+        description: Name of your Webservice
+        order_weight: 1
+      - name: namespace
+        kind: Text
+        description: Namespace name - Default ns-namespace
+        order_weight: 2
+      - name: description
+        kind: Text
+        description: Additional Informations about the Webservice
+        optional: true
+        order_weight: 3
+nodes:
+  - name: Webserver
+    namespace: Kubernetes
+    icon: mdi:hand-extended
+    include_in_menu: true
+    generate_template: true
+    inherit_from:
+      - KubernetesRessource
+      - CoreArtifactTarget
+    attributes:
+      - name: port
+        kind: Number
+        description: The Port Number on which the Service is reachable
+        optional: false
+        regex: ^(6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-9][0-9]{0,3})$  # yamllint disable-line rule:line-length
+      - name: containerport
+        kind: Number
+        description: The Port Number on which the Container is reachable
+        optional: false
+        regex: ^(6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-9][0-9]{0,3})$  # yamllint disable-line rule:line-length
+      - name: replicas
+        kind: Number
+        description: The Number of replicas of the Deployment
+        optional: false
+        regex: ^[1-5]$
+      - name: version
+        kind: Number
+        description: The Version of the Deployment
+        optional: true
+        regex: ^[1-5]$
+      - name: host
+        kind: Text
+        description: URL to the Webserver x.iac-ba.network.garden
+        read_only: true
+        optional: false
+        computed_attribute:
+          kind: Jinja2
+          jinja2_template: "{{ name__value }}.iac-ba.network.garden"
+      - name: image
+        kind: Dropdown
+        optional: false
+        choices:
+          - name: httpd:latest
+            description: Image for the Apache Webserver
+            color: "#7f7fff"
+          - name: nginx:latest
+            description: Image for the Nginx Webserver
+            color: "#aeeeee"
+          - name: marcincuber/2048-game
+            description: Image for classic 2048 game
+            color: "#008000"
+          - name: public.ecr.aws/pahudnet/nyancat-docker-image
+            description: Image for Nyan Cat Docker image
+            color: "#FFFF00"
+```
