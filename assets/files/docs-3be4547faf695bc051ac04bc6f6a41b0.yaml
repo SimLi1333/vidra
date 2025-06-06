@@ -55,9 +55,8 @@ jobs:
       - name: Copy preserved files
         run: |
           cp gh-pages/index.yaml main/docs/build/ || true
-          tgz_file=$(find gh-pages -maxdepth 1 -name 'infrahub-operator-*.tgz' | head -n 1)
-          if [ -n "$tgz_file" ]; then cp "$tgz_file" main/docs/build/; fi  
-          
+          cp gh-pages/*.tgz main/docs/build/ || true
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
@@ -65,4 +64,4 @@ jobs:
           publish_dir: ./main/docs/build
           keep_files: |
             index.yaml
-            $tgz_file
+            *.tgz
