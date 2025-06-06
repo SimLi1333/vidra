@@ -20,12 +20,13 @@ Developing Kubernetes operators is simplified by using a dedicated SDK. An SDK a
     A framework for building Kubernetes controllers that can manage multiple resources. It is more focused on composition and less on full operator capabilities.
 * **Daisy**
     A lightweight framework for building Kubernetes controllers in YAML, but it lacks the comprehensive features and tooling of Operator-SDK.
-    * **KOPF (Kubernetes Operator Python Framework)**
+
+* **KOPF (Kubernetes Operator Python Framework)**
     A Python-based framework for building Kubernetes operators. While we have more experience with Python, it does not align with our Go-based development stack.
 
 ## Decision Outcome
 
-**Chosen option: "Cluster-scoped controller and CRD"**, because:
+**Chosen option: "Operator-SDK (Kubebuilder wrapper)"**, because:
 - Operator-SDK provides a comprehensive set of tools for building, testing, and deploying operators.
 - It has strong community support and is widely adopted in the Kubernetes ecosystem.
 - It integrates seamlessly with Go, which we need to create a robust continuous delivery operator for Infrahub.
