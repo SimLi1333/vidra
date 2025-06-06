@@ -3,9 +3,9 @@ title: Features
 sidebar_position: 2
 ---
 
-# Vidra Operator – Feature Overview
+# Feature Overview
 
-Vidra is a Kubernetes operator designed to manage custom resources with flexibility and safety in complex environments. Below is an overview of its core features and ongoing development focus areas.
+Vidra is a Kubernetes operator designed to manage custom resources with flexibility and safety in complex environments. Below is an overview of its core features and capabilities, including both current functionalities and potential future developments.
 
 ---
 
@@ -35,13 +35,14 @@ Allows multiple `VidraResource` instances to manage the same Kubernetes resource
 Vidra downloads artifacts only if the checksum has changed, reducing unnecessary network calls and improving performance.
 
 ### Helm Chart Deployment
-Vidra is available as a Helm chart, allowing:
+Vidra is available as a Helm chart (OCI and standard Helm repository), allowing:
+- Installation via `helm repo add` and `helm install`
 - Flexible deployment configurations
 - Easy integration into Helm-based infrastructure
 
 ### Multicluster Support
 Vidra supports multi-cluster environments:
-- Uses `kubeconfig` contexts to read/write across clusters
+- Uses `kubeconfig` contexts to read/write across clusters (stored in Kubernetes Secrets)
 - Reconciles resources consistently across multiple environments
 - Maintains unique identity and ownership tracking per cluster
 
@@ -60,8 +61,7 @@ Vidra uses an event-driven model to trigger reconciliation:
 
 ### Finalizers for Safe Cleanup
 Finalizers ensure that:
-- Resources are not deleted during processing
-- Dependencies are properly handled before deletion
+- Managed resources are cleaned up if the `VidraResource` is deleted
 - Cleanup logic is safely executed
 
 ## Experimental Capabilities (Not Yet Fully Validated)
@@ -69,9 +69,10 @@ Finalizers ensure that:
 Vidra’s architecture supports advanced scenarios that are available but not yet fully tested:
 
 ### Advanced CRDs
-Potential for managing complex CRDs such as:
-- Network configurations (e.g., Kubenet, SDC)
-- Cloud-native infrastructure (e.g., Crossplane)
+Potential for managing complex CRs such as:
+- Network configurations (e.g., Kubenet, SDC) -> Infrahub artifacts could define network policies and configurations
+- Cloud-native infrastructure (e.g., Crossplane) -> Infrahub artifacts could define Crossplane resources for cloud services
+- Any other Kubernetes resource typer (CRD or not)
 
 These capabilities are technically feasible but require further testing and validation before being considered production-ready.
 
@@ -83,6 +84,7 @@ These capabilities are technically feasible but require further testing and vali
 Vidra is evolving toward a fully event-based Continuous Integration Operator. Planned webhook support will:
 - Trigger real-time reconciliation on Infrahub changes
 - Reduce update latency
+- Remove reliance on frequent periodic resyncs
 - Provide more immediate feedback and state syncing
 
 ### Sync to Other Platforms
@@ -97,7 +99,7 @@ Upcoming improvements could include:
 - Tracing to follow resource lifecycle events
 
 ### User Interface
-Future plans may include a graphical interface to:
+The Managed Resource and the status of the `InfrahubSync` and `VidraResource` resources could be visualized in a user interface, providing:
 - Visualize resource state and dependencies
 - Provide dashboards for real-time monitoring and management
 
