@@ -1,0 +1,68 @@
+name: Deploy Docusaurus to GitHub Pages
+
+on:
+  push:
+      branches: [ "main" ]
+      # Publish semver tags as releases
+      tags: [ 'v*.*.*' ]
+      paths:
+          - 'docs/**'
+          - '.github/workflows/docs.yaml'
+          - 'Makefile'
+  pull_request:
+      branches: [ "main" ]
+      paths:
+          - 'docs/**'
+          - '.github/workflows/docs.yaml'
+          - 'Makefile'
+
+permissions:
+  contents: write  # allows pushing to gh-pages
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v3
+        with:
+          path: main
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '19'
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: main/docs
+
+      - name: Generate CRD docs
+        run: make generate-crd-docs
+        working-directory: main
+
+      - name: Build website
+        run: npm run build
+        working-directory: main/docs
+
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      - name: Copy preserved files
+        run: |
+          cp gh-pages/index.yaml main/docs/build/ || true
+          tgz_file=$(find gh-pages -maxdepth 1 -name 'infrahub-operator-*.tgz' | head -n 1)
+          if [ -n "$tgz_file" ]; then cp "$tgz_file" main/docs/build/; fi  
+          
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./main/docs/build
+          keep_files: |
+            index.yaml
+            $tgz_file
