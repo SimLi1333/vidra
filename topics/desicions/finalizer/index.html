@@ -5,7 +5,7 @@
 <meta name="generator" content="Docusaurus v3.8.0">
 <title data-rh="true">Use of Finalizer for Resource Cleanup | My Site</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://infrahub-operator.github.io/vidra/img/social-card.png"><meta data-rh="true" name="twitter:image" content="https://infrahub-operator.github.io/vidra/img/social-card.png"><meta data-rh="true" property="og:url" content="https://infrahub-operator.github.io/vidra/topics/desicions/finalizer"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Use of Finalizer for Resource Cleanup | My Site"><meta data-rh="true" name="description" content="Context and Problem Statement"><meta data-rh="true" property="og:description" content="Context and Problem Statement"><link data-rh="true" rel="icon" href="/vidra/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://infrahub-operator.github.io/vidra/topics/desicions/finalizer"><link data-rh="true" rel="alternate" href="https://infrahub-operator.github.io/vidra/topics/desicions/finalizer" hreflang="en"><link data-rh="true" rel="alternate" href="https://infrahub-operator.github.io/vidra/topics/desicions/finalizer" hreflang="x-default"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Use of Finalizer for Resource Cleanup","item":"https://infrahub-operator.github.io/vidra/topics/desicions/finalizer"}]}</script><link rel="alternate" type="application/rss+xml" href="/vidra/blog/rss.xml" title="My Site RSS Feed">
 <link rel="alternate" type="application/atom+xml" href="/vidra/blog/atom.xml" title="My Site Atom Feed"><link rel="stylesheet" href="/vidra/assets/css/styles.c171c55a.css">
-<script src="/vidra/assets/js/runtime~main.51406325.js" defer="defer"></script>
+<script src="/vidra/assets/js/runtime~main.2e17a47f.js" defer="defer"></script>
 <script src="/vidra/assets/js/main.378288ce.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -19,15 +19,15 @@
 <ul>
 <li>
 <p><strong>Rely solely on Kubernetes <code>ownerReferences</code></strong><br>
-<!-- -->Use the built-in Kubernetes mechanism to automatically clean up dependent resources when the parent is deleted. This approach is simple but limited in multi-cluster scenarios and may not guarantee cleanup of all resources.</p>
+<!-- -->Use the built-in Kubernetes mechanism to automatically clean up dependent resources when the parent is deleted. This approach is simple but limited in multi-cluster scenarios and may not guarantee cleanup of all resources if a resource is renamed in Infrahub.</p>
 </li>
 <li>
 <p><strong>Implement a custom finalizer</strong><br>
-<!-- -->Attach a finalizer to Vidra resources, ensuring that all managed resources are explicitly deleted before the Vidra resource itself is removed. This provides more control and reliability, especially in complex or multi-cluster environments.</p>
+<!-- -->Attach a finalizer to <code>VidraResources</code> and store a list of managed resources in the <code>VidraResource</code> state, ensuring that all managed resources are explicitly deleted before the Vidra resource itself is removed. This provides more control and reliability, especially in complex or multi-cluster environments.</p>
 </li>
 </ul>
 <h2 class="anchor anchorWithStickyNavbar_LWe7" id="decision">Decision<a href="#decision" class="hash-link" aria-label="Direct link to Decision" title="Direct link to Decision">​</a></h2>
-<p><strong>Chosen option: &quot;Implement a custom finalizer&quot;</strong>, because it allows us to ensure that all resources created and managed by Vidra are properly cleaned up before the Vidra resource itself is deleted. This is particularly important in multi-cluster scenarios where Kubernetes ownership is not possble.</p>
+<p><strong>Chosen option: &quot;Implement a custom finalizer&quot;</strong>, because it allows us to ensure that all resources created and managed by Vidra are properly cleaned up before the Vidra resource itself is deleted. This is particularly important in multi-cluster scenarios where Kubernetes ownership is not possble. It also allows us to delete stale resources that may not have been cleaned up due to renaming or other changes in Infrahub.</p>
 <h2 class="anchor anchorWithStickyNavbar_LWe7" id="consequences">Consequences<a href="#consequences" class="hash-link" aria-label="Direct link to Consequences" title="Direct link to Consequences">​</a></h2>
 <ul>
 <li>Good, because it provides a reliable mechanism for resource cleanup, ensuring that no resources are left orphaned after a Vidra resource is deleted.</li>
