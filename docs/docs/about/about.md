@@ -6,7 +6,7 @@ This project was developed as part of a bachelor's thesis at the [Eastern Switze
 
 ## Authors
 
-- Simon Linser  
+- Simon Linder  
 - Ramon Stutz
 
 ## Stats
@@ -42,3 +42,4 @@ Go                              42            467            208           2438
 SUM:                            42            467            208           2438
 -------------------------------------------------------------------------------
 ```
+
