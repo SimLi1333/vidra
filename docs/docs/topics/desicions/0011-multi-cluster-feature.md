@@ -25,11 +25,14 @@ This was a nice-to-have feature, not a must-have during planing. If there was no
 
 ## Decision Outcome
 
-**Chosen option: "Single operator managing multiple clusters"**.  
-We implemented a mechanism where Vidra Operator can reconcile managed resources on remote clusters. This is achieved by providing a new Secret with the destination server as label, containing the kubeconfig for the target cluster. On the first reconciliation of a resource destined for a different cluster, a dynamic Go client is created using the kubeconfig and destination server. To optimize performance and resource usage, this client is cached and reused for subsequent reconciliations, using mutexes to ensure thread safety.
+**Chosen option: "Single operator managing multiple clusters"**, because it simplifies management by centralizing the operator in one place, reducing the need for multiple installations and configurations. This approach allows for easier updates, consistent behavior across clusters, and a unified view of all managed resources.
+
+We implemented a mechanism where Vidra Operator can deploy managed resources on remote clusters. This is achieved by providing a new Secret with the destination server as label, containing the kubeconfig for the target cluster. On the first reconciliation of a resource destined for a different cluster, a dynamic Go client is created using the kubeconfig and destination server. To optimize performance and resource usage, this client is cached and reused for subsequent reconciliations, using mutexes to ensure thread safety.
+
+This design doesn not exclude the possibility of installing the operator on each cluster if desired. It provides flexibility for users who prefer to manage resources locally while still allowing centralized management.
 
 ### Consequences
 
 * Good, because it reduces the need to install and maintain the operator on every cluster, centralizes management, and offers flexibility.  
 * Bad, because it introduces complexity in client management, requires secure handling of kubeconfigs, and needs careful access control to avoid security risks.  
-* Note: It is still possible to install the operator on each cluster if desired.
+

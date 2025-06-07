@@ -8,7 +8,7 @@ sidebar_position: 5
 
 ## Context and Problem Statement
 
-As in every projet ther is the decision whether to use a dev container for environment consistency or rely on manual setup, considering the team's operating systems and the simplicity of the required tooling.
+As in every projet there is the decision whether to use a dev container for environment consistency or rely on manual setup, considering the team's operating systems and the simplicity of the required tooling.
 
 ## Considered Options
 
@@ -16,7 +16,7 @@ As in every projet ther is the decision whether to use a dev container for envir
   Offers a consistent environment for all developers but adds setup complexity.
 
 * **Manual Setup**
-    Simple and straightforward, but may lead to inconsistencies across team members' environments.
+  Simple and straightforward, but may lead to inconsistencies across team members' environments.
 
 ## Decision Outcome
 

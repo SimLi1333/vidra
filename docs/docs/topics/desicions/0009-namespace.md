@@ -21,7 +21,7 @@ This decision impacts how resources are organized, how access control is managed
 
 ## Decision Outcome
 
-**Chosen option: both**, because we want to support as many deployment scenarios as possible.  The operator will use the namespace defined in the `InfrahubSync` CRD as fallback, if the resources do not hace a namespace. This approach maximizes flexibility, allowing users to set a default namespace at the CRD level while still enabling per-resource overrides when needed.
+**Chosen option: both**, because we want to support as many deployment scenarios as possible. The operator will use the namespace defined in the `InfrahubSync` CRD as fallback, if the resources do not have a namespace. This approach maximizes flexibility, allowing users to set a default namespace at the CRD level while still enabling per-resource overrides when needed.
 
 ### Consequences
 
