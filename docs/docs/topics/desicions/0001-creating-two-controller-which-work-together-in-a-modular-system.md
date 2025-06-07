@@ -1,34 +1,34 @@
 ---
-title: Transitioning Vidra Operator to Cluster Scope
+title: Creating Two Controllers for Modular System Design
 sidebar_position: 2
 ---
 
-# Transitioning Vidra Operator to Cluster Scope
+# Creating Two Controllers for Modular System Design
 
 ## Context and Problem Statement
 
-We needed to decide whether the Controller should be namespace-scoped or cluster-scoped.
+We needed to decide whether to implement a single controller to handle both synchronization with Infrahub and Kubernetes managed resource lifecycle management (continuous delivery), or to split these responsibilities into two dedicated controllers.
 
-While namespace-scoped Operators offer isolation, they are limited as they cannot take ownership of resources in other namespaces. Our use case requires managing resources across multiple namespaces, and leveraging ownership could improve resource lifecycle management.
+A single controller can simplify deployment but may become complex and harder to maintain as responsibilities grow. Our use case involves both integrating with Infrahub (external system) and managing the lifecycle of Kubernetes resources, which are distinct concerns.
 
 ## Considered Options
 
-* **Namespace-scoped controller and CRDs**  
-  Limited to managing resources within a single namespace, may require additional logic to clean up resources using finalizers.
+* **Single controller handling both Infrahub sync and resource lifecycle**  
+  Simpler deployment, but risks mixing concerns and increasing code complexity.
 
-* **Cluster-scoped controller and CRD**  
-  Can manage resources across all namespaces and utilize Kubernetes ownership features effectively.
+* **Two controllers: one for Infrahub sync, one for resource lifecycle management**  
+  Clear separation of concerns, easier to test and maintain, but introduces more components to deploy and coordinate.
 
 ## Decision Outcome
 
-**Chosen option: "Cluster-scoped controller and CRD"**, because:
+**Chosen option: "Two controllers: one for Infrahub sync, one for resource lifecycle management"**, because:
 
-- While a namespace-scoped controller is technically feasible—especially when combined with finalizers to handle cleanup—we want to fully benefit from Kubernetes ownership semantics.
-- A cluster-scoped design gives us the flexibility to manage multi-namespace resources cleanly and consistently.
-- It allows us to support advanced use cases and infrastructure-level resources in the future.
-- We leave the door open to use either finalizers or ownership patterns for resource cleanup, depending on what best fits the use case.
+- Separation of concerns leads to cleaner, more maintainable codebases.
+- Each controller can evolve independently, allowing for focused improvements and optimizations.
+- Issues in one controller (e.g., Infrahub connectivity) do not directly impact the other (resource lifecycle).
+- Testing and debugging are simplified due to reduced scope per controller.
 
 ### Consequences
 
-* Good, because it provides **flexibility, better visibility**, and aligns with **ownership and management patterns** in Kubernetes.
-* Bad, because it may require **additional access control** and careful **RBAC management** to ensure security.
+* Good, because it provides **modularity, maintainability**, and aligns with **best practices for controller design** in Kubernetes.
+* Bad, because it introduces **additional deployment complexity** and requires **coordination between controllers**.

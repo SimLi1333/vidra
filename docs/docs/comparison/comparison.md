@@ -35,6 +35,7 @@ Vidra is just one of several open-source tools designed to manage and deploy Kub
 **Limitations compared to Vidra**:
 - Less visibility into application-level deployments unless additional tooling (e.g., Weave GitOps UI) is used.
 - Limited out-of-the-box support for non-Git sources unless extended.
+- No multicluster support out of the box.
 
 ## Vidra
 
