@@ -12,7 +12,7 @@ To ensure maintainability, testability, and clear separation of concerns, we nee
 ## Considered Options
 
 * **Monolithic structure**  
-    All logic (Kubernetes, domain, external integrations) is mixed, leading to tight coupling and harder testing.
+    All logic (Kubernetes, domain, external integrations) is mixed in the Reconcile function, leading to tight coupling and harder testing. (many Operators follow this pattern)
 
 * **Clean/Onion Architecture**  
     Separate the codebase into:

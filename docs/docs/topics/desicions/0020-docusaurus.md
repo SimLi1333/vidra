@@ -13,13 +13,13 @@ We needed to choose a documentation framework for Vidra. Consistency of document
 ## Considered Options
 
 * **Docusaurus**  
-    A popular documentation framework based on React, widely used in the Infrahub ecosystem. It allows us to maintain a consistent look and feel with other Infrahub tools, and it integrates well with our existing CI/CD pipeline for automated publishing.
+    A popular documentation framework based on React, widely used in the Infrahub ecosystem. It allows us to maintain a consistent look and feel with other Infrahub tools.
 
 * **MkDocs**  
     A simpler, static site generator that is easy to set up and use. It is lightweight and has a straightforward configuration, but it does not provide the same level of customization and integration as Docusaurus.
 
 <Admonition type="note" title="Note">
-We also used **crd-ref-docs** to generate API documentation for our Custom Resource Definitions (CRDs). This is integrated into our CI pipeline and published automatically to GitHub Pages.
+We also used **crd-ref-docs** to generate API documentation for our Custom Resource Definitions (CRDs). This is integrated into our CI pipeline and published automatically to GitHub Pages but this is indipendent of this desicion.
 </Admonition>
 
 ## Decision Outcome
