@@ -62,7 +62,7 @@ The only entitie in domain layer so far is `Artifact`, which represents the Infr
 
 ### 2.3 Controller Layer
 
-The **Controller Layer** implements the reconciliation logic that drives Vidra’s synchronization workflows. Controllers monitor changes to custom resources and orchestrate the necessary actions to align cluster state with the desired configuration.
+The **Controller Layer** implements the reconciliation logic that drives Vidra’s continuous delivery workflows. Controllers monitor changes to custom resources and orchestrate the necessary actions to align cluster state with the desired state. Controller implements the use-cases of the custom resources and orchestrates the necessary actions to align cluster state with the desired configuration.
 
 - **InfrahubSyncReconciler:** Handles all tasks related to Infrahub, including authentication, querying, artifact retrieval, and triggering downstream synchronization.
 - **VidraResourceReconciler:** Manages the lifecycle of Kubernetes resources, applying, updating, or deleting manifests as needed.
@@ -73,6 +73,7 @@ Each controller is dedicated to a specific CRD, ensuring clear separation of con
 
 The **Adapter Layer** manages integrations with external systems, such as Infrahub and Kubernetes clusters. It handles API communication, artifact processing, and abstracts external dependencies behind interfaces, facilitating testing and future expansion.
 
+While Kubernetes is not a direct external system, we put the actions done by additional go clients (like talking to other clusters or handling eventbased reconciliation) into the adapter layer, as they are not part of the core controller logic.
 
 This layered approach enforces separation of concerns, simplifies testing, and enables future extensibility. Dependencies between layers are managed through interfaces, allowing for easy mocking and unit testing. Importantly, dependencies only go inward—outer layers depend on inner layers, but not vice versa—ensuring a clean, maintainable architecture.
 
