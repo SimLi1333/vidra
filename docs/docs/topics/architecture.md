@@ -19,7 +19,7 @@ Vidra is implemented as a **Kubernetes operator**, extending the Kubernetes cont
 ### Key Architectural Goals:
 
 - **Declarative Resource Management:** Users specify synchronization requirements via custom resources; Vidra automates downstream artifact application.
-- **GitOps Principles:** Supports Git-based workflows, allowing users to define infrastructure as code and manage it through version control.
+- **GitOps Principles:** Supports GitOps-based workflows, allowing users to define infrastructure in Infrahub and manage it through version control.
 - **Extensibility:** Modular architecture enables support for additional artifact types, expanded Infrahub query capabilities, and even integration with any other system that generate manifests.
 - **Scalability and Robustness:** Efficient handling of concurrent sync operations with robust error handling.
 - **Separation of Concerns:** Clear boundaries between domain logic, external system integration, and Kubernetes API interactions.
@@ -52,15 +52,13 @@ The **[API Layer](../api-references/api-references.md)** exposes Vidra’s funct
 - **InfrahubSync CRD:** The primary entry point for configuring Vidra, allowing users to specify synchronization parameters.
 - **VidraResource CRD:** Defines the structure for Kubernetes resources managed by Vidra, enabling declarative management of cluster artifacts.
 
-The API Layer can be found ![here](https://github.com/infrahub-operator/vidra/tree/main/api/v1alpha1)
+The API Layer can be found [here](https://github.com/infrahub-operator/vidra/tree/main/api/v1alpha1)
 
 ### 2.2 Domain Layer
 
-The **Domain Layer** defines Vidra’s core business entities and domain interfaces. This layer is intentionally minimal, focusing primarily on the `InfrahubSync` and `VidraResource` custom resources, which represent the essential concepts and behaviors within Vidra.
+The **Domain Layer** defines Vidra’s core business entities and domain interfaces. This layer is intentionally minimal, focusing all important entities primarily in the `InfrahubSync` and `VidraResource` custom resources, which represent the essential concepts and behaviors within Vidra.
 
-- **InfrahubSync:** Captures synchronization intent, including parameters such as target branches, artifacts, and scheduling.
-- **VidraResource:** Represents Kubernetes resources (e.g., ConfigMaps, Secrets, Deployments) managed by Vidra, typically created based on retrieved Infrahub artifacts.
-
+The only entitie in domain layer so far is `Artifact`, which represents the Infrahub artifact that is downloaded and applied to the cluster. It contains metadata about the artifact, such as its ID, name, and checksum.
 
 ### 2.3 Controller Layer
 
