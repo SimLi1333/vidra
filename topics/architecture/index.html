@@ -5,7 +5,7 @@
 <meta name="generator" content="Docusaurus v3.8.0">
 <title data-rh="true">Architecture | My Site</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://infrahub-operator.github.io/vidra/img/social-card.png"><meta data-rh="true" name="twitter:image" content="https://infrahub-operator.github.io/vidra/img/social-card.png"><meta data-rh="true" property="og:url" content="https://infrahub-operator.github.io/vidra/topics/architecture"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Architecture | My Site"><meta data-rh="true" name="description" content="Introduction"><meta data-rh="true" property="og:description" content="Introduction"><link data-rh="true" rel="icon" href="/vidra/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://infrahub-operator.github.io/vidra/topics/architecture"><link data-rh="true" rel="alternate" href="https://infrahub-operator.github.io/vidra/topics/architecture" hreflang="en"><link data-rh="true" rel="alternate" href="https://infrahub-operator.github.io/vidra/topics/architecture" hreflang="x-default"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Architecture","item":"https://infrahub-operator.github.io/vidra/topics/architecture"}]}</script><link rel="alternate" type="application/rss+xml" href="/vidra/blog/rss.xml" title="My Site RSS Feed">
 <link rel="alternate" type="application/atom+xml" href="/vidra/blog/atom.xml" title="My Site Atom Feed"><link rel="stylesheet" href="/vidra/assets/css/styles.c171c55a.css">
-<script src="/vidra/assets/js/runtime~main.04859dc4.js" defer="defer"></script>
+<script src="/vidra/assets/js/runtime~main.3e47efb0.js" defer="defer"></script>
 <script src="/vidra/assets/js/main.378288ce.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -21,7 +21,7 @@
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="key-architectural-goals">Key Architectural Goals:<a href="#key-architectural-goals" class="hash-link" aria-label="Direct link to Key Architectural Goals:" title="Direct link to Key Architectural Goals:">​</a></h3>
 <ul>
 <li><strong>Declarative Resource Management:</strong> Users specify synchronization requirements via custom resources; Vidra automates downstream artifact application.</li>
-<li><strong>GitOps Principles:</strong> Supports Git-based workflows, allowing users to define infrastructure as code and manage it through version control.</li>
+<li><strong>GitOps Principles:</strong> Supports GitOps-based workflows, allowing users to define infrastructure in Infrahub and manage it through version control.</li>
 <li><strong>Extensibility:</strong> Modular architecture enables support for additional artifact types, expanded Infrahub query capabilities, and even integration with any other system that generate manifests.</li>
 <li><strong>Scalability and Robustness:</strong> Efficient handling of concurrent sync operations with robust error handling.</li>
 <li><strong>Separation of Concerns:</strong> Clear boundaries between domain logic, external system integration, and Kubernetes API interactions.</li>
@@ -34,7 +34,7 @@
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="container-diagram-c2">Container Diagram (C2)<a href="#container-diagram-c2" class="hash-link" aria-label="Direct link to Container Diagram (C2)" title="Direct link to Container Diagram (C2)">​</a></h3>
 <p><img decoding="async" loading="lazy" alt="Container Diagram" src="/vidra/assets/images/C2.drawio-df5b7198a068905d029d51af9378ace5.png" width="1367" height="940" class="img_ev3q"></p>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="component-diagram-c3">Component Diagram (C3)<a href="#component-diagram-c3" class="hash-link" aria-label="Direct link to Component Diagram (C3)" title="Direct link to Component Diagram (C3)">​</a></h3>
-<p><img decoding="async" loading="lazy" alt="Component Diagram" src="/vidra/assets/images/C3.drawio-07aafb1cc113b112ee0027661ba5c0b4.png" width="1394" height="1060" class="img_ev3q"></p>
+<p><img decoding="async" loading="lazy" alt="Component Diagram" src="/vidra/assets/images/C3.drawio-d1dd6fcaa61d192ea8dc768dc2bd93ee.png" width="1406" height="956" class="img_ev3q"></p>
 <h2 class="anchor anchorWithStickyNavbar_LWe7" id="high-level-code-structure-c4">High-Level Code Structure (C4)<a href="#high-level-code-structure-c4" class="hash-link" aria-label="Direct link to High-Level Code Structure (C4)" title="Direct link to High-Level Code Structure (C4)">​</a></h2>
 <p>Vidra is structured into four primary layers, each implemented as a distinct Go package to promote a clean, maintainable architecture:</p>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="21-api-layer">2.1 API Layer<a href="#21-api-layer" class="hash-link" aria-label="Direct link to 2.1 API Layer" title="Direct link to 2.1 API Layer">​</a></h3>
@@ -43,13 +43,10 @@
 <li><strong>InfrahubSync CRD:</strong> The primary entry point for configuring Vidra, allowing users to specify synchronization parameters.</li>
 <li><strong>VidraResource CRD:</strong> Defines the structure for Kubernetes resources managed by Vidra, enabling declarative management of cluster artifacts.</li>
 </ul>
-<p>The API Layer can be found <img decoding="async" loading="lazy" src="https://github.com/infrahub-operator/vidra/tree/main/api/v1alpha1" alt="here" class="img_ev3q"></p>
+<p>The API Layer can be found <a href="https://github.com/infrahub-operator/vidra/tree/main/api/v1alpha1" target="_blank" rel="noopener noreferrer">here</a></p>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="22-domain-layer">2.2 Domain Layer<a href="#22-domain-layer" class="hash-link" aria-label="Direct link to 2.2 Domain Layer" title="Direct link to 2.2 Domain Layer">​</a></h3>
-<p>The <strong>Domain Layer</strong> defines Vidra’s core business entities and domain interfaces. This layer is intentionally minimal, focusing primarily on the <code>InfrahubSync</code> and <code>VidraResource</code> custom resources, which represent the essential concepts and behaviors within Vidra.</p>
-<ul>
-<li><strong>InfrahubSync:</strong> Captures synchronization intent, including parameters such as target branches, artifacts, and scheduling.</li>
-<li><strong>VidraResource:</strong> Represents Kubernetes resources (e.g., ConfigMaps, Secrets, Deployments) managed by Vidra, typically created based on retrieved Infrahub artifacts.</li>
-</ul>
+<p>The <strong>Domain Layer</strong> defines Vidra’s core business entities and domain interfaces. This layer is intentionally minimal, focusing all important entities primarily in the <code>InfrahubSync</code> and <code>VidraResource</code> custom resources, which represent the essential concepts and behaviors within Vidra.</p>
+<p>The only entitie in domain layer so far is <code>Artifact</code>, which represents the Infrahub artifact that is downloaded and applied to the cluster. It contains metadata about the artifact, such as its ID, name, and checksum.</p>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="23-controller-layer">2.3 Controller Layer<a href="#23-controller-layer" class="hash-link" aria-label="Direct link to 2.3 Controller Layer" title="Direct link to 2.3 Controller Layer">​</a></h3>
 <p>The <strong>Controller Layer</strong> implements the reconciliation logic that drives Vidra’s synchronization workflows. Controllers monitor changes to custom resources and orchestrate the necessary actions to align cluster state with the desired configuration.</p>
 <ul>
