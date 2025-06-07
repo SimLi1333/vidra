@@ -7,7 +7,7 @@ sidebar_position: 17
 
 ## Context and Problem Statement
 
-We needed to decide whether to maintain separate repositories for Vidra, the CLI, and the documentation, or to combine them into a single repository.
+While moving the code from Ost gitlab to gitHub, we needed to decide whether to maintain separate repositories for Vidra, the CLI, and the documentation, or to combine them into a single repository.
 
 While multiple repositories can provide isolation, they introduce complexity in versioning and coordination. Our use case requires tight coupling between the CLI and Vidra, and consistent documentation updates alongside releases.
 

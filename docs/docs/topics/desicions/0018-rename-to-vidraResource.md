@@ -30,12 +30,11 @@ This was a not considered during planning. We initially implemented the manifest
 
 ## Decision Outcome
 
-**Chosen option: Move manifest download to InfrahubSync, refactor CRD, and rename resource.**  
-This approach cleanly separates concerns, simplifies the CRD, aligns with GitOps principles, and sets the foundation for supporting additional external systems.
+**Chosen option: Move manifest download to InfrahubSync, refactor CRD, and rename resource**, because it provides a cleaner separation of concerns, simplifies the CRD, and aligns with Kubernetes best practices by storing the desired state in the `spec`. This approach also allows for future extensibility by enabling the creation of additional sync controllers for other external systems.  
 
 ### Consequences
 
 * Good, because it improves maintainability, clarity, and separation of concerns, and allows for future extensibility.
 * Good, because it aligns with Kubernetes best practices by storing the desired state in the `spec` and removing unnecessary duplication.
 * Good, because it enables the creation of additional sync controllers for other external systems in the future, increasing extensibility.
-* Bad, because it requires changes to the CRD, controller logic and tests, includes renaming a CRD in the Operator SDK, which is not intended by the SDK.
+* Bad, because it requires changes to the CRD, controller logic and tests, includes renaming a CRD in the Operator SDK, which is not intended by the Operator SDK.
