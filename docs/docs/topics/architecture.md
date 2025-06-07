@@ -62,7 +62,7 @@ The only entitie in domain layer so far is `Artifact`, which represents the Infr
 
 ### 2.3 Controller Layer
 
-The **Controller Layer** implements the reconciliation logic that drives Vidra’s synchronization workflows. Controllers monitor changes to custom resources and orchestrate the necessary actions to align cluster state with the desired configuration.
+The **Controller Layer** implements the reconciliation logic that drives Vidra’s continuous delivery workflows. Controllers monitor changes to custom resources and orchestrate the necessary actions to align cluster state with the desired state. Controller implements the use-cases of the custom resources and orchestrates the necessary actions to align cluster state with the desired configuration.
 
 - **InfrahubSyncReconciler:** Handles all tasks related to Infrahub, including authentication, querying, artifact retrieval, and triggering downstream synchronization.
 - **VidraResourceReconciler:** Manages the lifecycle of Kubernetes resources, applying, updating, or deleting manifests as needed.
@@ -73,6 +73,7 @@ Each controller is dedicated to a specific CRD, ensuring clear separation of con
 
 The **Adapter Layer** manages integrations with external systems, such as Infrahub and Kubernetes clusters. It handles API communication, artifact processing, and abstracts external dependencies behind interfaces, facilitating testing and future expansion.
 
+While Kubernetes is not a direct external system, we put the actions done by additional go clients (like talking to other clusters or handling eventbased reconciliation) into the adapter layer, as they are not part of the core controller logic.
 
 This layered approach enforces separation of concerns, simplifies testing, and enables future extensibility. Dependencies between layers are managed through interfaces, allowing for easy mocking and unit testing. Importantly, dependencies only go inward—outer layers depend on inner layers, but not vice versa—ensuring a clean, maintainable architecture.
 
@@ -92,9 +93,10 @@ You can explore the implementation of these three layers (Domain, Controller, Ad
    - Retrieves User and Password from the Secret with annotation `infrahub-api-url: <infrahub-api-url>`.
    - Authenticates to Infrahub using configured credentials.
    - Executes the specified query (in ConfigMap `vidra-config`) on Infrahub and retrieves metadata about the resulting artifact.  
-   - Downloads the artifacts (e.g., a Kubernetes manifest bundle).
+   - Downloads the artifacts (e.g., a Kubernetes manifest bundle) if the checksum of the Artifact did change.
    - Applies the artifacts and its manifests each to a `VidraResource` with the artifact ID as name.
    - Updates resource status to reflect success or failure of the sync process.
+   - Adds itself to a time-based reconcile queue, ensuring periodic checks for updates or changes to the InfrahubSync resource.
 
 4. **Event Trigger:** The Kubernetes API server notifies the vidraResource controller of the resource creation or update.
 
@@ -102,8 +104,9 @@ You can explore the implementation of these three layers (Domain, Controller, Ad
    - Monitors `VidraResource` CR's created by the InfrahubSync controller.
    - Applies the manifests to the destination Kubernetes cluster (can be a different cluster), ensuring the desired state matches the actual state.
    - Creates lists and finalizers of the managed resources, allowing for easy tracking, management and deletion of resources or VidraResources.
-   - Applies event based reconciliation, where changes to the managed resources triggers reconciliation or adds a timebased reconcile interval.
+   - Applies event based reconciliation if configured to do so, where changes to the managed resources triggers reconciliation or adds a timebased reconcile interval.
    - Updates resource status to reflect success or failure of the application process.
+   - Adds itself to a time-based reconcile queue, ensuring periodic checks for updates or changes to the VidraResource resource.
 
    ![Vidra Data Flow](../../static/img/data-flow.drawio.png)
 ---
@@ -127,7 +130,7 @@ Vidra implements comprehensive error handling strategies:
 - Transient failures during API calls trigger retries with exponential backoff.
 - Validation errors halt reconciliation with clear status messages which are statet in the resource status.
 - Unexpected errors are logged and surfaced in resource conditions, enabling operators to diagnose issues.
-- Concurrency controls prevent conflicting sync operations from corrupting cluster state.
+- Concurrency controls (mutex) prevent conflicting go-client creation.
 
 ---
 
@@ -136,7 +139,7 @@ Vidra implements comprehensive error handling strategies:
 The modular architecture of Vidra allows:
 
 - Adoption of additional artifact types, enabling reconciliation of any Kubernetes resource—including custom resources (CRs)
-- Addition of new Infrahub query capabilities and authentication methods.
-- Enhanced observability via metrics and tracing.
+- Addition of new Infrahub query capabilities.
+- Integration with other systems (e.g., Helm, GitOps) through the Adapter Layer.
 
 This design ensures Vidra can evolve to meet growing infrastructure automation demands and diverse deployment scenarios.

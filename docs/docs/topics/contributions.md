@@ -14,7 +14,7 @@ Contributions to **Vidra Operator** are welcome and appreciated! This guide will
 
 This project follows the [Kubernetes Operator pattern](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/).
 
-It uses **controllers** that implement a **Reconcile** function. The Reconcile function ensures the actual cluster state moves toward the desired state defined in Kubernetes Custom Resources.
+It uses **controllers** that implement a **Reconcile** function. The Reconcile function ensures the actual cluster state moves toward the desired state defined in Kubernetes Custom Resources. The Recooncile function is called with the Custom Resource (CR) as input, which did trigger the Reconcile function.
 
 ---
 

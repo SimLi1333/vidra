@@ -16,7 +16,7 @@ To develop and test the **Vidra Operator** locally, create a Kubernetes cluster 
 ## Infrahub
 
 ### Installation
-To install Infrahub in your local cluster, follow the [Infrahub installation guide](https://docs.infrahub.app/guides/installation). This will set up the necessary components for Vidra to interact with Infrahub.
+To install Infrahub in your local cluster, follow the [Infrahub installation guide](https://docs.infrahub.app/guides/installation).
 
 
 <Admonition type="note" title="Infrahub Installation">
@@ -26,10 +26,10 @@ For production deployments, consider using the [Helm chart Repo](https://github.
 
 ### Configuration
 To configure Infrahub for Vidra, you need to make sure infrahub generates the necessary artifacts with valid kubernetes manifests. 
-You can get an idea of how to configure Infrahub for Vidra by looking at the our demo repository [infrahub-operator/vidra-demo](https://github.ch/infrahub-operator/demo).
+You can get an idea of how to configure Infrahub for Vidra by looking at our guide for preparing that infrahub for Vidra: [Preparing Infrahub for Vidra](../guides/infrahub).
 
 ### KubeVirt
-If you like your cluster to be able to run virtual machines, you can install [KubeVirt](https://kubevirt.io/). This is not required for Vidra, but it is a nice addition to be able to create and manage Virtual machines out of Infrahub.
+If you like your cluster to be able to run virtual machines, you can install [KubeVirt](https://kubevirt.io/). This is not required for Vidra, but it is a nice addition to be able to create and manage virtual machines out of Infrahub.
 
 <Admonition type="note" title="KubeVirt Installation">
 We tested Infrahub and Vidra with [KubeVirt on Talos Linux cluster](https://www.talos.dev/v1.10/advanced/install-kubevirt/).  
