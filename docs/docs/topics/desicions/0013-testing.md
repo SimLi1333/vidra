@@ -29,8 +29,6 @@ Every real project needs to be tested. There are multiple testing libraries and 
 
 To facilitate testing, we used `envtest` to provide a real Kubernetes API server environment. For dependency injection and mocking, we used `mokgen` and custom-written mocks, especially for the adapter layer. The factory pattern was applied in the multicluster and event-based Kubernetes code to enable flexible test setups.
 
-### End-to-End Testing
-
 End-to-end (E2E) tests are performed using Cert-Manager and Prometheus. These tests deploy the Vidra Operator from the container registry into a real Kubernetes cluster, then monitor the operator's startup and behavior. This approach ensures that the operator works as expected in a production-like environment, validating integration with external components and overall system reliability.
 
 ### Consequences

@@ -67,4 +67,4 @@ To upgrade, run the `go install` command again with the latest version, or downl
 
 ---
 
-For more usage instructions, see the [Vidra CLI documentation](./usage.mdx).
+For more usage instructions, see the [Vidra CLI documentation](./usage).

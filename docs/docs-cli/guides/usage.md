@@ -36,7 +36,7 @@ Each command has the same set of operations:
 
 ## Examples
 ```sh
-# Apply a kubeconfig secret for a cluster
+# Apply a kubeconfig secret for a cluster reading from your kubeconfig file
 vidra-cli cluster apply admin@ba-iac -n secrets
 
 # Delete a kubeconfig secret for a cluster
@@ -49,7 +49,7 @@ vidra-cli cluster get --name my-cluster
 vidra-cli cluster list
 ```
  <Admonition type="note" title="Note">
- Runing vidra-cli cluster apply will prompt you with the available cluster contexts in your kubeconfig file. You can select one of them to create a kubeconfig secret for that cluster.
+ Runing `vidra-cli cluster apply` (uncomplete command) will prompt you with the available cluster contexts in your kubeconfig file. You can select one of them to create a kubeconfig secret for that cluster.
  </Admonition>
 
 ```sh
