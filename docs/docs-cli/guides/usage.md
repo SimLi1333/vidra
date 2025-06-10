@@ -54,11 +54,14 @@ vidra-cli cluster list
 
 ```sh
 # Apply an Infrahub credentials secret
-vidra-cli credentials apply --url https://infrahub.example.com --username admin --password secret
+vidra-cli credentials apply https://infrahub.example.com --username admin --password secret
+
 # Delete an Infrahub credentials secret by URL
-vidra-cli credentials delete --url https://infrahub.example.com
+vidra-cli credentials delete https://infrahub.example.com
+
 # Get an Infrahub credentials secret by URL
-vidra-cli credentials get --url https://infrahub.example.com
+vidra-cli credentials get https://infrahub.example.com
+
 # List all Infrahub credentials secrets
 vidra-cli credentials list
 ```
@@ -76,8 +79,8 @@ vidra-cli config get -n default
 vidra-cli config list 
 ```
 
+Apply an InfrahubSync resource
 ```sh
-# Apply an InfrahubSync resource
  vidra-cli infrahubsync apply "http://198.19.248.5:8000" -a Webserver_Manifest -b main2 -d 2025-04-09T00:00:00Z -s https://kubernetes.default.svc -N default -e
  ```
  <Admonition type="note" title="Note">
