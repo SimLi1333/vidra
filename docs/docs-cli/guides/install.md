@@ -31,8 +31,8 @@ Check the [Vidra releases page](https://github.com/your-org/vidra/releases) for 
 ```sh
 # Example for Linux/macOS
 curl -LO https://github.com/infrahub-operator/vidra/releases/download/vX.Y.Z/vidra-cli
-chmod +x vidra
-sudo mv vidra /usr/local/bin/
+chmod +x vidra-cli
+sudo mv vidra-cli /usr/local/bin/
 ```
 
 Replace `vX.Y.Z` with the latest release version.
