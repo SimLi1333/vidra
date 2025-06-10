@@ -54,13 +54,13 @@ vidra-cli cluster list
 
 ```sh
 # Apply an Infrahub credentials secret
-vidra-cli credentials apply --url https://infrahub.example.com --username admin --password secret
+vidra-cli credentials apply https://infrahub.example.com --username admin --password secret
 
 # Delete an Infrahub credentials secret by URL
-vidra-cli credentials delete --url https://infrahub.example.com
+vidra-cli credentials delete https://infrahub.example.com
 
 # Get an Infrahub credentials secret by URL
-vidra-cli credentials get --url https://infrahub.example.com
+vidra-cli credentials get https://infrahub.example.com
 
 # List all Infrahub credentials secrets
 vidra-cli credentials list
