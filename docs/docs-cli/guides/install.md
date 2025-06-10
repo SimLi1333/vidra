@@ -49,10 +49,10 @@ You should see the help output for the Vidra CLI.
 
 # Generate ZSH completion script for Vidra CLI
 ```bash
-vidra-cli completion zsh > _vidra
+vidra-cli completion zsh > _vidra-cli
 
 mkdir -p ~/.zsh/completions
-mv _vidra ~/.zsh/completions/
+mv _vidra-cli ~/.zsh/completions/
 
 fpath+=~/.zsh/completions
 autoload -Uz compinit
