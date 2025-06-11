@@ -23,15 +23,13 @@ task init
 
 This single command spins up a local [kind](https://kind.sigs.k8s.io/) Kubernetes cluster and installs Infrahub, Vidra Operator, Vidra CLI, and a self-service frontend. No Docker, no Kubernetes setup—just code.
 
-### Step 2: Check Your Cluster
-
 Verify that Vidra Operator is running:
 
 ```bash
 kubectl get pod -n vidra-system
 ```
 
-::: note
+:::note
 
 > Heads up: Shell completion and the `k` alias might not work in Codespaces, so use the full `kubectl` command.
 
@@ -41,8 +39,8 @@ kubectl get pod -n vidra-system
 
 - Open the **Ports** tab in Codespaces.
 - Click the globe icon for port `8000` (Infrahub) and `5001` (Frontend).
-- In the frontend, submit a webserver request. This action creates a proposed change in Infrahub.
-- Log in to Infrahub (`admin` / `infrahub`), review, and merge the change. Artifacts are generated and ready for deployment.
+- In the frontend, submit a webserver request like `test/test`. This action creates a proposed change in Infrahub.
+- Log in to Infrahub (`admin` / `infrahub`), review, and merge the proposed change. Artifacts are generated and ready for deployment.
 
 ### Step 4: Sync with Vidra
 
@@ -66,8 +64,14 @@ Want to see what Vidra is managing? Try:
 
 ```bash
 kubectl get infrahubsyncs.infrahub.operators.com -o yaml
+````
+```bash
 kubectl get vidraresources.infrahub.operators.com
+```
+```bash
 kubectl get vidraresources.infrahub.operators.com -o yaml
+```
+```bash
 kubectl get <kind> <name> -n <namespace>
 ```
 
@@ -75,6 +79,13 @@ Or launch [k9s](https://k9scli.io/) for a terminal UI:
 
 ```bash
 k9s
+```
+
+### Step 6: Forward to the Webserver
+To access the deployed webserver, forward the service port:
+
+```bash
+kubectl port-forward svc/test 8080:80 -n test
 ```
 
 List all available tasks with:
