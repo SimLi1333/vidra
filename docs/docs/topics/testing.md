@@ -57,7 +57,7 @@ All `VidraResource` reconciliation tests are executed twice: once applying the r
 
 The k8s adapter packages are again tested using `envtest`, but with a focus on isolated logic rather than full controller behavior. This allows us to verify that the adapter functions correctly interact with the Kubernetes API, such as creating a second client for interacting with a different cluster.
 
-The event-based feature is tested by moking the callback functions that are called when a resource is created or updated. This allows us to verify that the controller correctly handles events and updates the `VidraResource` status accordingly.
+The event-driven functionality is tested by mocking the callback functions triggered when a resource is created or updated. This approach allows us to verify that the controller responds appropriately to events and updates the `VidraResource` status as expected. Notably, this event-based test runs successfully in local environments but is currently disabled in CI due to inconsistent behavior. To prevent failures in CI, the test is conditionally skipped when the `GITHUB_ACTIONS` environment variable is set (`if syscall.Getenv("GITHUB_ACTIONS") == "true": skip`).
 
 ### End to end Tests
 
