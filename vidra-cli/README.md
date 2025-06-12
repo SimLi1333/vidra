@@ -1,15 +1,15 @@
 # install from local source code
 ```bash
-go build -o vidra .
+go build -o vidra-cli .
 
-mv vidra "$(go env GOPATH)/bin/"
+mv vidra-cli "$(go env GOPATH)/bin/"
 
-vidra --help
+vidra-cli --help
 ```
 
 # Generate ZSH completion script for Vidra CLI
 ```bash
-vidra completion zsh > _vidra
+vidra-cli completion zsh > _vidra
 
 mkdir -p ~/.zsh/completions
 mv _vidra ~/.zsh/completions/

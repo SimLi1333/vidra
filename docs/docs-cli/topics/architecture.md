@@ -26,3 +26,26 @@ This separation ensures a modular, testable, and maintainable CLI codebase.
 <Admonition type="note" title="Note">
 You can explore the implementation of these layers in the [vidra-cli directory](https://github.com/infrahub-operator/vidra/tree/main/vidra-cli).
 </Admonition>
+
+## kubecli Adapter
+The `kubecli` adapter provides a set of reusable functions for interacting with Kubernetes clusters. It abstracts the complexity of Kubernetes API calls, allowing reusable operations across all different commands. This adapter is designed to be used by the service layer, providing a consistent interface for Kubernetes operations.
+
+## Resource Naming Strategy
+
+To generate meaningful yet unique resource names, the CLI uses hashing of unique input values. For example, when creating a kubeconfig for a cluster, the resource name is derived as follows:
+
+```
+cluster-kubeconfig-{hash of cluster name}
+```
+
+This approach ensures that resource names are both descriptive and collision-resistant, while avoiding exposure of sensitive or overly long identifiers.
+
+## Error Handling
+Each cli command has its own error handler that is responsible for formatting and returning errors in a consistent manner. This allows for better user experience and easier debugging.
+
+Like if a cluster secet apply fails because the command is incomplete, the error handler will also prompt the user with the available cluster contexts in their kubeconfig file, allowing them to select one of them to create a kubeconfig secret for that cluster.
+
+Default timeouts for all commands are set to 1 minute using a context Deadline. This ensures that commands do not hang indefinitely and provides a consistent timeout behavior across the CLI.
+
+```
+
