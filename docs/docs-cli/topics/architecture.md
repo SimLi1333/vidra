@@ -47,5 +47,8 @@ Like if a cluster secet apply fails because the command is incomplete, the error
 
 Default timeouts for all commands are set to 1 minute using a context Deadline. This ensures that commands do not hang indefinitely and provides a consistent timeout behavior across the CLI.
 
-```
+## Function reuse
+The CLI is designed to maximize function reuse across different commands. For example, the `kubecli` adapter provides functions for applying, deleting, and retrieving Kubernetes secrets, which are used by multiple commands. This reduces code duplication and ensures consistency in how Kubernetes operations are performed.
+
+Additionally it ads maintainability and testability, as changes to the underlying logic only need to be made in one place.
 
