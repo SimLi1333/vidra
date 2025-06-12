@@ -6,7 +6,7 @@ import Admonition from '@theme/Admonition';
 
 # Comparison to ArgoCD and Flux
 
-Vidra is just one of several open-source tools designed to manage and deploy Kubernetes resources. This comparison provides a concise overview of the key features and philosophies behind ArgoCD and Flux, highlighting where Vidra fits in and what unique value it offers to users.
+Vidra is one of several open-source tools designed to manage and deploy Kubernetes resources. This comparison provides a concise overview of the key features and philosophies behind ArgoCD and Flux, highlighting where Vidra fits in and what unique value it offers to users.
 
 ## ArgoCD
 
@@ -19,7 +19,7 @@ Vidra is just one of several open-source tools designed to manage and deploy Kub
 - **Custom resource sync**: Can sync not only Helm charts and Kustomize, but also plain manifests and custom plugins.
 
 **Limitations compared to Vidra**:
-- Hard requirement to sync with a Git repository, which does not sute our use case. 
+- Hard requirement to sync with a Git repository, which does not suit our use case.
 - GitOps workflow is tightly coupled to Git — limited flexibility for non-Git workflows or programmatic triggers.
 - Integrating with systems outside of Git (e.g., artifact registries, APIs) often requires additional tooling.
 
@@ -41,13 +41,12 @@ Vidra is just one of several open-source tools designed to manage and deploy Kub
 
 **Vidra** is designed as a lightweight deployment orchestrator for Kubernetes that emphasizes pluggability, programmatic integration, and simplicity.
 
-- **No knowladge about CR required**: Vidra can be managed over the Vidra CLI, no knowladge reqired about the CR.
+- **No knowledge about CR required**: Vidra can be managed over the Vidra CLI; no knowledge required about the CR.
 - **Pluggable execution engine**: Custom workflows and deployment logic can be added without rebuilding the core system.
 - **Lightweight footprint**: Minimal operational overhead, suitable for embedding into broader automation frameworks.
 
 **Limitations**:
 - Only supports Infrahub as of today.
-
 
 **Unique strengths**:
 - Better suited for scenarios where Git is not the central source of truth.
@@ -55,5 +54,4 @@ Vidra is just one of several open-source tools designed to manage and deploy Kub
 
 ---
 
-Vidra is not a direct replacement for ArgoCD or Flux, especially as it is the only one conecting to Infrahub. Instead, it complements them by providing a lightweight, pluggable solution for users who need more flexibility in managing Kubernetes resources without being tied to a Git-centric workflow.
-
+Vidra is not a direct replacement for ArgoCD or Flux, especially as it is the only one connecting to Infrahub. Instead, it complements them by providing a lightweight, pluggable solution for users who need more flexibility in managing Kubernetes resources without being tied to a Git-centric workflow.

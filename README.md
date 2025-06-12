@@ -7,17 +7,18 @@
 ![GitHub](https://img.shields.io/github/license/infrahub-operator/vidra)
 <img src=".github/logo.png" alt="Nornir Conditional Runner Logo" height="200" align="right">
 
-A continuous delivery Kubernetes operator for Infrahub
+A continuous deployment Kubernetes operator for [Infrahub](https://github.com/opsmill/infrahub) 
 
-`Vidra` is a Kubernetes operator designed to automate the deployment and lifecycle management of application and resources defined in Infrahub on Kubernetes clusters. It streamlines continuous delivery workflows, reduces operational overhead, and simplifies the management of complex application or virtual machine deployments.
+`Vidra` is a Kubernetes operator designed to automate the deployment and lifecycle management of k8s resources defined in [Infrahub](https://github.com/opsmill/infrahub) on Kubernetes clusters. It streamlines continuous deployment workflows, reduces operational overhead, and simplifies the management of complex k8s deployments.
 
-It aims to automate syncing infrastructure artifacts from Infrahub into Kubernetes CRDs. And reconciles them with the state of the cluster, enabling continuous delivery workflows.
+It automates syncing infrastructure artifacts from Infrahub into Kubernetes CRs. And reconciles the synced manifest with the state of the cluster, enabling continuous deployment workflows.
 
+## Getting Started
 To get started, please refer to the [installation guide](https://infrahub-operator.github.io/vidra/guides/install) and explore the [usage guide](https://infrahub-operator.github.io/vidra/guides/usage) and [API references](https://infrahub-operator.github.io/vidra/api-references/) for detailed information on how to use Vidra effectively.
 
-## Documentation
-
 - [Official Documentation](https://infrahub-operator.github.io/vidra/)
+- [Codespaces Demo](https://github.com/infrahub-operator/infrahub-vidra-demo)
+
 
 ## Contributing
 

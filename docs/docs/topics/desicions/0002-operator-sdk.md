@@ -36,7 +36,7 @@ Developing Kubernetes operators is simplified by using a dedicated SDK. An SDK a
 ### Consequences
 
 * Good, because it provides **flexibility, better visibility**, and aligns with **ownership and management patterns** in Kubernetes.
-* Bad, because not all teammembers are familiar with Go, but since there is more to this projet than just the operator, we can learn it together and split the work between team members with different language skills.
+* Bad, because not all team members are familiar with Go, but since there is more to this projet than just the operator, we can learn it together and split the work between team members with different language skills.
 
 ## Links
 

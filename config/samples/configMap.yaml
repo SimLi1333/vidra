@@ -7,6 +7,6 @@ metadata:
   # namespace: your-namespace
 data:
   requeueSyncAfter: "1m" # How often Vidra syncs with Infrahub. (if you do not want to use the default value of 1 minute)
-  requeueRecourcesAfter: "1m" # How often managed resources are being reconciled. (if you do not want to use the default value of 10 minutes)
+  requeueResourcesAfter: "1m" # How often managed resources are being reconciled. (if you do not want to use the default value of 10 minutes)
   queryName: "ArtifactIDs" # Infrahub graphQL query name for geting Artifact IDs. (if you do not want to use the default value of "ArtifactIDs")
   eventBasedReconcile: "true" # Enable event-based reconciliation. (default is false)

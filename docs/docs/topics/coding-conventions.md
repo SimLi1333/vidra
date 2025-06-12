@@ -22,12 +22,12 @@ We follow the [**Effective Go**](https://golang.org/doc/effective_go.html) guide
 
 ### Examples
 
-| Context                | Example                     |
-|------------------------|-----------------------------|
-| Variable name          | `infrahubSync`         |
-| Exported function name | `GetSortedListByLabel()` |
-| Exported type          | `DynamicMulticlusterFactory`               |
-| Unexported function    | `processArtifacts()`       |
+| Context                | Example                      |
+|------------------------|------------------------------|
+| Variable name          | `infrahubSync`               |
+| Exported function name | `GetSortedListByLabel()`     |
+| Exported type          | `DynamicMulticlusterFactory` |
+| Unexported function    | `processArtifacts()`         |
 
 ---
 
@@ -43,7 +43,7 @@ All code must be formatted using the official Go formatting tool:
 
 ## Linting
 
-We use [`golangci-lint`](https://golangci-lint.run/) as the primary linting tool. It aggregates multiple linters including `staticcheck`, `govet`, `gocritic`, and others.
+We use [`golangci-lint`](https://golangci-lint.run/) as the primary linting tool. It aggregates multiple linters, including `staticcheck`, `govet`, `gocritic`, and others.
 
 ### Usage
 
@@ -56,24 +56,26 @@ make lint
 ---
 
 ## Architecture
-Use Interfaces to define behavior and decouple components. This allows for easier testing and mocking.
+
+Use interfaces to define behavior and decouple components. This allows for easier testing and mocking.
+
 ### Example
 
 ```go
-//Domain Layer
+// Domain Layer
 type DynamicMulticlusterFactory interface {
-	GetCachedClientFor(ctx context.Context, serverURL string, k8sClient client.Client) (client.Client, error)
+  GetCachedClientFor(ctx context.Context, serverURL string, k8sClient client.Client) (client.Client, error)
 }
 // Adapter Layer
 type DynamicMulticlusterFactory struct {
-	mu      sync.Mutex
-	clients map[string]client.Client
+  mu      sync.Mutex
+  clients map[string]client.Client
 }
 
 func NewDynamicMulticlusterFactory() *DynamicMulticlusterFactory {
-	return &DynamicMulticlusterFactory{
-		clients: make(map[string]client.Client),
-	}
+  return &DynamicMulticlusterFactory{
+    clients: make(map[string]client.Client),
+  }
 }
 
 func (f *DynamicMulticlusterFactory) GetCachedClientFor(ctx context.Context, serverURL string, k8sClient client.Client) (client.Client, error) {

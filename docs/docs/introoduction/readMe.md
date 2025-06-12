@@ -5,10 +5,9 @@ title: Introduction
 position: 1
 ---
 
-## Vidra a Operator for Infrahub
+## Vidra: A K8s Operator for Infrahub
 
-
-**Vidra** is a Kubernetes operator that automates syncing infrastructure artifacts from [Infrahub](https://www.opsmill.com) into Kubernetes. And reconciles them with the state of the cluster, enabling continuous delivery workflows.
+**Vidra** is a Kubernetes operator that automates syncing infrastructure artifacts from [Infrahub](https://www.opsmill.com) into Kubernetes and reconciles them with the state of the cluster, enabling continuous delivery workflows.
 
 To get started, please refer to the [installation guide](../guides/install.md) and explore the [CRD reference](../api-references/api-references.md) for detailed information on how to use Vidra effectively.
 

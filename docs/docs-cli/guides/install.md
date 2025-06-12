@@ -6,7 +6,7 @@ import Admonition from '@theme/Admonition';
 
 # Installing the Vidra CLI
 
-You can install the Vidra CLI tool directly using Go, or by downloading a pre-built binary.
+You can install the Vidra CLI tool directly using Go or by downloading a pre-built binary.
 
 ## Prerequisites
 
@@ -47,7 +47,8 @@ vidra-cli --help
 
 You should see the help output for the Vidra CLI.
 
-# Generate ZSH completion script for Vidra CLI
+## Generate ZSH Completion Script for Vidra CLI
+
 ```bash
 vidra-cli completion zsh > _vidra-cli
 

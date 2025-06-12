@@ -53,7 +53,7 @@ var _ = Describe("DynamicWatcher", func() {
 			obj := &unstructured.Unstructured{}
 			obj.SetGroupVersionKind(gvr.GroupVersion().WithKind("Foo"))
 			obj.SetName("foo1")
-			obj.SetLabels(map[string]string{"managed-by": "vida"})
+			obj.SetLabels(map[string]string{"managed-by": "vidra"})
 
 			watcher := watch.NewFake()
 			client.PrependWatchReactor("foos", func(action k8stesting.Action) (bool, watch.Interface, error) {
@@ -92,7 +92,7 @@ var _ = Describe("DynamicWatcher", func() {
 			obj := &unstructured.Unstructured{}
 			obj.SetGroupVersionKind(gvr.GroupVersion().WithKind("Foo"))
 			obj.SetName("tombstoned-foo")
-			obj.SetLabels(map[string]string{"managed-by": "vida"})
+			obj.SetLabels(map[string]string{"managed-by": "vidra"})
 
 			tombstone := cache.DeletedFinalStateUnknown{
 				Key: "test/tombstoned-foo",
@@ -147,12 +147,12 @@ var _ = Describe("DynamicWatcher", func() {
 			oldObj := &unstructured.Unstructured{}
 			oldObj.SetGeneration(1)
 			oldObj.SetName("gen-change-foo")
-			oldObj.SetLabels(map[string]string{"managed-by": "vida"})
+			oldObj.SetLabels(map[string]string{"managed-by": "vidra"})
 
 			newObj := &unstructured.Unstructured{}
 			newObj.SetGeneration(2)
 			newObj.SetName("gen-change-foo")
-			newObj.SetLabels(map[string]string{"managed-by": "vida"})
+			newObj.SetLabels(map[string]string{"managed-by": "vidra"})
 
 			cb.On("Callback", newObj, gvr).Once()
 
@@ -168,7 +168,7 @@ var _ = Describe("DynamicWatcher", func() {
 			obj := &unstructured.Unstructured{}
 			obj.SetGeneration(1)
 			obj.SetName("same-gen-foo")
-			obj.SetLabels(map[string]string{"managed-by": "vida"})
+			obj.SetLabels(map[string]string{"managed-by": "vidra"})
 
 			handler := getEventHandler(gvr, cb.Callback)
 			handler.UpdateFunc(obj, obj)
@@ -195,7 +195,7 @@ var _ = Describe("DynamicWatcher", func() {
 
 			deleted := &unstructured.Unstructured{}
 			deleted.SetName("my-resource")
-			deleted.SetLabels(map[string]string{"managed-by": "vida"})
+			deleted.SetLabels(map[string]string{"managed-by": "vidra"})
 
 			cb.On("Callback", deleted, gvr).Once()
 
@@ -210,7 +210,7 @@ var _ = Describe("DynamicWatcher", func() {
 
 			obj := &unstructured.Unstructured{}
 			obj.SetName("tombstoned-foo")
-			obj.SetLabels(map[string]string{"managed-by": "vida"})
+			obj.SetLabels(map[string]string{"managed-by": "vidra"})
 
 			tombstone := cache.DeletedFinalStateUnknown{
 				Key: "test/tombstoned-foo",

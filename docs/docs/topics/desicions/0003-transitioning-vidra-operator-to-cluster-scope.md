@@ -7,14 +7,14 @@ sidebar_position: 2
 
 ## Context and Problem Statement
 
-We needed to decide whether the Controller should be namespace-scoped or cluster-scoped.
+We needed to decide whether the controller should be namespace-scoped or cluster-scoped.
 
-While namespace-scoped Operators offer isolation, they are limited as they cannot take ownership of resources in other namespaces. Our use case requires managing resources across multiple namespaces, and leveraging ownership could improve resource lifecycle management.
+While namespace-scoped operators offer isolation, they are limited because they cannot take ownership of resources in other namespaces. Our use case requires managing resources across multiple namespaces, and leveraging ownership could improve resource lifecycle management.
 
 ## Considered Options
 
 * **Namespace-scoped controller and CRDs**  
-  Limited to managing resources within a single namespace, may require additional logic to clean up resources using finalizers.
+  Limited to managing resources within a single namespace; may require additional logic to clean up resources using finalizers.
 
 * **Cluster-scoped controller and CRD**  
   Can manage resources across all namespaces and utilize Kubernetes ownership features effectively.

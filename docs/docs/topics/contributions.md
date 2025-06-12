@@ -14,7 +14,7 @@ Contributions to **Vidra Operator** are welcome and appreciated! This guide will
 
 This project follows the [Kubernetes Operator pattern](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/).
 
-It uses **controllers** that implement a **Reconcile** function. The Reconcile function ensures the actual cluster state moves toward the desired state defined in Kubernetes Custom Resources. The Recooncile function is called with the Custom Resource (CR) as input, which did trigger the Reconcile function.
+It uses **controllers** that implement a **Reconcile** function. The Reconcile function ensures the actual cluster state moves toward the desired state defined in Kubernetes Custom Resources. The Reconcile function is called with the Custom Resource (CR) as input, which triggered the Reconcile function.
 
 ---
 
@@ -26,6 +26,10 @@ You’ll need access to a **Kubernetes cluster** for development and testing. Th
 We recommend [Kind](https://kind.sigs.k8s.io/) or [Minikube](https://minikube.sigs.k8s.io/) for setting up a local development cluster.
 </Admonition>
 For help setting up a local cluster, refer to the [Cluster Setup](./deploy) guide.
+
+<Admonition type="note" title="Note">
+You can also use the [infrahub-vidra-demo](https://github.com/infrahub-operator/infrahub-vidra-demo) repository's devcontainer to run the operator and a Kind cluster in a containerized environment. Use the command `task develop` to get the operator code into the devcontainer and get started with development.
+</Admonition>
 
 ---
 
@@ -56,13 +60,16 @@ make install
 
 # 4. Run the operator locally
 make run
-````
+```
 
-<Admonition type="note" title="Running Locally"> Running locally uses your machine’s Go environment and the active kubeconfig context. It does not apply in-cluster RBAC permissions, so make sure your user has sufficient access. </Admonition>
+<Admonition type="note" title="Running Locally">
+Running locally uses your machine’s Go environment and the active kubeconfig context. It does not apply in-cluster RBAC permissions, so make sure your user has sufficient access.
+</Admonition>
 
 ---
 
 ## Testing Changes
+
 To test your changes, you can use the following commands:
 
 ```shell
@@ -78,11 +85,13 @@ make run
 # 4. Lint the code
 make lint
 ```
+
 ---
 
 ## Running Vidra Operator on the Cluster
 
 To test the operator inside the cluster (with RBAC and in a real-world environment):
+
 ```shell
 # 1. Build the operator image
 make docker-build IMG=<some-registry>/vidra:<tag>
@@ -98,16 +107,16 @@ kubectl logs -l app.kubernetes.io/name=vidra-operator -n vidra-system
 ```
 
 <Admonition type="hint" title="Hint">
-Run `make --help` to see all available automation commands
+Run `make --help` to see all available automation commands:
 ```shell
 make --help
 ```
 </Admonition>
+
 ---
 
-Further Reading
+## Further Reading
 
-[Operator SDK Documentation](https://sdk.operatorframework.io/docs/)
-[Kubebuilder Book](https://book.kubebuilder.io/)
-[Kubernetes Custom Resources](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/)
-
+- [Operator SDK Documentation](https://sdk.operatorframework.io/docs/)
+- [Kubebuilder Book](https://book.kubebuilder.io/)
+- [Kubernetes Custom Resources](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/)

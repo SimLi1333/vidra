@@ -3,7 +3,7 @@ title: Testing the Vidra CLI
 position: 2
 ---
 
-# Unit Tests for teh Vidra CLI
+# Unit Tests for the Vidra CLI
 
 This document describes the unit tests for the business logic and relevant functions of the KubeCLI adapter. The tests use mocking where appropriate. Cobra code and certain KubeCLI functions that interact directly with external tools are intentionally not tested.
 
@@ -15,7 +15,7 @@ This document describes the unit tests for the business logic and relevant funct
 
 ## Mocking
 
-All interactions with the kubecli adapter and other external dependencies are mocked using the `gomock` package. This allows us to isolate the business logic from the actual Kubernetes API and other system calls, ensuring that tests are fast and reliable.
+All interactions with the KubeCLI adapter and other external dependencies are mocked using the `gomock` package. This allows us to isolate the business logic from the actual Kubernetes API and other system calls, ensuring that tests are fast and reliable.
 
 ## Exclusions
 

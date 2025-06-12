@@ -70,9 +70,9 @@ Vidra’s architecture supports advanced scenarios that are available but not ye
 
 ### Advanced CRs
 Potential for managing complex CRs such as:
-- Network configurations (e.g., Kubenet, SDC) -> Infrahub artifacts could define network policies and configurations
-- Cloud-native infrastructure (e.g., Crossplane) -> Infrahub artifacts could define Crossplane resources for cloud services
-- Any other Kubernetes resource typer (CR or not)
+- Network configurations (e.g., Kubenet, SDC) — Infrahub artifacts could define network policies and configurations
+- Cloud-native infrastructure (e.g., Crossplane) — Infrahub artifacts could define Crossplane resources for cloud services
+- Any other Kubernetes resource type (CR or not)
 
 These capabilities are technically feasible but require further testing and validation before being considered production-ready.
 
@@ -99,7 +99,7 @@ Upcoming improvements could include:
 - Tracing to follow resource lifecycle events
 
 ### User Interface
-The Managed Resource and the status of the `InfrahubSync` and `VidraResource` resources could be visualized in a user interface, providing:
-- Visualize resource state and dependencies
-- Provide dashboards for real-time monitoring and management
+The managed resource and the status of the `InfrahubSync` and `VidraResource` resources could be visualized in a user interface, providing:
+- Visualization of resource state and dependencies
+- Dashboards for real-time monitoring and management
 

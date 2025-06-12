@@ -19,10 +19,11 @@ Previously, we relied solely on Kubernetes ownership (`ownerReferences`) for man
 
 ## Decision
 
-**Chosen option: "Implement a custom finalizer"**, because it allows us to ensure that all resources created and managed by Vidra are properly cleaned up before the Vidra resource itself is deleted. This is particularly important in multi-cluster scenarios where Kubernetes ownership is not possble. It also allows us to delete stale resources that may not have been cleaned up due to renaming or other changes in Infrahub.
+**Chosen option: "Implement a custom finalizer"**, because it allows us to ensure that all resources created and managed by Vidra are properly cleaned up before the Vidra resource itself is deleted. This is particularly important in multi-cluster scenarios where Kubernetes ownership is not possible. It also allows us to delete stale resources that may not have been cleaned up due to renaming or other changes in Infrahub.
 
 ## Consequences
 
 * Good, because it provides a reliable mechanism for resource cleanup, ensuring that no resources are left orphaned after a Vidra resource is deleted.
 * Good, because it allows using the same cleanup logic across different clusters, ensuring consistency in resource management.
 * Bad, because it introduces additional complexity in managing finalizers and requires careful handling to avoid resource leaks if the finalizer logic fails.
+

@@ -1,5 +1,5 @@
 ---
-title:  Managed Resource Ownership and Cleanup Labels
+title: Managed Resource Ownership and Cleanup Labels
 sidebar_position: 11
 ---
 
@@ -27,7 +27,7 @@ We decided to add two labels to all managed resources:
 - `owned-by`: Contains a list of `VidraResources` that currently own the resource.
 
 This approach enables:
-- Accurate tracking of which `VidraResource` are responsible for cleanup.
+- Accurate tracking of which `VidraResources` are responsible for cleanup.
 - Additional benefit: Prevents overwriting resources not managed by Vidra by checking the `managed-by` label before creating or updating resources.
 
 * Good, because it enables correct cleanup, prevents accidental overwrites, and clarifies resource ownership.
