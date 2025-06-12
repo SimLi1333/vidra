@@ -13,7 +13,7 @@ To use Infrahub, you need to define a schema resembling your resources (we creat
 This guide will show you how to prepare Infrahub for use with the Vidra Operator on the example of a `Webserver` resource. 
 
 <Admonition type="note" title="Note">
-There will be a Demo Repo with all the necessary resources to get started with Infrahub and Vidra Operator. You will be able to fork the repo and use it as a starting point for your own Infrahub instance.
+There is a [Demo Repo](https://github.com/infrahub-operator/infrahub-vidra-demo) with all the necessary resources to get started with Infrahub and Vidra Operator. You can fork the repo and use it as a starting point for your own Infrahub instance.
 </Admonition>
 
 ## GraphQL Queries
