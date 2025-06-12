@@ -15,7 +15,7 @@ Traditional GitOps workflows often require you to handcraft YAML files and wire 
 
 ### Step 1: Launch Codespaces and Initialize
 
-Start by opening the demo repository in GitHub Codespaces. Just hit the green “Code” button and select “Open with Codespaces”. Once your environment is ready, initialize everything with:
+Start by opening the [demo repository](https://github.com/infrahub-operator/infrahub-vidra-demo)  in GitHub Codespaces. Just hit the green “Code” button and select “Open with Codespaces”. Once your environment is ready, initialize everything with:
 
 ```bash
 task init
@@ -35,14 +35,14 @@ kubectl get pod -n vidra-system
 
 :::
 
-### Step 3: Explore the UI
+### Step 2: Explore the UI
 
 - Open the **Ports** tab in Codespaces.
 - Click the globe icon for port `8000` (Infrahub) and `5001` (Frontend).
 - In the frontend, submit a webserver request like `test/test`. This action creates a proposed change in Infrahub.
 - Log in to Infrahub (`admin` / `infrahub`), review, and merge the proposed change. Artifacts are generated and ready for deployment.
 
-### Step 4: Sync with Vidra
+### Step 3: Sync with Vidra
 
 Bring your modeled infrastructure to life in the cluster:
 
@@ -58,7 +58,7 @@ If you’re running locally (not in Codespaces), you can use:
 task vidra-add-sync
 ```
 
-### Step 5: Dive Deeper
+### Step 4: Dive Deeper
 
 Want to see what Vidra is managing? Try:
 
@@ -81,7 +81,7 @@ Or launch [k9s](https://k9scli.io/) for a terminal UI:
 k9s
 ```
 
-### Step 6: Forward to the Webserver
+### Step 5: Forward to the Webserver
 To access the deployed webserver, forward the service port:
 
 ```bash
