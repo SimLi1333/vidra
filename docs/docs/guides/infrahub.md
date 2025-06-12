@@ -82,7 +82,7 @@ query GetWebserver($webserver: String!) {
 ```
 
 ## Example Transformator
-The transformator is a Python script that transforms the data fetched from Infrahub into Kubernetes manifests. It uses the GraphQL queries defined above to fetch the necessary data and then generates the manifests based on a YAML template stored in the same Git repository. This transformer example below is for the `Webserver` resource, but it is as generic as possible and can easily be used for other resources, as it searches for the keys obtained from the GraphQL query and replaces them in the YAML template. Th get more information about the transformator, see the [Infrahub documentation](https://docs.infrahub.app/topics/transformation).
+The transformator is a Python script that transforms the data fetched from Infrahub into Kubernetes manifests. It uses the GraphQL queries defined above to fetch the necessary data and then generates the manifests based on a YAML template stored in the same Git repository. This transformer example below is for the `Webserver` resource, but it is as generic as possible and can easily be used for other resources, as it searches for the keys obtained from the GraphQL query and replaces them in the YAML template. To get more information about the transformator, see the [Infrahub documentation](https://docs.infrahub.app/topics/transformation).
 
 ```python
 from typing import Dict, Any
