@@ -5,8 +5,8 @@
 <meta name="generator" content="Docusaurus v3.8.0">
 <title data-rh="true">Comparison | My Site</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://infrahub-operator.github.io/vidra/img/social-card.png"><meta data-rh="true" name="twitter:image" content="https://infrahub-operator.github.io/vidra/img/social-card.png"><meta data-rh="true" property="og:url" content="https://infrahub-operator.github.io/vidra/comparison/"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Comparison | My Site"><meta data-rh="true" name="description" content="Vidra is just one of several open-source tools designed to manage and deploy Kubernetes resources. This comparison provides a concise overview of the key features and philosophies behind ArgoCD and Flux, highlighting where Vidra fits in and what unique value it offers to users."><meta data-rh="true" property="og:description" content="Vidra is just one of several open-source tools designed to manage and deploy Kubernetes resources. This comparison provides a concise overview of the key features and philosophies behind ArgoCD and Flux, highlighting where Vidra fits in and what unique value it offers to users."><link data-rh="true" rel="icon" href="/vidra/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://infrahub-operator.github.io/vidra/comparison/"><link data-rh="true" rel="alternate" href="https://infrahub-operator.github.io/vidra/comparison/" hreflang="en"><link data-rh="true" rel="alternate" href="https://infrahub-operator.github.io/vidra/comparison/" hreflang="x-default"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Comparison","item":"https://infrahub-operator.github.io/vidra/comparison/"}]}</script><link rel="alternate" type="application/rss+xml" href="/vidra/blog/rss.xml" title="My Site RSS Feed">
 <link rel="alternate" type="application/atom+xml" href="/vidra/blog/atom.xml" title="My Site Atom Feed"><link rel="stylesheet" href="/vidra/assets/css/styles.c171c55a.css">
-<script src="/vidra/assets/js/runtime~main.50dea281.js" defer="defer"></script>
-<script src="/vidra/assets/js/main.14995e4b.js" defer="defer"></script>
+<script src="/vidra/assets/js/runtime~main.932e1318.js" defer="defer"></script>
+<script src="/vidra/assets/js/main.6e25e1e7.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
 <svg xmlns="http://www.w3.org/2000/svg" style="display: none;"><defs>
@@ -19,7 +19,7 @@
 <ul>
 <li><strong>GitOps-first</strong>: ArgoCD embraces the GitOps model, making Git the single source of truth for application state.</li>
 <li><strong>UI and CLI</strong>: Comes with a rich user interface and CLI for observing and managing deployments.</li>
-<li><strong>Application-centric model</strong>: ArgoCD uses an &quot;Application&quot; CRD to represent and manage deployments.</li>
+<li><strong>Application-centric model</strong>: ArgoCD uses an &quot;Application&quot; CR to represent and manage deployments.</li>
 <li><strong>Multi-tenancy</strong>: Built-in support for managing multiple teams and access controls.</li>
 <li><strong>Custom resource sync</strong>: Can sync not only Helm charts and Kustomize, but also plain manifests and custom plugins.</li>
 </ul>
@@ -46,9 +46,13 @@
 <h2 class="anchor anchorWithStickyNavbar_LWe7" id="vidra">Vidra<a href="#vidra" class="hash-link" aria-label="Direct link to Vidra" title="Direct link to Vidra">​</a></h2>
 <p><strong>Vidra</strong> is designed as a lightweight deployment orchestrator for Kubernetes that emphasizes pluggability, programmatic integration, and simplicity.</p>
 <ul>
-<li><strong>No knowladge about CRD required</strong>: Vidra can be managed over the Vidra CLI, no knowladge reqired about the CRD.</li>
+<li><strong>No knowladge about CR required</strong>: Vidra can be managed over the Vidra CLI, no knowladge reqired about the CR.</li>
 <li><strong>Pluggable execution engine</strong>: Custom workflows and deployment logic can be added without rebuilding the core system.</li>
 <li><strong>Lightweight footprint</strong>: Minimal operational overhead, suitable for embedding into broader automation frameworks.</li>
+</ul>
+<p><strong>Limitations</strong>:</p>
+<ul>
+<li>Only supports Infrahub as of today.</li>
 </ul>
 <p><strong>Unique strengths</strong>:</p>
 <ul>
@@ -56,6 +60,6 @@
 <li>Easier to integrate with existing systems and APIs.</li>
 </ul>
 <hr>
-<p>Vidra is not a direct replacement for ArgoCD or Flux, especially as it is the only one conecting to Infrahub. Instead, it complements them by providing a lightweight, pluggable solution for users who need more flexibility in managing Kubernetes resources without being tied to a Git-centric workflow.</p></div></article><nav class="docusaurus-mt-lg pagination-nav" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href="/vidra/topics/preliminary-work"><div class="pagination-nav__sublabel">Previous</div><div class="pagination-nav__label">Preliminary Work</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/vidra/about/"><div class="pagination-nav__sublabel">Next</div><div class="pagination-nav__label">About</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#argocd" class="table-of-contents__link toc-highlight">ArgoCD</a></li><li><a href="#flux" class="table-of-contents__link toc-highlight">Flux</a></li><li><a href="#vidra" class="table-of-contents__link toc-highlight">Vidra</a></li></ul></div></div></div></div></main></div></div></div><footer class="theme-layout-footer footer"><div class="container container-fluid"></div></footer></div>
+<p>Vidra is not a direct replacement for ArgoCD or Flux, especially as it is the only one conecting to Infrahub. Instead, it complements them by providing a lightweight, pluggable solution for users who need more flexibility in managing Kubernetes resources without being tied to a Git-centric workflow.</p></div></article><nav class="docusaurus-mt-lg pagination-nav" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href="/vidra/topics/ci"><div class="pagination-nav__sublabel">Previous</div><div class="pagination-nav__label">Continuos Integration</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/vidra/about/"><div class="pagination-nav__sublabel">Next</div><div class="pagination-nav__label">About</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#argocd" class="table-of-contents__link toc-highlight">ArgoCD</a></li><li><a href="#flux" class="table-of-contents__link toc-highlight">Flux</a></li><li><a href="#vidra" class="table-of-contents__link toc-highlight">Vidra</a></li></ul></div></div></div></div></main></div></div></div><footer class="theme-layout-footer footer"><div class="container container-fluid"></div></footer></div>
 </body>
 </html>
