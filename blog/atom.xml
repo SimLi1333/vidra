@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?><?xml-stylesheet type="text/xsl" href="atom.xsl"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://infrahub-operator.github.io/vidra/blog</id>
-    <title>My Site Blog</title>
+    <title>Vidra Blog</title>
     <updated>2025-06-05T00:00:00.000Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://infrahub-operator.github.io/vidra/blog"/>
-    <subtitle>My Site Blog</subtitle>
+    <subtitle>Vidra Blog</subtitle>
     <icon>https://infrahub-operator.github.io/vidra/img/favicon.ico</icon>
     <entry>
         <title type="html"><![CDATA[Demo System for Vidra Operator]]></title>
