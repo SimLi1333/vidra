@@ -117,14 +117,21 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
 spec:
   source:
-    infrahubAPIURL: "https://infrahub-server.infrahub.orb.local" # The URL of your Infrahub instance.
-    targetBranch: "main" # Optional: The branch in Infrahub to query for Artifacts.
-    targetDate: "2025-04-09T00:00:00Z" # Optional: The date to query for Artifacts. If not set, the latest branch is used.
-    artefactName: "Webserver_Manifest" # Name of the Artifact Definition in Infrahub to query for Artifacts containing k8s manifests.
+    # The URL of your Infrahub instance.
+    infrahubAPIURL: "https://infrahub-server.infrahub.orb.local"
+    # The branch in Infrahub to query for Artifacts. (Optional)
+    targetBranch: "main"
+    # The date to query for Artifacts. If not set, the latest branch is used. (Optional)
+    targetDate: "2025-04-09T00:00:00Z"
+    # Name of the Artifact Definition in Infrahub to query for Artifacts containing k8s manifests.
+    artefactName: "Webserver_Manifest"
   destination:
-    server: 'https://k8s-cldop-test-0.network.garden:6443' # Optional: The URL of the Kubernetes cluster where the resources should be applied (Multi-cluster mode). If set to "https://kubernetes.default.svc" or not set at all, the current cluster is used. 
-    namespace: 'default' # Optional: The namespace in the destination cluster which is used as fallback if the managed resources do not have a namespace defined. If not set, the default namespace is used.
-    reconcileOnEvents: true # Optional: If set to true, all managed resources in this sync will be reconciled on events (e.g., creation, update, deletion) instead of a time-based requeue. Default is false.
+    # The URL of the Kubernetes cluster where the resources should be applied (Multi-cluster mode). If set to "https://kubernetes.default.svc" or not set at all, the current cluster is used. (Optional)
+    server: 'https://k8s-cldop-test-0.network.garden:6443'
+    # The namespace in the destination cluster which is used as fallback if the managed resources do not have a namespace defined. If not set, the default namespace is used. (Optional)
+    namespace: 'default'
+    # If set to true, all managed resources in this sync will be reconciled on events (e.g., creation, update, deletion) instead of a time-based requeue. Default is false. (Optional)
+    reconcileOnEvents: true
 ```
 <Admonition type="note" title="Note">
 If you want to synchronize multiple Artefact Definitions (like Webserver and VirtualMachines), you can create multiple `InfrahubSync` resources with different `artefactName` values.

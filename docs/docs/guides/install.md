@@ -90,11 +90,10 @@ helm uninstall vidra-operator --namespace vidra-system
 kubectl delete namespace vidra-system
 ```
 
-Or:
 
 ### OLM Uninstall
 
-### 1. Delete the Subscription and ClusterServiceVersion (CSV)
+#### 1. Delete the Subscription and ClusterServiceVersion (CSV)
 
 ```sh
 kubectl delete subscriptions.operators.coreos.com -n operators vidra-operator-subscription 
@@ -102,19 +101,19 @@ kubectl delete csv -n operators $(kubectl get csv -n operators -o jsonpath="{.it
 ```
 
 
-### 2. Delete the CRDs
+#### 2. Delete the CRDs
 
 ```sh
 kubectl delete crd infrahubsyncs.infrahub.operators.com vidraresources.infrahub.operators.com.
 ```
 
-### 3. Delete the Operator
+#### 3. Delete the Operator
 
 ```sh
 kubectl delete operator vidra-operator.operators
 ```
 
-### 4. Delete the CatalogSource
+#### 4. Delete the CatalogSource
 
 ```sh
 kubectl delete catalogsource -n operators vidra-catalog

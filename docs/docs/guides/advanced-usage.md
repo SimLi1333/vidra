@@ -47,7 +47,7 @@ python -c 'import base64, os; print(base64.b64encode(open(os.path.expanduser("<p
 ---
 
 ## Creating a `VidraResource`
-Usually you will use the [`InfrahubSync`](usage##creating-an-infrahubsync-resource) resource to synchronize resources from Infrahub to Kubernetes. However, if you want to create your own workflow or test just the kubernetes part of Vidra, you can use the `VidraResource` CRD. This allows you to define a manifest in the `VidraResource` and Vidra will do its job by reconciling the desired resources to the specified destination cluster and monitor the `VidraResource` and all its managed resourges for change, keeping the `VidraResource.spec.manifest` in sync with the managed resources.
+Usually you will use the [`InfrahubSync`](usage##creating-an-infrahubsync-resource) resource to synchronize resources from Infrahub to Kubernetes. However, if you want to create your own workflow or test just the kubernetes part of Vidra, you can use the `VidraResource` CR. This allows you to define a manifest in the `VidraResource` and Vidra will do its job by reconciling the desired resources to the specified destination cluster and monitor the `VidraResource` and all its managed resourges for change, keeping the `VidraResource.spec.manifest` in sync with the managed resources.
 
 To manage resources using the Vidra Operator, you can create a `VidraResource`. Below is an example of how a `VidraResource` looks like:
 
@@ -61,7 +61,7 @@ metadata:
   name: vidraresource-sample
 spec:
     destination:
-      # server: https://kubernetes.default.svc
+      server: https://kubernetes.default.svc
       namespace: default
       reconcileOnEvents: true
     manifest: '{"apiVersion": "v1","kind": "Namespace","metadata":{"name": "ns-sample"}}'

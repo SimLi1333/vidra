@@ -27,7 +27,7 @@ Vidra is implemented as a **Kubernetes operator**, extending the Kubernetes cont
 ---
 
 ## 2. C4 Model
-The following diagrams illustrate the C4 model for Vidra, providing a high-level perspective on its architecture and interactions within the Kubernetes ecosystem.
+The following diagrams illustrate the C4 model for Vidra, providing a high-level perspective on its architecture and interactions within the Kubernetes ecosystem. 
 
 ### System Context Diagram (C1)
 
