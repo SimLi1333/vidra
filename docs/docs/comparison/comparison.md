@@ -14,7 +14,7 @@ Vidra is just one of several open-source tools designed to manage and deploy Kub
 
 - **GitOps-first**: ArgoCD embraces the GitOps model, making Git the single source of truth for application state.
 - **UI and CLI**: Comes with a rich user interface and CLI for observing and managing deployments.
-- **Application-centric model**: ArgoCD uses an "Application" CRD to represent and manage deployments.
+- **Application-centric model**: ArgoCD uses an "Application" CR to represent and manage deployments.
 - **Multi-tenancy**: Built-in support for managing multiple teams and access controls.
 - **Custom resource sync**: Can sync not only Helm charts and Kustomize, but also plain manifests and custom plugins.
 
@@ -41,9 +41,13 @@ Vidra is just one of several open-source tools designed to manage and deploy Kub
 
 **Vidra** is designed as a lightweight deployment orchestrator for Kubernetes that emphasizes pluggability, programmatic integration, and simplicity.
 
-- **No knowladge about CRD required**: Vidra can be managed over the Vidra CLI, no knowladge reqired about the CRD.
+- **No knowladge about CR required**: Vidra can be managed over the Vidra CLI, no knowladge reqired about the CR.
 - **Pluggable execution engine**: Custom workflows and deployment logic can be added without rebuilding the core system.
 - **Lightweight footprint**: Minimal operational overhead, suitable for embedding into broader automation frameworks.
+
+**Limitations**:
+- Only supports Infrahub as of today.
+
 
 **Unique strengths**:
 - Better suited for scenarios where Git is not the central source of truth.

@@ -8,7 +8,7 @@ import Admonition from '@theme/Admonition';
 This guide assumes you have a running Infrahub instance and the Vidra Operator installed in your Kubernetes cluster. If you haven't set up Infrahub yet, please refer to the [Infrahub installation guide](https://docs.infrahub.app/guides/installation).
 </Admonition>
 
-To use Infrahub, you need to define a schema resembling your resources (we created `Webserver` containing `Deployment`, `Service` and `Ingres` and another one `VirtualMachine`). See the [Infrahub schema documentation](https://docs.infrahub.app/topics/schema) for more information. A example schema for a `Webserver` resource is provided undder https://infrahub-operator.github.io/vidra/guides/infrahub#example-schema-for-webserver.
+To use Infrahub, you need to define a schema resembling your resources (we created `Webserver` containing `Deployment`, `Service` and `Ingres` and another one `VirtualMachine`). See the [Infrahub schema documentation](https://docs.infrahub.app/topics/schema) for more information. A example schema for a `Webserver` resource is provided at https://infrahub-operator.github.io/vidra/guides/infrahub#example-schema-for-webserver.
 
 This guide will show you how to prepare Infrahub for use with the Vidra Operator on the example of a `Webserver` resource. 
 
@@ -82,7 +82,7 @@ query GetWebserver($webserver: String!) {
 ```
 
 ## Example Transformator
-The transformator is a Python script that transforms the data fetched from Infrahub into Kubernetes manifests. It uses the GraphQL queries defined above to fetch the necessary data and then generates the manifests based on a YAML Template stored in the same Git repository.
+The transformator is a Python script that transforms the data fetched from Infrahub into Kubernetes manifests. It uses the GraphQL queries defined above to fetch the necessary data and then generates the manifests based on a YAML template stored in the same Git repository. This transformer example below is for the `Webserver` resource, but it is as generic as possible and can easily be used for other resources, as it searches for the keys obtained from the GraphQL query and replaces them in the YAML template.
 
 ```python
 from typing import Dict, Any
@@ -288,7 +288,7 @@ Once the Artifact Definition is created by integrating the git repo with all res
 ```yaml
 version: "1.0"
 generics:
-  - name: Ressource
+  - name: Resource
     namespace: Kubernetes
     description: Generic Device Data
     branch: aware

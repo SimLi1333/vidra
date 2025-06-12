@@ -9,7 +9,7 @@ sidebar_position: 1
 
 ## Vidra Operator
 
-The **Vidra Operator** is a Kubernetes Operator responsible for keeping Kubernetes resources in sync with inventory data and its manifests stored in Infrahub. It automates the creation and update of Kubernetes Custom Resources (CRs) based on artifacts retrieved from Infrahub queries. Vidra enables continious delivery into the Kubernetes control plane.
+The **Vidra Operator** is a Kubernetes Operator responsible for keeping Kubernetes resources in sync with inventory data and its manifests stored in Infrahub. It automates the creation and update of Kubernetes native resources and Custom Resources (CRs) based on artifacts retrieved from Infrahub queries. Vidra enables continious delivery into the Kubernetes control plane.
 
 ## Artifact
 
@@ -49,7 +49,7 @@ Vidra’s reconciliation process runs when:
 - An `InfrahubSync` is created or updated.
 - The scheduled resync interval is triggered.
 - An `VidraResource` is created or updated.
-- An event occurs on a managed resource (if reconciliation on events is enabled).
+- An event occurs on a managed resource (if reconciliation on events is enabled). This is similar to autoHeal.
 
 During reconciliation, Vidra authenticates with Infrahub, fetches the specified artifact, parses it, and ensures Kubernetes resources match the current state on the destination cluster.
 
