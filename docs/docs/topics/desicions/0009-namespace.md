@@ -13,15 +13,15 @@ This decision impacts how resources are organized, how access control is managed
 
 ## Considered Options
 
-* **Distinct Namespace per Managed Resource**
+* **Distinct Namespace per Managed Resource:**  
   In this approach, each resource managed by Vidra is deployed into its own dedicated namespace. This provides strong isolation between resources, which can enhance security and reduce the risk of unintended interactions. However, it also increases the complexity of namespace management and makes resource discovery more challenging, as administrators must track and manage a larger number of namespaces.
 
-**Namespace Specified in InfrahubSync CRD:**  
-  The namespace for each managed resource is defined within the `InfrahubSync` CRD. This approach enables grouping multiple resources in a single namespace or distributing them as needed. It would imply that all resources in one artifact group (like Webserver) would be in one namespace. It simplifies management and aligns with Kubernetes patterns for multi-tenancy and resource grouping.
+* **Namespace Specified in InfrahubSync CRD:**  
+  The namespace for each managed resource is defined within the `InfrahubSync` CRD. This approach enables grouping multiple resources in a single namespace or distributing them as needed. It implies that all resources in one artifact group (like Webserver) would be in one namespace. It simplifies management and aligns with Kubernetes patterns for multi-tenancy and resource grouping.
 
 ## Decision Outcome
 
-**Chosen option: both**, because we want to support as many deployment scenarios as possible. The operator will use the namespace defined in the `InfrahubSync` CRD as fallback, if the resources do not have a namespace. This approach maximizes flexibility, allowing users to set a default namespace at the CRD level while still enabling per-resource overrides when needed.
+**Chosen option: both**, because we want to support as many deployment scenarios as possible. The operator will use the namespace defined in the `InfrahubSync` CRD as a fallback if the resources do not have a namespace. This approach maximizes flexibility, allowing users to set a default namespace at the CRD level while still enabling per-resource overrides when needed.
 
 ### Consequences
 

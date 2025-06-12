@@ -14,6 +14,7 @@ A running Kubernetes cluster with the Vidra operator installed is required. If y
 <Admonition type="note" title="Note">
 All these configurations can also be done using the CLI tool for Vidra. The CLI tool provides a convenient way to manage Vidra resources and configurations. You can find more information about the CLI tool in the [CLI documentation](/cli).
 </Admonition>
+
 ## Configuring Vidra
 
 Vidra uses a ConfigMap to manage its configuration. Below is an example ConfigMap you can use as a starting point:
@@ -22,15 +23,15 @@ Vidra uses a ConfigMap to manage its configuration. Below is an example ConfigMa
 apiVersion: v1
 kind: ConfigMap
 metadata:
-    name: vidra-config
-    labels:
-        app: vidra # Important: This label is used to identify the operator's resources.
-    namespace: vidra-system
+  name: vidra-config
+  labels:
+    app: vidra # Important: This label is used to identify the operator's resources.
+  namespace: vidra-system
 data:
-    requeueSyncAfter: "1m" # How often Vidra syncs with Infrahub. (if you do not want to use the default value of 1 minute)
-    requeueRecourcesAfter: "1m" # How often managed resources are being reconciled. (if you do not want to use the default value of 10 minutes)
-    queryName: "ArtifactIDs" # Infrahub graphQL query name for geting Artifact IDs. (if you do not want to use the default value of "ArtifactIDs")
-    eventBasedReconcile: "true" # Enable event-based reconciliation. (default is false)
+  requeueSyncAfter: "1m" # How often Vidra syncs with Infrahub. (if you do not want to use the default value of 1 minute)
+  requeueResourcesAfter: "1m" # How often managed resources are reconciled. (if you do not want to use the default value of 10 minutes)
+  queryName: "ArtifactIDs" # Infrahub GraphQL query name for getting Artifact IDs. (if you do not want to use the default value of "ArtifactIDs")
+  eventBasedReconcile: "true" # Enable event-based reconciliation. (default is false)
 ```
 <Admonition type="note" title="Note">
 All the fields in the ConfigMap are optional and can be customized according to your needs. If you do not specify a field, Vidra will use its default values.
@@ -38,11 +39,10 @@ All the fields in the ConfigMap are optional and can be customized according to 
 
 `Requeue` values are specified as positive duration strings. A duration is a sequence of decimal numbers with optional fractions and a unit suffix, such as "300ms" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", and "h". Negative durations are not allowed and will be ignored. Setting a value to `0` disables requeueing for that resource (e.g., for maintenance).
 
-`requeueRecourcesAfter` is disabled if you set eventBasedReconcile: "true" as it will use the Kubernetes event system to trigger reconciliations instead of a time-based requeue.
-
+`requeueResourcesAfter` is disabled if you set `eventBasedReconcile: "true"`, as it will use the Kubernetes event system to trigger reconciliations instead of a time-based requeue.
 
 <Admonition type="note" title="Note">
-If you want to use a different namespace than `vidra-system`, make sure to adjust the `namespace` field in the metadata section accordingly. Vidra will find the ConfigMap based on the label `app: vidra`.  
+If you want to use a different namespace than `vidra-system`, make sure to adjust the `namespace` field in the metadata section accordingly. Vidra will find the ConfigMap based on the label `app: vidra`.
 </Admonition>
 
 ### Applying the ConfigMap
@@ -55,8 +55,9 @@ kubectl apply -f vidra-config.yaml
 
 ---
 
-## Creating a `infrahub-credentials` Secret
-To authenticate with your Infrahub, you need to create a Kubernetes Secret containing your Infrahub API credentials. The Secret should be contain the label `infrahub-api-url` with the URL of your Infrahub instance. Below is an example of how to create this Secret:
+## Creating an `infrahub-credentials` Secret
+
+To authenticate with your Infrahub, you need to create a Kubernetes Secret containing your Infrahub API credentials. The Secret should contain the label `infrahub-api-url` with the URL of your Infrahub instance. Below is an example of how to create this Secret:
 
 ```yaml
 apiVersion: v1
@@ -74,17 +75,17 @@ data:
 <Admonition type="note" title="Note">
 The `username` and `password` fields should contain your Infrahub API credentials, encoded in base64. You can use the following command to encode your credentials:
 
-**MacOS/Linux:**
+**macOS/Linux:**
 ```sh
 echo -n <value> | base64
 ```
 **Windows:**
 ```Python
-python -c 'import base64; print(base64.b64encode(b"<value>").decode())' 
+python -c 'import base64; print(base64.b64encode(b"<value>").decode())'
 ```
 </Admonition>
 
-The label `infrahub-api-url` is used to identify the Infrahub instance that the Vidra operator should connect to. Make sure to replace the value with your actual Infrahub API URL or IP. 
+The label `infrahub-api-url` is used to identify the Infrahub instance that the Vidra operator should connect to. Make sure to replace the value with your actual Infrahub API URL or IP.  
 **Example:** The URL must look like `infrahub-server.infrahub.orb.local` if your Infrahub is accessible at `https://infrahub-server.infrahub.orb.local`, since Kubernetes does not allow `/` in labels.
 
 <Admonition type="note" title="Note">
@@ -105,6 +106,7 @@ kubectl apply -f infrahub-secret.yaml
 ---
 
 ## Creating an `InfrahubSync` Resource
+
 To synchronize resources from Infrahub, you need to create an `InfrahubSync` resource. Below is an example of how to create this resource:
 
 ```yaml
@@ -134,21 +136,20 @@ spec:
     reconcileOnEvents: true
 ```
 <Admonition type="note" title="Note">
-If you want to synchronize multiple Artefact Definitions (like Webserver and VirtualMachines), you can create multiple `InfrahubSync` resources with different `artefactName` values.
+If you want to synchronize multiple Artifact Definitions (like Webserver and VirtualMachines), you can create multiple `InfrahubSync` resources with different `artefactName` values.
 </Admonition>
 
 <Admonition type="note" title="Note">
-If you want to use a different namespace, make sure to add the `namespace` field in the metadata section accordingly. Vidra will find the `InfrahubSync` resource based on it Kind.
+If you want to use a different namespace, make sure to add the `namespace` field in the metadata section accordingly. Vidra will find the `InfrahubSync` resource based on its Kind.
 </Admonition>
 
-
 ### Applying the InfrahubSync Resource
+
 To apply the `InfrahubSync` resource, save the above YAML to a file (e.g., `infrahub-sync.yaml`) and run:
 
 ```sh
 kubectl apply -f infrahub-sync.yaml
 ```
-
 
 The `InfrahubSync` resource will trigger the Vidra operator to start synchronizing resources from Infrahub based on the specified query and parameters. You can monitor the status of the synchronization by checking the status of the `InfrahubSync` resource:
 
@@ -161,7 +162,7 @@ If you use the `destination.server` field to specify a different Kubernetes clus
 </Admonition>
 
 <Admonition type="note" title="Note">
-Some sample resources of Vidra which we used can be found in the [config samples directory](https://github.com/infrahub-operator/vidra/tree/main/config/samples).
+Some sample resources for Vidra can be found in the [config samples directory](https://github.com/infrahub-operator/vidra/tree/main/config/samples).
 </Admonition>
 
 ---

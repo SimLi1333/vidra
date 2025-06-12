@@ -16,10 +16,10 @@ We needed to choose a documentation framework for Vidra. Consistency of document
     A popular documentation framework based on React, widely used in the Infrahub ecosystem. It allows us to maintain a consistent look and feel with other Infrahub tools.
 
 * **MkDocs**  
-    A simpler, static site generator that is easy to set up and use. It is lightweight and has a straightforward configuration, but it does not provide the same level of customization and integration as Docusaurus.
+    A simpler static site generator that is easy to set up and use. It is lightweight and has straightforward configuration, but it does not provide the same level of customization and integration as Docusaurus.
 
 <Admonition type="note" title="Note">
-We also used **crd-ref-docs** to generate API documentation for our Custom Resource Definitions (CRDs). This is integrated into our CI pipeline and published automatically to GitHub Pages but this is indipendent of this desicion.
+We also used **crd-ref-docs** to generate API documentation for our Custom Resource Definitions (CRDs). This is integrated into our CI pipeline and published automatically to GitHub Pages, but this is independent of this decision.
 </Admonition>
 
 ## Decision Outcome
@@ -35,8 +35,8 @@ We also used **crd-ref-docs** to generate API documentation for our Custom Resou
 For more information on how to use Docusaurus, refer to the [Docusaurus documentation](https://docusaurus.io/docs).
 </Admonition>
 <Admonition type="note" title="Note">
-A search feature is added provided by <code>@easyops-cn/docusaurus-search-local</code> for local full-text search within the documentation.
+A search feature is provided by <code>@easyops-cn/docusaurus-search-local</code> for local full-text search within the documentation.
 </Admonition>
 <Admonition type="note" title="Note">
-A Blog feature is added for feature announcements and updates like the creation of a Demo environment.
+A blog feature is added for feature announcements and updates, such as the creation of a demo environment.
 </Admonition>

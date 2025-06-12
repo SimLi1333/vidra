@@ -8,81 +8,88 @@ import Admonition from '@theme/Admonition';
 This guide assumes you have a running Infrahub instance and the Vidra Operator installed in your Kubernetes cluster. If you haven't set up Infrahub yet, please refer to the [Infrahub installation guide](https://docs.infrahub.app/guides/installation).
 </Admonition>
 
-To use Infrahub, you need to define a schema resembling your resources (we created `Webserver` containing `Deployment`, `Service` and `Ingres` and another one `VirtualMachine`). See the [Infrahub schema documentation](https://docs.infrahub.app/topics/schema) for more information. A example schema for a `Webserver` resource is provided at https://infrahub-operator.github.io/vidra/guides/infrahub#example-schema-for-webserver.
+To use Infrahub, you need to define a schema resembling your resources (for example, we created a `Webserver` containing `Deployment`, `Service`, and `Ingress`, and another one called `VirtualMachine`). See the [Infrahub schema documentation](https://docs.infrahub.app/topics/schema) for more information. An example schema for a `Webserver` resource is provided at https://infrahub-operator.github.io/vidra/guides/infrahub#example-schema-for-webserver.
 
-This guide will show you how to prepare Infrahub for use with the Vidra Operator on the example of a `Webserver` resource. 
+This guide will show you how to prepare Infrahub for use with the Vidra Operator using the example of a `Webserver` resource as example.
+
+<Admonition type="note" title="Note">
+All code snippets with example in the title can be changed to your own tailored solution.
+</Admonition>
 
 <Admonition type="note" title="Note">
 There is a [Demo Repo](https://github.com/infrahub-operator/infrahub-vidra-demo) with all the necessary resources to get started with Infrahub and Vidra Operator. You can fork the repo and use it as a starting point for your own Infrahub instance.
 </Admonition>
 
 ## GraphQL Queries
-Vidra Operator uses one GraphQL query to fetch the necessary ID's of the relevant Artifacts. Below is the query which needs to be added to Infrahub. 
+Vidra Operator uses a GraphQL query to fetch data from Infrahub resources. Below is the query that needs to be added to Infrahub.
 
 <Admonition type="note" title="Note">
 You can add GraphQL queries to Infrahub using the Infrahub UI, the Infrahub CLI, or through [git integration](https://docs.infrahub.app/overview/versioning#integration-with-git). For reproducibility, we recommend using git integration, as demonstrated in this guide.
 </Admonition>
 
 ### Query ArtifactIDs
-
+This query is necessary because it gathers the IDs of the relevant Artifacts. `InfrahubSync` CR of Vidra Operator will only download if the checksum changed.
 ```graphql
 query ArtifactIDs($artifactname: [String]) {
-    CoreArtifact(name__values: $artifactname) {
-        edges {
-            node {
-                id
-                storage_id {
-                    id
-                }
-                checksum {
-                    value
-                }
-                name {
-                    value
-                }
-            }
+  CoreArtifact(name__values: $artifactname) {
+    edges {
+      node {
+        id
+        storage_id {
+          id
         }
+        checksum {
+          value
+        }
+        name {
+          value
+        }
+      }
     }
+  }
 }
 ```
-The following query is used to get `Webserver` resources and is needed in the transormator later on.
 
 ### Example Query Webserver Details
-
+This query is used to get `Webserver` resources and is needed in the transformator later on.
 ```graphql
 query GetWebserver($webserver: String!) {
-    KubernetesWebserver(name__value: $webserver) {
-        edges {
-            node {
-                name {
-                    value
-                }
-                port {
-                    value
-                }
-                containerport {
-                    value
-                }
-                replicas {
-                    value
-                }
-                image {
-                    value
-                }
-                namespace {
-                    value
-                }
-                host {
-                    value
-                }
-            }
+  KubernetesWebserver(name__value: $webserver) {
+    edges {
+      node {
+        name {
+          value
         }
+        port {
+          value
+        }
+        containerport {
+          value
+        }
+        replicas {
+          value
+        }
+        image {
+          value
+        }
+        namespace {
+          value
+        }
+        host {
+          value
+        }
+      }
     }
+  }
 }
 ```
 
 ## Example Transformator
-The transformator is a Python script that transforms the data fetched from Infrahub into Kubernetes manifests. It uses the GraphQL queries defined above to fetch the necessary data and then generates the manifests based on a YAML template stored in the same Git repository. This transformer example below is for the `Webserver` resource, but it is as generic as possible and can easily be used for other resources, as it searches for the keys obtained from the GraphQL query and replaces them in the YAML template. To get more information about the transformator, see the [Infrahub documentation](https://docs.infrahub.app/topics/transformation).
+The transformator is a Python script that transforms the data fetched from Infrahub into Kubernetes manifests. It uses the GraphQL queries defined above to fetch the necessary data and then generates the manifests based on a YAML template stored in the same Git repository. The transformator example below is for the `Webserver` resource, but it is as generic as possible and can easily be used for other resources, as it searches for the keys obtained from the GraphQL query and creates `customizedkeyvalue` map and searches and replaces them in the YAML template. For exxample if `name` is a field in Infrahub and it has a value of `my-webserver`, the transformator will replace `name` in the YAML template with `my-webserver`. The same applies to all other fields in the Infrahub resource.
+
+<Admonition type="note" title="Note">
+To get more information about creating your own transformator, see the [Infrahub documentation](https://docs.infrahub.app/topics/transformation).
+</Admonition>
 
 ```python
 from typing import Dict, Any
@@ -90,9 +97,9 @@ from infrahub_sdk.transforms import InfrahubTransform
 from .helperfunctions import HelperFunctions
 from pathlib import Path
 
-""" This Public Module provides:
-- Get Information from the GraphQL
-- Compare the Values with the Default YAML Templates
+""" This public module provides:
+- Get information from the GraphQL
+- Compare the values with the default YAML templates
 """
 
 
@@ -151,7 +158,7 @@ class HelperFunctions:
     def filternesteddict(nesteddict: Dict[str, Any], key: str = "") -> Dict[str, str]:
         """Filter nested dictionaries and store the result in a global dictionary."""
         for nestedkey, value in nesteddict.items():
-            # Check if Dictionary is nested
+            # Check if dictionary is nested
             if isinstance(value, dict):
                 HelperFunctions.filternesteddict(value, nestedkey)
                 continue
@@ -171,7 +178,7 @@ class HelperFunctions:
     @staticmethod
     def match_key_in_line(line: str, key: str) -> bool:
         """Check if a specific key is present in the line (case-insensitive)."""
-        pattern = rf"\W{re.escape(key)}\W"  # Searching for a non-word Character (like -), de key word and non-word character.
+        pattern = rf"\W{re.escape(key)}\W"  # Searching for a non-word character (like -), the key word and non-word character.
         return bool(re.search(pattern, line, re.IGNORECASE))
 
     @staticmethod
@@ -184,9 +191,9 @@ class HelperFunctions:
 ```
 
 ## Example YAML Template
-This is an example YAML template for a `Webserver` resource. It will be used in the transformator the values specified in the Infrahub resource will be replaced in the template.
+This is an example YAML template for a `Webserver` resources. It will be used in the transformator; the values specified in Infrahub will dynamically be replaced in the template.
 
-```YAML
+```yaml
 ---
 apiVersion: v1
 kind: Namespace
@@ -252,11 +259,10 @@ spec:
                   number: port
 ```
 
-## Example ìnfrahub.yaml`
-This is an example of how to the final artifact definition for the `Webserver` resource looks like. It defines the artifact name, parameters, content type, targets, and transformation function.
+## Example `.infrahub.yml`
+This is an example of how the final artifact definition for the `Webserver` resource looks. It defines the artifact name, parameters, content type, targets, and transformation function.
 
 ```yaml
-
 queries:
   - name: GetWebserver
     file_path: "GraphQL/GetWebserver.gql"
@@ -281,9 +287,9 @@ artifact_definitions:
     transformation: "TransformWebserver"
 ```
 
-Once the Artifact Definition is created by integrating the git repo with all resources, you can create the `Webserver` resource in Infrahub and add it to the target group `g_webserver`. The Vidra Operator will then use the transformator to generate the Kubernetes manifests based on the data fetched from Infrahub.
+Once the artifact definition is created by integrating the git repo with all resources, you can create the `Webserver` resource in Infrahub and add it to the target group `g_webserver`. The Vidra Operator will then use the transformator to generate the Kubernetes manifests based on the data fetched from Infrahub.
 
-## Example Schema for Webserver:
+## Example Schema for Webserver
 
 ```yaml
 version: "1.0"
@@ -310,7 +316,7 @@ generics:
         order_weight: 2
       - name: description
         kind: Text
-        description: Additional Informations about the Webservice
+        description: Additional information about the Webservice
         optional: true
         order_weight: 3
 nodes:
@@ -325,22 +331,22 @@ nodes:
     attributes:
       - name: port
         kind: Number
-        description: The Port Number on which the Service is reachable
+        description: The port number on which the Service is reachable
         optional: false
         regex: ^(6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-9][0-9]{0,3})$  # yamllint disable-line rule:line-length
       - name: containerport
         kind: Number
-        description: The Port Number on which the Container is reachable
+        description: The port number on which the Container is reachable
         optional: false
         regex: ^(6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-9][0-9]{0,3})$  # yamllint disable-line rule:line-length
       - name: replicas
         kind: Number
-        description: The Number of replicas of the Deployment
+        description: The number of replicas of the Deployment
         optional: false
         regex: ^[1-5]$
       - name: version
         kind: Number
-        description: The Version of the Deployment
+        description: The version of the Deployment
         optional: true
         regex: ^[1-5]$
       - name: host

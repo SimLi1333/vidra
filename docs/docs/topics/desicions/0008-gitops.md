@@ -7,12 +7,12 @@ sidebar_position: 9
 
 ## Context and Problem Statement
 
-We decided to align our operational and deployment practices with the [four principles of GitOps](https://opengitops.dev). This decision aims to improve automation, reliability, and transparency in managing the Vidra Operator and its resources.
+We have decided to align our operational and deployment practices with the [four principles of GitOps](https://opengitops.dev). This decision aims to improve automation, reliability, and transparency in managing the Vidra Operator and its resources.
 
 ## Considered Options
 
 * **Continue with ad-hoc/manual operations**  
-    Operations are performed manually or with custom function, leading to inconsistencies and reduced auditability.
+    Operations are performed manually or with custom functions, leading to inconsistencies and reduced auditability.
 
 * **Adopt GitOps principles**  
     Operations and desired state are managed declaratively in Infrahub, with automated reconciliation and strong audit trails.

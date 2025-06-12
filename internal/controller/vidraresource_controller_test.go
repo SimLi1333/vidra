@@ -1831,7 +1831,7 @@ var _ = Describe("VidraResourceReconciler SetupWithManager", func() {
 				},
 			},
 			Data: map[string]string{
-				"requeueRecourcesAfter": "12m",
+				"requeueResourcesAfter": "12m",
 				"eventBasedReconcile":   "true",
 			},
 		}

@@ -1,15 +1,15 @@
 ---
-title: Monorepo vs Multirepo for Vidra, CLI, and Documentation
+title: Monorepo vs. Multirepo for Vidra, CLI, and Documentation
 sidebar_position: 17
 ---
 
-# Monorepo vs Multirepo for Vidra, CLI, and Documentation
+# Monorepo vs. Multirepo for Vidra, CLI, and Documentation
 
 ## Context and Problem Statement
 
-While moving the code from Ost gitlab to gitHub, we needed to decide whether to maintain separate repositories for Vidra, the CLI, and the documentation, or to combine them into a single repository.
+While moving the code from OST GitLab to GitHub, we needed to decide whether to maintain separate repositories for Vidra, the CLI, and the documentation, or to combine them into a single repository.
 
-While multiple repositories can provide isolation, they introduce complexity in versioning and coordination. Our use case requires tight coupling between the CLI and Vidra, and consistent documentation updates alongside releases.
+While multiple repositories can provide isolation, they introduce complexity in versioning and coordination. Our use case requires tight coupling between the CLI and Vidra, as well as consistent documentation updates alongside releases.
 
 ## Considered Options
 

@@ -8,7 +8,7 @@ import Admonition from '@theme/Admonition';
 
 `vidra-cli [command]`
 
-vidra-cli is a command-line tool for managing vidra-cli Operator and related resources.
+vidra-cli is a command-line tool for managing the vidra-cli Operator and related resources.
 
 ## Available Commands
 
@@ -24,19 +24,20 @@ vidra-cli is a command-line tool for managing vidra-cli Operator and related res
 - `-h`, `--help`: Show help for the `vidra` command.
 
 ## Operations
+
 Each command has the same set of operations:
 
 ### Example credentials command
 
 - **apply**: Generate and apply an Infrahub credentials secret to Kubernetes.
-- **delete**: Remove an Infrahub credential secret by URL.
+- **delete**: Remove an Infrahub credentials secret by URL.
 - **get**: Retrieve an Infrahub credentials secret by URL.
 - **list**: List all Infrahub credentials secrets.
 
-
 ## Examples
+
 ```sh
-# Apply a kubeconfig secret for a cluster reading from your kubeconfig file
+# Apply a kubeconfig secret for a cluster, reading from your kubeconfig file
 vidra-cli cluster apply admin@ba-iac -n secrets
 
 # Delete a kubeconfig secret for a cluster
@@ -48,9 +49,9 @@ vidra-cli cluster get --name my-cluster
 # List all cluster kubeconfig secrets
 vidra-cli cluster list
 ```
- <Admonition type="note" title="Note">
- Runing `vidra-cli cluster apply` (uncomplete command) will prompt you with the available cluster contexts in your kubeconfig file. You can select one of them to create a kubeconfig secret for that cluster.
- </Admonition>
+<Admonition type="note" title="Note">
+Running `vidra-cli cluster apply` (incomplete command) will prompt you with the available cluster contexts in your kubeconfig file. You can select one of them to create a kubeconfig secret for that cluster.
+</Admonition>
 
 ```sh
 # Apply an Infrahub credentials secret
@@ -66,7 +67,7 @@ vidra-cli credentials get https://infrahub.example.com
 vidra-cli credentials list
 ```
 ```sh
-# Apply an vidra-cli configuration
+# Apply a vidra-cli configuration
 vidra-cli config apply --query-name ArtifactIDs -r 5m -s 1m
 
 # Delete a vidra-cli configuration
@@ -79,10 +80,10 @@ vidra-cli config get -n default
 vidra-cli config list 
 ```
 
-Apply an InfrahubSync resource
+Apply an `InfrahubSync` resource:
 ```sh
- vidra-cli infrahubsync apply "http://198.19.248.5:8000" -a Webserver_Manifest -b main2 -d 2025-04-09T00:00:00Z -s https://kubernetes.default.svc -N default -e
- ```
- <Admonition type="note" title="Note">
- Pleas use the -h flag to get more information about each command and its options.
- </Admonition>
+vidra-cli infrahubsync apply "http://198.19.248.5:8000" -a Webserver_Manifest -b main2 -d 2025-04-09T00:00:00Z -s https://kubernetes.default.svc -N default -e
+```
+<Admonition type="note" title="Note">
+Please use the -h flag to get more information about each command and its options.
+</Admonition>

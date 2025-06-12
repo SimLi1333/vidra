@@ -7,12 +7,12 @@ sidebar_position: 8
 
 ## Context and Problem Statement
 
-To ensure maintainability, testability, and clear separation of concerns, we needed to decide on the architectural approach for the Vidra Operator. The main challenge was structuring the codebase to support evolving requirements, integration with Kubernetes, and external systems like Infrahub, while keeping the core business logic independent.
+To ensure maintainability, testability, and a clear separation of concerns, we needed to decide on the architectural approach for the Vidra Operator. The main challenge was structuring the codebase to support evolving requirements, integration with Kubernetes, and external systems like Infrahub, while keeping the core business logic independent.
 
 ## Considered Options
 
 * **Monolithic structure**  
-    All logic (Kubernetes, domain, external integrations) is mixed in the Reconcile function, leading to tight coupling and harder testing. (many Operators follow this pattern)
+    All logic (Kubernetes, domain, external integrations) is mixed in the Reconcile function, leading to tight coupling and making testing harder. (Many operators follow this pattern.)
 
 * **Clean/Onion Architecture**  
     Separate the codebase into:
@@ -22,12 +22,12 @@ To ensure maintainability, testability, and clear separation of concerns, we nee
 
 ## Decision Outcome
 
-**Chosen option: "Clean/Onion Architecture"**, because it enables clear separation between business logic and infrastructure concerns. The domain layer remains decoupled from Kubernetes and Infrahub specifics, making the codebase easier to test, extend, and maintain.
+**Chosen option: "Clean/Onion Architecture"**, because it enables a clear separation between business logic and infrastructure concerns. The domain layer remains decoupled from Kubernetes and Infrahub specifics, making the codebase easier to test, extend, and maintain.
 
 ### Consequences
 
-* Good, because it improves modularity, testability, and adaptability to future changes or integrations.
-* Bad, because it introduces some initial complexity and requires discipline to maintain boundaries between layers.
+* Positive: Improves modularity, testability, and adaptability to future changes or integrations.
+* Negative: Introduces some initial complexity and requires discipline to maintain boundaries between layers.
 
 ## References
 

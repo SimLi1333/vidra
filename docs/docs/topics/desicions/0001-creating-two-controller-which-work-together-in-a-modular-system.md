@@ -7,9 +7,9 @@ sidebar_position: 2
 
 ## Context and Problem Statement
 
-We needed to decide whether to implement a single controller to handle both synchronization with Infrahub and Kubernetes managed resource lifecycle management (continuous delivery), or to split these responsibilities into two dedicated controllers.
+We needed to decide whether to implement a single controller to handle both synchronization with Infrahub and Kubernetes-managed resource lifecycle management (continuous delivery), or to split these responsibilities into two dedicated controllers.
 
-A single controller can simplify deployment but may become complex and harder to maintain as responsibilities grow. Our use case involves both integrating with Infrahub (external system) and managing the lifecycle of Kubernetes resources, which are distinct concerns.
+A single controller can simplify deployment but may become complex and harder to maintain as responsibilities grow. Our use case involves both integrating with Infrahub (an external system) and managing the lifecycle of Kubernetes resources, which are distinct concerns.
 
 ## Considered Options
 
@@ -26,7 +26,7 @@ A single controller can simplify deployment but may become complex and harder to
 - Separation of concerns leads to cleaner, more maintainable codebases.
 - Each controller can evolve independently, allowing for focused improvements and optimizations.
 - Issues in one controller (e.g., Infrahub connectivity) do not directly impact the other (resource lifecycle).
-- Testing and debugging are simplified due to reduced scope per controller.
+- Testing and debugging are simplified due to the reduced scope per controller.
 
 ### Consequences
 

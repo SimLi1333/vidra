@@ -12,15 +12,15 @@ Before installing the Vidra Operator, make sure you have access to a Kubernetes 
 For a development cluster, we recommend using [minikube](https://minikube.sigs.k8s.io/docs/start/) or [kind](https://kind.sigs.k8s.io/docs/user/quick-start/). Refer to the [Cluster Setup](../topics/deploy.md) guide for more details.
 </Admonition>
 
-## Install the Vidra Operator using Helm:
+## Install the Vidra Operator using Helm
 Helm is a Kubernetes package manager that simplifies installing and managing applications like Vidra using charts.
 
 <Admonition type="note" title="Note">
-Helm is not required to run the Vidra Operator, but it simplifies the installation process. Helm version 3.0.0 or higher is recommended.  [Helm installation guide](https://helm.sh/docs/intro/install/)
+Helm is not required to run the Vidra Operator, but it simplifies the installation process. Helm version 3.0.0 or higher is recommended. See the [Helm installation guide](https://helm.sh/docs/intro/install/).
 </Admonition>
 
 ### Helm Installation
-To install the Vidra Operator using Helm OCI, you can use the following command:
+To install the Vidra Operator using Helm OCI, use the following command:
 
 ```sh
 helm install vidra-operator oci://ghcr.io/infrahub-operator/vidra/helm-charts/vidra-operator --namespace vidra-system --create-namespace
@@ -44,12 +44,11 @@ kubectl get pods -n vidra-system -w
 
 ---
 
-## Install the Vidra Operator using OLM:
+## Install the Vidra Operator using OLM
 OLM (Operator Lifecycle Manager) is a Kubernetes project that helps you manage the lifecycle of operators running on your cluster. It provides a way to install, update, and manage operators in a Kubernetes-native way.
 
-
 <Admonition type="warning" title="Warning">
-OLM is not required to run the Vidra Operator, but it simplifies the installation process. OLM version 0.32.0 or higher is recommended. [Installation](https://operator-framework.github.io/operator-lifecycle-manager/docs/installation/)
+OLM is not required to run the Vidra Operator, but it simplifies the installation process. OLM version 0.32.0 or higher is recommended. See the [installation guide](https://operator-framework.github.io/operator-lifecycle-manager/docs/installation/).
 
 **Alternative OLM installation:**
 
@@ -60,7 +59,7 @@ curl -sL https://github.com/operator-framework/operator-lifecycle-manager/releas
 
 ### Operator Lifecycle Manager (OLM) Installation
 
-Install the Vidra Operator by creating a catalog source and subscription:
+Install the Vidra Operator by creating a CatalogSource and Subscription:
 
 ```sh
 kubectl apply -f https://raw.githubusercontent.com/Infrahub-Operator/Vidra/main/install/catalogsource.yaml -f https://raw.githubusercontent.com/Infrahub-Operator/Vidra/main/install/subscription.yaml
@@ -76,11 +75,10 @@ kubectl get csv -n operators -w
 ```
 
 ---
----
 
 ## Uninstall Vidra Operator
 <Admonition type="warning" title="Warning">
-Before uninstalling the Vidra Operator, ensure that you have removed all `VidraResource` resources otherwise finalizer could block the uninstall.
+Before uninstalling the Vidra Operator, ensure that you have removed all `VidraResource` resources; otherwise, the finalizer could block the uninstall.
 </Admonition>
 To completely remove the Vidra Operator and its resources, follow these steps:
 
@@ -89,7 +87,6 @@ To completely remove the Vidra Operator and its resources, follow these steps:
 helm uninstall vidra-operator --namespace vidra-system
 kubectl delete namespace vidra-system
 ```
-
 
 ### OLM Uninstall
 
@@ -100,11 +97,10 @@ kubectl delete subscriptions.operators.coreos.com -n operators vidra-operator-su
 kubectl delete csv -n operators $(kubectl get csv -n operators -o jsonpath="{.items[?(@.metadata.labels['operators.coreos.com/vidra.operators')].metadata.name}")
 ```
 
-
 #### 2. Delete the CRDs
 
 ```sh
-kubectl delete crd infrahubsyncs.infrahub.operators.com vidraresources.infrahub.operators.com.
+kubectl delete crd infrahubsyncs.infrahub.operators.com vidraresources.infrahub.operators.com
 ```
 
 #### 3. Delete the Operator

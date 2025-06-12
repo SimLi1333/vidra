@@ -328,12 +328,12 @@ func (r *VidraResourceReconciler) applyResource(ctx context.Context, res *infrah
 	existing.SetGroupVersionKind(desired.GroupVersionKind())
 	existing.SetNamespace(desired.GetNamespace())
 	existing.SetName(desired.GetName())
-	// Add label "managed-by": "vida" to the resource
+	// Add label "managed-by": "vidra" to the resource
 	labels := desired.GetLabels()
 	if labels == nil {
 		labels = map[string]string{}
 	}
-	labels["managed-by"] = "vida"
+	labels["managed-by"] = "vidra"
 	desired.SetLabels(labels)
 
 	// Try fetching the existing resource
@@ -515,13 +515,13 @@ func (r *VidraResourceReconciler) InitConfigWithClient(ctx context.Context, k8sC
 
 	var configMap *corev1.ConfigMap
 	for _, cm := range configMaps.Items {
-		if cm.Data["requeueRecourcesAfter"] != "" {
+		if cm.Data["requeueResourcesAfter"] != "" {
 			configMap = &cm
 			break
 		}
 	}
 	// Check for 'requeueAfter' and update if available
-	requeueAfter, ok := configMap.Data["requeueRecourcesAfter"]
+	requeueAfter, ok := configMap.Data["requeueResourcesAfter"]
 	if ok {
 		duration, err := time.ParseDuration(requeueAfter)
 		if err == nil {

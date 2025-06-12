@@ -57,11 +57,11 @@ func (f *DynamicWatcherFactory) watchGVR(
 	informer := cache.NewSharedInformer(
 		&cache.ListWatch{
 			ListFunc: func(opts v1.ListOptions) (runtime.Object, error) {
-				opts.LabelSelector = labels.SelectorFromSet(labels.Set{"managed-by": "vida"}).String()
+				opts.LabelSelector = labels.SelectorFromSet(labels.Set{"managed-by": "vidra"}).String()
 				return client.Resource(gvr).Namespace("").List(context.TODO(), opts)
 			},
 			WatchFunc: func(opts v1.ListOptions) (watch.Interface, error) {
-				opts.LabelSelector = labels.SelectorFromSet(labels.Set{"managed-by": "vida"}).String()
+				opts.LabelSelector = labels.SelectorFromSet(labels.Set{"managed-by": "vidra"}).String()
 				return client.Resource(gvr).Namespace("").Watch(context.TODO(), opts)
 			},
 		},
@@ -98,7 +98,7 @@ func getEventHandler(gvr schema.GroupVersionResource, callback func(obj *unstruc
 					return
 				}
 			}
-			if unstrObj.GetLabels()["managed-by"] == "vida" {
+			if unstrObj.GetLabels()["managed-by"] == "vidra" {
 				callback(unstrObj, gvr)
 			}
 		},
@@ -110,7 +110,7 @@ func getEventHandler(gvr schema.GroupVersionResource, callback func(obj *unstruc
 				log.Printf("UpdateFunc: unexpected types old=%T new=%T", oldObj, newObj)
 				return
 			}
-			if newUnstr.GetLabels()["managed-by"] == "vida" &&
+			if newUnstr.GetLabels()["managed-by"] == "vidra" &&
 				genChanged.Update(event.UpdateEvent{
 					ObjectOld: oldUnstr,
 					ObjectNew: newUnstr,
@@ -133,7 +133,7 @@ func getEventHandler(gvr schema.GroupVersionResource, callback func(obj *unstruc
 					return
 				}
 			}
-			if unstrObj.GetLabels()["managed-by"] == "vida" {
+			if unstrObj.GetLabels()["managed-by"] == "vidra" {
 				callback(unstrObj, gvr)
 			}
 		},

@@ -11,7 +11,7 @@ import Admonition from '@theme/Admonition';
 We want to persist the state of resources managed by the Vidra Operator, specifically tracking the last successful reconcile, last error, and the current Sync/Deploy state for both `InfrahubSync` and `VidraResource` objects. This information is stored in the `status` section of each resource.
 
 <Admonition type="note" title="Note">
-This was a not considered during planning. If there was no time to implement it, we would have left it out.
+This was not considered during planning. If there had been no time to implement it, we would have left it out.
 </Admonition>
 
 ## Considered Options
@@ -33,4 +33,4 @@ To address this, we implemented a commonly used predicate that prevents reconcil
 
 ### Consequences
 * Good, because it provides visibility into the operational state of resources, enabling better monitoring and troubleshooting.
-* Bad, because it requires careful handling of status updates to avoid triggering unnecessary reconcile loops. 
+* Bad, because it requires careful handling of status updates to avoid triggering unnecessary reconcile loops.

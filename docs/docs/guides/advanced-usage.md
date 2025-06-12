@@ -9,11 +9,12 @@ Most of these configurations can also be done using the CLI tool for Vidra. The 
 </Admonition>
 
 # Advanced Usage of Vidra Operator
+
 This guide covers advanced usage scenarios for the Vidra Operator, including multi-cluster synchronization and `VidraResource` management.
 
 If you want to synchronize resources to a different Kubernetes cluster, you can specify the `server` field in the `destination` section of the `InfrahubSync` resource. This allows Vidra to connect to the specified cluster and apply the resources there.
 
-For this to work, you need to create a Kubernetes Secret containing the kubeconfig for the target cluster. The Secret should have the label `cluster-kubeconfig` with the URL of the target cluster. Below is an example of how to create this Secret:
+To enable this, you need to create a Kubernetes Secret containing the kubeconfig for the target cluster. The Secret should have the label `cluster-kubeconfig` with the URL of the target cluster. Below is an example of how to create this Secret:
 
 ```yaml
 apiVersion: v1
@@ -29,7 +30,7 @@ data:
 <Admonition type="note" title="Note">
 The `kubeconfig` field should contain the kubeconfig for the target cluster, encoded in base64. You can use the following command to encode your kubeconfig:
 
-**MacOS/Linux:**
+**macOS/Linux:**
 ```sh
 echo -n <kubeConfig> | base64 >> temp.txt
 ```
@@ -47,9 +48,10 @@ python -c 'import base64, os; print(base64.b64encode(open(os.path.expanduser("<p
 ---
 
 ## Creating a `VidraResource`
-Usually you will use the [`InfrahubSync`](usage##creating-an-infrahubsync-resource) resource to synchronize resources from Infrahub to Kubernetes. However, if you want to create your own workflow or test just the kubernetes part of Vidra, you can use the `VidraResource` CR. This allows you to define a manifest in the `VidraResource` and Vidra will do its job by reconciling the desired resources to the specified destination cluster and monitor the `VidraResource` and all its managed resourges for change, keeping the `VidraResource.spec.manifest` in sync with the managed resources.
 
-To manage resources using the Vidra Operator, you can create a `VidraResource`. Below is an example of how a `VidraResource` looks like:
+Usually, you will use the [`InfrahubSync`](usage##creating-an-infrahubsync-resource) resource to synchronize resources from Infrahub to Kubernetes. However, if you want to create your own workflow or test just the Kubernetes part of Vidra, you can use the `VidraResource` CR. This allows you to define a manifest in the `VidraResource`, and Vidra will reconcile the desired resources to the specified destination cluster and monitor the `VidraResource` and all its managed resources for changes, keeping the `VidraResource.spec.manifest` in sync with the managed resources.
+
+To manage resources using the Vidra Operator, you can create a `VidraResource`. Below is an example of how a `VidraResource` looks:
 
 ```yaml
 apiVersion: infrahub.operators.com/v1alpha1
@@ -60,16 +62,16 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: vidraresource-sample
 spec:
-    destination:
-      server: https://kubernetes.default.svc
-      namespace: default
-      reconcileOnEvents: true
-    manifest: '{"apiVersion": "v1","kind": "Namespace","metadata":{"name": "ns-sample"}}'
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+    reconcileOnEvents: true
+  manifest: '{"apiVersion": "v1","kind": "Namespace","metadata":{"name": "ns-sample"}}'
 ```
 
 A `VidraResource` only requires the `spec.manifest` field, which should contain the Kubernetes manifests you want Vidra to manage.
 
-A `VidraResource` created by `InfrahubSync` and a completed reconciliation will look like this:
+A `VidraResource` created by `InfrahubSync` after a completed reconciliation will look like this:
 ```yaml
 apiVersion: infrahub.operators.com/v1alpha1
 kind: VidraResource
@@ -185,7 +187,7 @@ The managed resources will have the following labels and annotations set by Vidr
     vidraresource.infrahub.operators.com/owned-by: 183c2696-244a-db4d-3835-c51c357bbaf3
   labels:
     kubernetes.io/metadata.name: ns-example
-    managed-by: vida
+    managed-by: vidra
   ownerReferences:
   - apiVersion: infrahub.operators.com/v1alpha1
     blockOwnerDeletion: true
