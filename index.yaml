@@ -3,12 +3,12 @@ entries:
   vidra-operator:
   - apiVersion: v2
     appVersion: 0.0.6
-    created: "2025-06-10T21:52:00.743329734Z"
+    created: "2025-06-13T00:09:52.628604769Z"
     description: A Helm chart for Kubernetes
-    digest: 655d3d4e3565b0a94276a98c52416b9c0c34292d81667f7913d9c4bfe4987e8d
+    digest: 2addeb4f2e5d6825b6b3b7a40bbc994d5207e744cdf8f1e34624654158238f19
     name: vidra-operator
     type: application
     urls:
     - https://infrahub-operator.github.io/vidra/vidra-operator-0.0.6.tgz
     version: 0.0.6
-generated: "2025-06-10T21:52:00.74281042Z"
+generated: "2025-06-13T00:09:52.628029805Z"
