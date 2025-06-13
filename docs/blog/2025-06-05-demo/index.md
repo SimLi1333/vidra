@@ -85,7 +85,7 @@ k9s
 To access the deployed webserver, forward the service port:
 
 ```bash
-kubectl port-forward svc/test 8080:80 -n test
+kubectl port-forward svc/svc-test 8080:80 -n ns-test
 ```
 
 List all available tasks with:
