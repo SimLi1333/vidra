@@ -63,6 +63,7 @@ type InfrahubSyncSource struct {
 type InfrahubSyncDestination struct {
 	// Only needed if you need to deploy to two Kubernetis cluster (multicluster) if set to "httlps://kubernetes.default.svc" or omitted, the operator will use the current cluster
 	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Pattern="^(http|https)://[a-zA-Z0-9.-]+(:[0-9]+)?(?:/[a-zA-Z0-9-]+)*$"
 	Server string `json:"server,omitempty" protobuf:"bytes,1,name=server"`
 
 	// Default Namespace in the Kubernetes cluster where the resource should be sent, if they do not hava a namespace already set
