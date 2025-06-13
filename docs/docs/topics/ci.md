@@ -60,7 +60,7 @@ This workflow handles linting, testing, building, publishing, and releasing the 
 
 ### Build and Publish the Operator
 
-- Uses the official **Docker GitHub Actions** to build the Vidra Operator image.
+- Uses the official **Docker GitHub Actions** to build and push the Vidra Operator image. (for platforms `linux/amd64,linux/arm64`)
 - Pushes the image to the **GitHub Container Registry (GHCR)**.
 - The image is tagged with the current version (e.g., `v0.0.3`).
 - The operator bundle is generated using `make bundle-build` and published to the GitHub Container Registry (for OLM install).
