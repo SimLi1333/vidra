@@ -1,0 +1,17 @@
+apiVersion: infrahub.operators.com/v1alpha1
+kind: InfrahubSync
+metadata:
+  name: sync-multi
+  labels:
+    app.kubernetes.io/name: vidra
+    app.kubernetes.io/managed-by: kustomize
+spec:
+  source:
+    infrahubAPIURL: "https://infrahub-server.infrahub.orb.local"
+    targetBranch: "main"
+    # targetDate: "2025-04-09T00:00:00Z"
+    artefactName: "Webserver_Manifest"
+  destination:
+    server: "https://k8s-cldop-stud-g00.network.garden:6443"
+    namespace: 'default'
+    reconcileOnEvents: true
