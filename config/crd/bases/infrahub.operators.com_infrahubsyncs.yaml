@@ -58,6 +58,7 @@ spec:
                     description: Only needed if you need to deploy to two Kubernetis
                       cluster (multicluster) if set to "httlps://kubernetes.default.svc"
                       or omitted, the operator will use the current cluster
+                    pattern: ^(http|https)://[a-zA-Z0-9.-]+(:[0-9]+)?(?:/[a-zA-Z0-9-]+)*$
                     type: string
                 type: object
               source:
