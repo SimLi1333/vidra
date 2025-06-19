@@ -13,7 +13,7 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "vidra",
+	Use:   "vidra-cli",
 	Short: "CLI to manage Infrahub secrets",
 }
 
